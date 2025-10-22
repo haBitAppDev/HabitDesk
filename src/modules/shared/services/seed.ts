@@ -29,8 +29,9 @@ export async function seedTaskTemplates(templates: TaskTemplate[]) {
   const batch = writeBatch(db);
 
   templates.forEach((template) => {
-    const ref = doc(db, "task_templates", template.id || toId(template.name));
-    batch.set(ref, { ...template, id: undefined });
+    const { id, ...rest } = template;
+    const ref = doc(db, "task_templates", id || toId(template.name));
+    batch.set(ref, rest);
   });
 
   await batch.commit();
@@ -42,8 +43,9 @@ export async function seedProgramTemplates(templates: ProgramTemplate[]) {
   const batch = writeBatch(db);
 
   templates.forEach((template) => {
-    const ref = doc(db, "program_templates", template.id || toId(template.name));
-    batch.set(ref, { ...template, id: undefined });
+    const { id, ...rest } = template;
+    const ref = doc(db, "program_templates", id || toId(template.name));
+    batch.set(ref, rest);
   });
 
   await batch.commit();

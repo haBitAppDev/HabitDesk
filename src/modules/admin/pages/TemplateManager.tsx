@@ -1,33 +1,16 @@
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
-  FormControl,
-  IconButton,
-  InputLabel,
-  List,
-  ListItem,
-  ListItemText,
-  MenuItem,
-  OutlinedInput,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import Grid from "@mui/material/GridLegacy";
+import { PenLine, Trash } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Button } from "../../../components/ui/button";
+import { Card } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Select } from "../../../components/ui/select";
+import { Spinner } from "../../../components/ui/spinner";
+import { Textarea } from "../../../components/ui/textarea";
 import type {
   ProgramTemplate,
   TaskTemplate,
@@ -117,7 +100,7 @@ export function TemplateManager() {
       .map((tag) => tag.trim())
       .filter(Boolean);
 
-    let inputs: Record<string, any> | undefined;
+    let inputs: Record<string, unknown> | undefined;
     if (values.inputs) {
       try {
         inputs = JSON.parse(values.inputs);
@@ -224,258 +207,305 @@ export function TemplateManager() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner className="h-10 w-10" />
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Templates verwalten
-      </Typography>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">
+          Templates verwalten
+        </h1>
+        <p className="mt-2 text-sm text-brand-text-muted">
+          Halte deine Task- und Programmvorlagen auf dem neuesten Stand, damit Therapie-Workflows
+          reibungslos laufen.
+        </p>
+      </div>
+
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <div className="rounded-card border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-soft">
           {error}
-        </Alert>
+        </div>
       )}
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Task Templates
-              </Typography>
-              <Box
-                component="form"
-                onSubmit={onSubmitTaskTemplate}
-                sx={{ display: "grid", gap: 2 }}
-              >
-                <Controller
-                  name="name"
-                  control={taskForm.control}
-                  render={({ field, fieldState }) => (
-                    <TextField
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="flex flex-col gap-6 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-brand-text">Task Templates</h2>
+              <p className="text-sm text-brand-text-muted">
+                Definiere wiederverwendbare therapeutische Aufgaben.
+              </p>
+            </div>
+            <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary">
+              {taskTemplates.length} aktiv
+            </span>
+          </div>
+          <form onSubmit={onSubmitTaskTemplate} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="task-name">Name</Label>
+              <Controller
+                name="name"
+                control={taskForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Input id="task-name" {...field} placeholder="Beispiel: Atemübung" />
+                    {fieldState.error && (
+                      <p className="text-xs text-red-600">{fieldState.error.message}</p>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-description">Beschreibung</Label>
+              <Controller
+                name="description"
+                control={taskForm.control}
+                render={({ field }) => (
+                  <Textarea
+                    id="task-description"
+                    {...field}
+                    rows={3}
+                    placeholder="Was ist das Ziel der Aufgabe?"
+                  />
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-tags">Tags (kommagetrennt)</Label>
+              <Controller
+                name="tags"
+                control={taskForm.control}
+                render={({ field }) => (
+                  <Input id="task-tags" {...field} placeholder="Mindfulness, Bewegung, ..." />
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-inputs">Inputs (JSON)</Label>
+              <Controller
+                name="inputs"
+                control={taskForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Textarea
+                      id="task-inputs"
                       {...field}
-                      label="Name"
-                      error={fieldState.invalid}
-                      helperText={fieldState.error?.message}
-                      fullWidth
+                      rows={4}
+                      placeholder='z.B. {"duration": 15}'
                     />
-                  )}
-                />
-                <Controller
-                  name="description"
-                  control={taskForm.control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Beschreibung"
-                      fullWidth
-                      multiline
-                      minRows={2}
-                    />
-                  )}
-                />
-                <Controller
-                  name="tags"
-                  control={taskForm.control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Tags (kommagetrennt)"
-                      fullWidth
-                    />
-                  )}
-                />
-                <Controller
-                  name="inputs"
-                  control={taskForm.control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label="Inputs (JSON)"
-                      fullWidth
-                      multiline
-                      minRows={3}
-                      error={fieldState.invalid}
-                      helperText={fieldState.error?.message}
-                    />
-                  )}
-                />
-                <Stack direction="row" spacing={2}>
-                  <Button type="submit" variant="contained">
-                    {editingTaskId ? "Task Template aktualisieren" : "Task Template anlegen"}
-                  </Button>
-                  {editingTaskId && (
-                    <Button variant="outlined" onClick={resetTaskForm}>
-                      Abbrechen
-                    </Button>
-                  )}
-                </Stack>
-              </Box>
-            </CardContent>
-            <CardActions>
-              <Typography variant="subtitle2">
-                {taskTemplates.length} Task Templates vorhanden
-              </Typography>
-            </CardActions>
-          </Card>
-          <List dense>
+                    {fieldState.error && (
+                      <p className="text-xs text-red-600">{fieldState.error.message}</p>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="submit">
+                {editingTaskId ? "Task Template aktualisieren" : "Task Template anlegen"}
+              </Button>
+              {editingTaskId && (
+                <Button type="button" variant="outline" onClick={resetTaskForm}>
+                  Abbrechen
+                </Button>
+              )}
+            </div>
+          </form>
+          <div className="space-y-3">
             {taskTemplates.map((template) => (
-              <ListItem
+              <div
                 key={template.id}
-                secondaryAction={
-                  <Stack direction="row" spacing={1}>
-                    <IconButton edge="end" onClick={() => handleEditTask(template)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton edge="end" onClick={() => handleDeleteTask(template.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Stack>
-                }
+                className="flex items-start justify-between rounded-[14px] border border-brand-divider/70 bg-white px-4 py-3"
               >
-                <ListItemText
-                  primary={template.name}
-                  secondary={template.tags?.join(", ")}
-                />
-              </ListItem>
+                <div>
+                  <p className="font-medium text-brand-text">{template.name}</p>
+                  {template.tags && (
+                    <p className="mt-1 text-xs uppercase tracking-wide text-brand-text-muted">
+                      {template.tags.join(", ")}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleEditTask(template)}
+                    className="rounded-full border border-brand-divider/60 p-2 text-brand-text-muted transition hover:border-brand-primary hover:text-brand-primary"
+                  >
+                    <PenLine className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTask(template.id)}
+                    className="rounded-full border border-red-200 p-2 text-red-500 transition hover:bg-red-50"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             ))}
-          </List>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Program Templates
-              </Typography>
-              <Box component="form" onSubmit={onSubmitProgramTemplate} sx={{ display: "grid", gap: 2 }}>
-                <Controller
-                  name="name"
-                  control={programForm.control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      label="Name"
-                      fullWidth
-                      error={fieldState.invalid}
-                      helperText={fieldState.error?.message}
-                    />
-                  )}
-                />
-                <Controller
-                  name="therapistTypes"
-                  control={programForm.control}
-                  render={({ field, fieldState }) => (
-                    <FormControl fullWidth error={fieldState.invalid}>
-                      <InputLabel>Therapeuten-Typen</InputLabel>
-                      <Select
-                        {...field}
-                        multiple
-                        input={<OutlinedInput label="Therapeuten-Typen" />}
-                        renderValue={(selected) => (
-                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                            {selected.map((value) => (
-                              <Chip key={value} label={value} />
-                            ))}
-                          </Box>
-                        )}
-                      >
-                        {therapistTypes.map((type) => (
-                          <MenuItem key={type.id} value={type.id}>
-                            {type.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  )}
-                />
-                <Controller
-                  name="taskTemplateIds"
-                  control={programForm.control}
-                  render={({ field, fieldState }) => (
-                    <FormControl fullWidth error={fieldState.invalid}>
-                      <InputLabel>Task Templates</InputLabel>
-                      <Select
-                        {...field}
-                        multiple
-                        input={<OutlinedInput label="Task Templates" />}
-                        renderValue={(selected) => (
-                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                            {selected.map((value) => (
-                              <Chip
-                                key={value}
-                                label={
-                                  taskTemplateOptions.find((option) => option.value === value)?.label ??
-                                  value
-                                }
-                              />
-                            ))}
-                          </Box>
-                        )}
-                      >
-                        {taskTemplateOptions.map((option) => (
-                          <MenuItem key={option.value} value={option.value}>
-                            {option.label}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  )}
-                />
-                <Stack direction="row" spacing={2}>
-                  <Button type="submit" variant="contained">
-                    {editingProgramId
-                      ? "Program Template aktualisieren"
-                      : "Program Template anlegen"}
-                  </Button>
-                  {editingProgramId && (
-                    <Button variant="outlined" onClick={resetProgramForm}>
-                      Abbrechen
-                    </Button>
-                  )}
-                </Stack>
-              </Box>
-            </CardContent>
-            <CardActions>
-              <Typography variant="subtitle2">
-                {programTemplates.length} Program Templates vorhanden
-              </Typography>
-            </CardActions>
-          </Card>
-          <List dense>
+            {taskTemplates.length === 0 && (
+              <p className="rounded-[14px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
+                Noch keine Task Templates angelegt.
+              </p>
+            )}
+          </div>
+        </Card>
+
+        <Card className="flex flex-col gap-6 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-brand-text">Program Templates</h2>
+              <p className="text-sm text-brand-text-muted">
+                Kombiniere Tasks zu strukturierten Therapieprogrammen.
+              </p>
+            </div>
+            <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary">
+              {programTemplates.length} aktiv
+            </span>
+          </div>
+          <form onSubmit={onSubmitProgramTemplate} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="program-name">Name</Label>
+              <Controller
+                name="name"
+                control={programForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Input id="program-name" {...field} placeholder="Beispiel: Schmerzbewältigung" />
+                    {fieldState.error && (
+                      <p className="text-xs text-red-600">{fieldState.error.message}</p>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="program-therapist-types">Therapeuten-Typen</Label>
+              <Controller
+                name="therapistTypes"
+                control={programForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Select
+                      id="program-therapist-types"
+                      multiple
+                      value={field.value}
+                      onChange={(event) => {
+                        const selected = Array.from(
+                          event.target.selectedOptions
+                        ).map((option) => option.value);
+                        field.onChange(selected);
+                      }}
+                    >
+                      {therapistTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </Select>
+                    {fieldState.error && (
+                      <p className="text-xs text-red-600">{fieldState.error.message}</p>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="program-task-templates">Task Templates</Label>
+              <Controller
+                name="taskTemplateIds"
+                control={programForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Select
+                      id="program-task-templates"
+                      multiple
+                      value={field.value}
+                      onChange={(event) => {
+                        const selected = Array.from(
+                          event.target.selectedOptions
+                        ).map((option) => option.value);
+                        field.onChange(selected);
+                      }}
+                    >
+                      {taskTemplateOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Select>
+                    {fieldState.error && (
+                      <p className="text-xs text-red-600">{fieldState.error.message}</p>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="submit">
+                {editingProgramId
+                  ? "Program Template aktualisieren"
+                  : "Program Template anlegen"}
+              </Button>
+              {editingProgramId && (
+                <Button type="button" variant="outline" onClick={resetProgramForm}>
+                  Abbrechen
+                </Button>
+              )}
+            </div>
+          </form>
+          <div className="space-y-3">
             {programTemplates.map((template) => (
-              <ListItem
+              <div
                 key={template.id}
-                secondaryAction={
-                  <Stack direction="row" spacing={1}>
-                    <IconButton edge="end" onClick={() => handleEditProgram(template)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton edge="end" onClick={() => handleDeleteProgram(template.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Stack>
-                }
+                className="flex items-start justify-between rounded-[14px] border border-brand-divider/70 bg-white px-4 py-3"
               >
-                <ListItemText
-                  primary={template.name}
-                  secondary={
-                    template.taskTemplateIds
+                <div>
+                  <p className="font-medium text-brand-text">{template.name}</p>
+                  <div className="mt-1 flex flex-wrap gap-1 text-[11px] uppercase tracking-wide text-brand-text-muted">
+                    {template.taskTemplateIds
                       .map(
                         (id) =>
                           taskTemplateOptions.find((option) => option.value === id)?.label ?? id
                       )
-                      .join(", ")
-                  }
-                />
-              </ListItem>
+                      .map((label) => (
+                        <span key={label} className="rounded-full bg-brand-light px-2 py-1">
+                          {label}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleEditProgram(template)}
+                    className="rounded-full border border-brand-divider/60 p-2 text-brand-text-muted transition hover:border-brand-primary hover:text-brand-primary"
+                  >
+                    <PenLine className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteProgram(template.id)}
+                    className="rounded-full border border-red-200 p-2 text-red-500 transition hover:bg-red-50"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             ))}
-          </List>
-        </Grid>
-      </Grid>
-    </Box>
+            {programTemplates.length === 0 && (
+              <p className="rounded-[14px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
+                Noch keine Program Templates angelegt.
+              </p>
+            )}
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 }

@@ -1,8 +1,8 @@
-import { CircularProgress, Container } from "@mui/material";
 import { Navigate, useLocation } from "react-router-dom";
 import type { PropsWithChildren } from "react";
 
 import { useAuthState } from "../../modules/shared/hooks/useAuthState";
+import { Spinner } from "../../components/ui/spinner";
 
 export function RequireAuth({ children }: PropsWithChildren) {
   const location = useLocation();
@@ -10,9 +10,9 @@ export function RequireAuth({ children }: PropsWithChildren) {
 
   if (loading) {
     return (
-      <Container sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
-        <CircularProgress />
-      </Container>
+      <div className="flex min-h-screen items-center justify-center bg-brand-background">
+        <Spinner className="h-8 w-8" />
+      </div>
     );
   }
 

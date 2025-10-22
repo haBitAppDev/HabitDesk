@@ -1,21 +1,12 @@
-import LogoutIcon from "@mui/icons-material/Logout";
-import MenuIcon from "@mui/icons-material/Menu";
-import {
-  AppBar,
-  Avatar,
-  Box,
-  Chip,
-  IconButton,
-  Menu,
-  MenuItem,
-  Toolbar,
-  Typography,
-} from "@mui/material";
-import { useState } from "react";
+import { LogOut, Menu } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { signOutUser } from "../../modules/shared/services/auth";
 import { useAuthState } from "../../modules/shared/hooks/useAuthState";
 import { useUserRole } from "../../modules/shared/hooks/useUserRole";
+import { Avatar } from "../ui/avatar";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 
 interface TopbarProps {
   onMenuToggle: () => void;
@@ -24,57 +15,88 @@ interface TopbarProps {
 export function Topbar({ onMenuToggle }: TopbarProps) {
   const { user } = useAuthState();
   const { role } = useUserRole();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
+  useEffect(() => {
+    const handleOutside = (event: MouseEvent) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
 
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-  };
+    if (open) {
+      document.addEventListener("mousedown", handleOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+    };
+  }, [open]);
 
   const handleLogout = async () => {
     await signOutUser();
-    handleCloseMenu();
+    setOpen(false);
   };
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-      <Toolbar>
-        <IconButton
-          color="inherit"
-          edge="start"
-          aria-label="open drawer"
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-brand-divider/60 bg-brand-background/80 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center px-4 md:px-8">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="mr-2 inline-flex items-center gap-2 border border-brand-divider/60 bg-white/70 text-brand-text md:hidden"
           onClick={onMenuToggle}
-          sx={{ mr: 2, display: { md: "none" } }}
         >
-          <MenuIcon />
-        </IconButton>
-        <Typography variant="h6" noWrap component="div">
-          HabitDesk
-        </Typography>
-        <Box sx={{ flexGrow: 1 }} />
-        {role && (
-          <Chip
-            label={role.toUpperCase()}
-            color={role === "admin" ? "secondary" : "default"}
-            size="small"
-            sx={{ mr: 2 }}
-          />
-        )}
-        <IconButton color="inherit" onClick={handleOpenMenu}>
-          <Avatar sx={{ bgcolor: "primary.main" }}>
-            {(user?.displayName?.[0] || user?.email?.[0] || "?").toUpperCase()}
-          </Avatar>
-        </IconButton>
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
-          <MenuItem disabled>{user?.email}</MenuItem>
-          <MenuItem onClick={handleLogout}>
-            <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout
-          </MenuItem>
-        </Menu>
-      </Toolbar>
-    </AppBar>
+          <Menu className="h-5 w-5" />
+        </Button>
+        <span className="text-lg font-semibold tracking-tight text-brand-text">
+          Habit<span className="text-brand-primary">Desk</span>
+        </span>
+        <div className="ml-auto flex items-center gap-3">
+          {role && (
+            <Badge
+              variant={role === "admin" ? "primary" : "muted"}
+              className="hidden sm:inline-flex"
+            >
+              {role}
+            </Badge>
+          )}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setOpen((prev) => !prev)}
+              className="flex items-center gap-3 rounded-full border border-transparent px-1 py-1 transition hover:border-brand-primary/40"
+            >
+              <Avatar name={user?.displayName ?? null} email={user?.email ?? null} />
+              <div className="hidden flex-col text-left text-xs font-medium sm:flex">
+                <span className="text-brand-text">{user?.displayName ?? "Account"}</span>
+                <span className="text-brand-text-muted">{user?.email}</span>
+              </div>
+            </button>
+            {open && (
+              <div className="absolute right-0 top-full z-50 mt-3 w-60 rounded-card bg-white p-3 shadow-soft ring-1 ring-black/5">
+                <div className="border-b border-brand-divider/60 pb-3 text-sm">
+                  <p className="font-semibold text-brand-text">
+                    {user?.displayName ?? "Angemeldeter Nutzer"}
+                  </p>
+                  <p className="text-brand-text-muted">{user?.email}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="mt-3 flex w-full items-center gap-2 rounded-[12px] px-3 py-2 text-sm font-medium text-brand-text hover:bg-brand-light/50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Abmelden
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
   );
 }

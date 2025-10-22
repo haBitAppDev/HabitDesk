@@ -1,33 +1,15 @@
-import DeleteIcon from "@mui/icons-material/Delete";
-import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { MinusCircle, PlusCircle } from "lucide-react";
 import { create } from "zustand";
 import { useEffect, useMemo, useState } from "react";
 
+import { Button } from "../../../components/ui/button";
+import { Card } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Select } from "../../../components/ui/select";
+import { Spinner } from "../../../components/ui/spinner";
 import { useAuthState } from "../../shared/hooks/useAuthState";
-import type {
-  ProgramTemplate,
-  TaskTemplate,
-} from "../../shared/types/domain";
+import type { ProgramTemplate, TaskTemplate } from "../../shared/types/domain";
 import {
   createProgramInstance,
   listProgramTemplates,
@@ -64,7 +46,8 @@ export const useBuilderStore = create<BuilderState>((set) => ({
 
 export function ProgramBuilder() {
   const { user } = useAuthState();
-  const { title, selectedTasks, removeTask, clear, setTitle, setTasks } = useBuilderStore();
+  const { title, selectedTasks, addTask, removeTask, clear, setTitle, setTasks } =
+    useBuilderStore();
   const [taskTemplates, setTaskTemplates] = useState<TaskTemplate[]>([]);
   const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
   const [templateId, setTemplateId] = useState<string>("");
@@ -125,15 +108,15 @@ export function ProgramBuilder() {
 
   const handleSave = async () => {
     if (!user) {
-      setMessage({ type: "error", text: "Bitte zuerst einloggen" });
+      setMessage({ type: "error", text: "Bitte zuerst einloggen." });
       return;
     }
-    if (!patientId) {
-      setMessage({ type: "error", text: "Patient-ID ist erforderlich" });
+    if (!patientId.trim()) {
+      setMessage({ type: "error", text: "Patient-ID ist erforderlich." });
       return;
     }
     if (!selectedTasks.length) {
-      setMessage({ type: "error", text: "Mindestens ein Task muss ausgewählt sein" });
+      setMessage({ type: "error", text: "Mindestens ein Task muss ausgewählt sein." });
       return;
     }
 
@@ -141,7 +124,7 @@ export function ProgramBuilder() {
     try {
       await createProgramInstance({
         authorId: user.uid,
-        patientId,
+        patientId: patientId.trim(),
         therapistId: user.uid,
         templateId: templateId || undefined,
         tasks: selectedTasks.map((task) => ({
@@ -150,7 +133,7 @@ export function ProgramBuilder() {
         })),
         title: title || undefined,
       });
-      setMessage({ type: "success", text: "Programm erfolgreich gespeichert" });
+      setMessage({ type: "success", text: "Programm erfolgreich gespeichert." });
       clear();
       setTemplateId("");
       setPatientId("");
@@ -162,6 +145,7 @@ export function ProgramBuilder() {
       });
     } finally {
       setSaving(false);
+      setTimeout(() => setMessage(null), 5000);
     }
   };
 
@@ -169,111 +153,197 @@ export function ProgramBuilder() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner className="h-10 w-10" />
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Program Builder
-      </Typography>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">Program Builder</h1>
+        <p className="mt-2 text-sm text-brand-text-muted">
+          Stelle Programme zusammen, indem du Tasks kombinierst oder bestehende Templates nutzt.
+        </p>
+      </div>
+
       {message && (
-        <Alert
-          severity={message.type}
-          sx={{ mb: 2 }}
-          onClose={() => setMessage(null)}
+        <div
+          className={`rounded-card border px-4 py-3 text-sm shadow-soft ${
+            message.type === "success"
+              ? "border-brand-primary/30 bg-brand-primary/10 text-brand-primary"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
         >
           {message.text}
-        </Alert>
+        </div>
       )}
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ display: "grid", gap: 2 }}>
-          <Typography variant="h6">Programmdetails</Typography>
-          <FormControl fullWidth>
-            <InputLabel>Basis-Template</InputLabel>
-            <Select
-              value={templateId}
-              label="Basis-Template"
-              onChange={(event) => handleTemplateSelect(event.target.value)}
-            >
-              <MenuItem value="">
-                <em>Keines</em>
-              </MenuItem>
-              {programTemplateOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            label="Programmtitel"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="z. B. Aufbauprogramm Phase 1"
-          />
-          <TextField
-            label="Patient-ID"
-            value={patientId}
-            onChange={(event) => setPatientId(event.target.value)}
-            placeholder="patient-123"
-          />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">Ausgewählte Tasks</Typography>
-            <Button variant="outlined" onClick={() => clear()} disabled={programsEmpty}>
-              Auswahl leeren
-            </Button>
-          </Stack>
-          {programsEmpty ? (
-            <Box sx={{ textAlign: "center", color: "text.secondary", py: 6 }}>
-              <PlaylistAddIcon sx={{ fontSize: 48, mb: 1 }} color="disabled" />
-              <Typography>Nutze die Task Library, um Tasks hinzuzufügen.</Typography>
-            </Box>
-          ) : (
-            <List>
-              {selectedTasks.map((task) => (
-                <ListItem
-                  key={task.id}
-                  secondaryAction={
-                    <Button
-                      color="secondary"
-                      variant="text"
-                      startIcon={<DeleteIcon />}
-                      onClick={() => removeTask(task.id)}
-                    >
-                      Entfernen
-                    </Button>
-                  }
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="flex flex-col gap-6 p-6 lg:col-span-2">
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="template">Basis-Template</Label>
+                <Select
+                  id="template"
+                  value={templateId}
+                  onChange={(event) => handleTemplateSelect(event.target.value)}
                 >
-                  <ListItemAvatar>
-                    <Chip label={task.tags?.[0] ?? "Task"} color="primary" />
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={task.name}
-                    secondary={task.description}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          )}
-          <Stack direction="row" justifyContent="flex-end" mt={2}>
-            <Button
-              variant="contained"
-              disabled={programsEmpty || saving}
-              onClick={handleSave}
-            >
-              {saving ? "Speichern..." : "Programm speichern"}
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
-    </Box>
+                  <option value="">Keines</option>
+                  {programTemplateOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="program-title">Programmtitel</Label>
+                <Input
+                  id="program-title"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="z. B. Aufbauprogramm Phase 1"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="patient-id">Patient-ID</Label>
+                <Input
+                  id="patient-id"
+                  value={patientId}
+                  onChange={(event) => setPatientId(event.target.value)}
+                  placeholder="patient_123"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="button" onClick={handleSave} disabled={saving}>
+                {saving ? "Speichern..." : "Programm speichern"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => clear()}>
+                Auswahl zurücksetzen
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-brand-text">Ausgewählte Tasks</h2>
+            {programsEmpty ? (
+              <div className="rounded-[14px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
+                Noch keine Tasks ausgewählt. Füge über die Bibliothek rechts Tasks hinzu.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {selectedTasks.map((task, index) => (
+                  <div
+                    key={task.id}
+                    className="flex items-start justify-between rounded-[14px] border border-brand-divider/70 bg-white px-4 py-3 shadow-sm"
+                  >
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-brand-text-muted">
+                        Schritt {index + 1}
+                      </p>
+                      <p className="text-sm font-semibold text-brand-text">{task.name}</p>
+                      {task.description && (
+                        <p className="mt-1 text-sm text-brand-text-muted">{task.description}</p>
+                      )}
+                      {task.tags && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {task.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeTask(task.id)}
+                      className="rounded-full border border-red-200 p-2 text-red-500 transition hover:bg-red-50"
+                    >
+                      <MinusCircle className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card className="flex h-full flex-col gap-4 p-6">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-text">Task Bibliothek</h2>
+            <p className="mt-1 text-xs text-brand-text-muted">
+              Füge Tasks per Klick hinzu. Duplizierte Einträge werden automatisch verhindert.
+            </p>
+          </div>
+          <div className="space-y-3 overflow-y-auto pr-1">
+            {taskTemplates.map((task) => {
+              const alreadySelected = selectedTasks.some((item) => item.id === task.id);
+              return (
+                <div
+                  key={task.id}
+                  className="rounded-[14px] border border-brand-divider/60 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-brand-text">{task.name}</p>
+                      {task.description && (
+                        <p className="mt-1 text-sm text-brand-text-muted">{task.description}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addTask(task)}
+                      disabled={alreadySelected}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                        alreadySelected
+                          ? "cursor-not-allowed border-brand-divider/60 text-brand-text-muted"
+                          : "border-brand-primary text-brand-primary hover:bg-brand-primary/10"
+                      }`}
+                    >
+                      {alreadySelected ? "Hinzugefügt" : "Hinzufügen"}
+                    </button>
+                  </div>
+                  {task.tags && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {task.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-brand-light px-2 py-1 text-[11px] font-medium uppercase tracking-wide text-brand-text-muted"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {task.inputs && (
+                    <details className="mt-2 rounded-[12px] border border-brand-divider/60 bg-brand-light/40 p-3 text-xs text-brand-text-muted">
+                      <summary className="cursor-pointer select-none text-brand-primary">
+                        Konfiguration anzeigen
+                      </summary>
+                      <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px]">
+                        {JSON.stringify(task.inputs, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              );
+            })}
+            {taskTemplates.length === 0 && (
+              <p className="rounded-[14px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
+                Keine Task Templates vorhanden.
+              </p>
+            )}
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 }

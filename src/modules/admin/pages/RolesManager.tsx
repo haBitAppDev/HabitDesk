@@ -1,23 +1,9 @@
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Snackbar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { Card } from "../../../components/ui/card";
+import { Label } from "../../../components/ui/label";
+import { Select } from "../../../components/ui/select";
+import { Spinner } from "../../../components/ui/spinner";
 import type { UserProfile, UserRole } from "../../shared/types/domain";
 import { listUsers, setUserRole } from "../services/adminApi";
 
@@ -51,6 +37,11 @@ export function RolesManager() {
     };
   }, []);
 
+  const sortedUsers = useMemo(
+    () => [...users].sort((a, b) => a.email.localeCompare(b.email)),
+    [users]
+  );
+
   const handleRoleChange = async (uid: string, role: UserRole) => {
     setUpdating(uid);
     try {
@@ -64,72 +55,84 @@ export function RolesManager() {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setUpdating(null);
+      setTimeout(() => setSnackbar(null), 4000);
     }
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner className="h-10 w-10" />
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Rollen verwalten
-      </Typography>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">Rollen verwalten</h1>
+        <p className="mt-2 text-sm text-brand-text-muted">
+          Weise Nutzer:innen Rollen zu, um Zugriff auf Admin- und Therapeut:innenfunktionen zu
+          steuern.
+        </p>
+      </div>
+
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="rounded-card border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-soft">
           {error}
-        </Alert>
+        </div>
       )}
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>E-Mail</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Rolle</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.uid} hover>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.displayName}</TableCell>
-                <TableCell>
-                  <FormControl size="small" sx={{ minWidth: 150 }}>
-                    <InputLabel id={`role-${user.uid}`}>Rolle</InputLabel>
-                    <Select
-                      labelId={`role-${user.uid}`}
-                      label="Rolle"
-                      value={user.role}
-                      onChange={(event) =>
-                        handleRoleChange(user.uid, event.target.value as UserRole)
-                      }
-                      disabled={updating === user.uid}
-                    >
-                      {ROLES.map((role) => (
-                        <MenuItem key={role} value={role}>
-                          {role}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <Snackbar
-        open={Boolean(snackbar)}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar(null)}
-        message={snackbar ?? undefined}
-      />
-    </Box>
+
+      {snackbar && (
+        <div className="rounded-card border border-brand-primary/30 bg-brand-primary/10 px-4 py-3 text-sm text-brand-primary shadow-soft">
+          {snackbar}
+        </div>
+      )}
+
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-brand-divider/70 text-sm">
+            <thead className="bg-brand-light/40 text-left text-xs font-semibold uppercase tracking-wide text-brand-text-muted">
+              <tr>
+                <th className="px-6 py-3">E-Mail</th>
+                <th className="px-6 py-3">Name</th>
+                <th className="px-6 py-3">Rolle</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-brand-divider/60 bg-white">
+              {sortedUsers.map((user) => (
+                <tr key={user.uid} className="transition hover:bg-brand-light/40">
+                  <td className="px-6 py-4 font-medium text-brand-text">{user.email}</td>
+                  <td className="px-6 py-4 text-brand-text-muted">
+                    {user.displayName || "—"}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor={`role-${user.uid}`} className="text-xs text-brand-text-muted">
+                        Rolle
+                      </Label>
+                      <Select
+                        id={`role-${user.uid}`}
+                        value={user.role}
+                        onChange={(event) =>
+                          handleRoleChange(user.uid, event.target.value as UserRole)
+                        }
+                        disabled={updating === user.uid}
+                      >
+                        {ROLES.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
   );
 }
