@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function hasRole(r) { return request.auth.token.role == r; }
+    function hasAnyRole() { return request.auth.token.role in ['admin','therapist','patient']; }
+
+    match /program_templates/{id} {
+      allow read: if hasRole('admin') || hasRole('therapist');
+      allow write: if hasRole('admin');
+    }
+
+    match /task_templates/{id} {
+      allow read: if hasRole('admin') || hasRole('therapist');
+      allow write: if hasRole('admin');
+    }
+
+    match /programs/{id} {
+      allow create: if hasRole('admin') || hasRole('therapist');
+      allow read: if hasRole('admin') || hasRole('therapist');
+      allow update, delete: if hasRole('admin') || (request.resource.data.authorId == request.auth.uid);
+    }
+
+    match /users/{uid} {
+      allow read, update: if request.auth.uid == uid || hasRole('admin');
+      allow create: if hasAnyRole();
+    }
+  }
+}
