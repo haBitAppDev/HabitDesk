@@ -30,17 +30,12 @@ jobs:
         run: npm run build
 
       - name: Deploy via SFTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.SFTP_HOST }}
           username: ${{ secrets.SFTP_USERNAME }}
+          server: ${{ secrets.SFTP_HOST }}
           password: ${{ secrets.SFTP_PASSWORD }}
           port: ${{ secrets.SFTP_PORT }}
-          protocol: sftp
-          local-dir: dist
-          server-dir: ${{ secrets.SFTP_REMOTE_DIR }}
-          exclude: |
-            **/.git*
-            **/.github*
-            node_modules/**
-            scripts/**
+          local_path: ./dist/
+          remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
+          sftp_only: true
