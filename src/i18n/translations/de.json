@@ -181,13 +181,13 @@
         "root": "Admin",
         "therapists": "Therapeut:innen",
         "roles": "Rollenverwaltung",
-        "templates": "Templates",
+        "templates": "Vorlagen",
         "dashboard": "Admin"
       },
       "therapist": {
         "root": "Therapeut",
         "programBuilder": "Program Builder",
-        "taskLibrary": "Task Library"
+        "taskLibrary": "Aufgabenbibliothek"
       },
       "tipTitle": "Tipp",
       "tip": "Verwalte Rollen und Templates zentral, damit Therapeut:innen sich auf Patient:innen konzentrieren können."
