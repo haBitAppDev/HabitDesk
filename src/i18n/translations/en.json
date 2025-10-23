@@ -75,6 +75,14 @@
             "duration": "Duration (seconds)",
             "allowPause": "Allow pause"
           }
+        },
+        "scope": {
+          "label": "Availability",
+          "global": "All therapists",
+          "types": "Specific therapist types",
+          "private": "Private (owner only)",
+          "typeList": "Select therapist types",
+          "noTypes": "No therapist types available."
         }
       },
       "list": {
@@ -102,6 +110,12 @@
       "tasks": "Task templates",
       "color": "Color",
       "noTherapistTypes": "No therapist types yet"
+      },
+      "scope": {
+        "label": "Availability",
+        "global": "All therapists",
+        "types": "Specific therapist types",
+        "private": "Private (owner only)"
       },
       "list": {
         "title": "Program templates",
@@ -165,6 +179,7 @@
       "dashboard": "Dashboard",
       "admin": {
         "root": "Admin",
+        "therapists": "Therapists",
         "roles": "Role Management",
         "templates": "Templates",
         "dashboard": "Admin"
@@ -187,6 +202,61 @@
         "programs": "Program templates",
         "tasks": "Task templates"
       }
+    }
+  },
+  "therapists": {
+    "title": "Therapist Management",
+    "subtitle": "Create invites, track onboarding progress, and manage therapist access scopes.",
+    "invites": {
+      "created": "Invite created. Share the code securely with the therapist.",
+      "revoked": "Invite revoked.",
+      "deleted": "Invite deleted.",
+      "restored": "Invite reactivated.",
+      "codeCopied": "Invite code copied to clipboard.",
+      "createTitle": "Create therapist invite",
+      "createHint": "Invite codes grant therapists access to HabitDesk and the Habit App. Codes are single-use.",
+      "form": {
+        "email": "Email (optional)",
+        "license": "License valid until",
+        "types": "Therapist types",
+        "contract": "Contract reference",
+        "notes": "Internal notes"
+      },
+      "noTypes": "No therapist types configured yet.",
+      "actions": {
+        "creating": "Creating…",
+        "create": "Generate invite",
+        "reset": "Reset form",
+        "reload": "Reload",
+        "revoke": "Revoke",
+        "restore": "Reactivate",
+        "delete": "Delete"
+      },
+      "listTitle": "Invite overview",
+      "listSubtitle": "Track invite status and manage codes.",
+      "empty": "No invites yet. Create one above to add a therapist.",
+      "table": {
+        "code": "Code",
+        "types": "Therapist types",
+        "email": "Email",
+        "status": "Status",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "linked": "Linked to {name}",
+      "typesAll": "All types"
+    },
+    "profiles": {
+      "title": "Active therapists",
+      "empty": "No therapists onboarded yet.",
+      "table": {
+        "name": "Name",
+        "email": "Email",
+        "types": "Types",
+        "license": "License valid until",
+        "contract": "Contract reference"
+      },
+      "typesUnknown": "Not specified"
     }
   },
   "roles": {

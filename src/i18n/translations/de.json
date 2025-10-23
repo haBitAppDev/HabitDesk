@@ -75,6 +75,14 @@
             "duration": "Dauer (Sekunden)",
             "allowPause": "Pause erlauben"
           }
+        },
+        "scope": {
+          "label": "Verfügbarkeit",
+          "global": "Alle Therapeut:innen",
+          "types": "Bestimmte Therapeuten-Typen",
+          "private": "Privat (nur Besitzer:in)",
+          "typeList": "Therapeuten-Typen auswählen",
+          "noTypes": "Keine Therapeuten-Typen vorhanden."
         }
       },
       "list": {
@@ -102,6 +110,12 @@
       "tasks": "Task Templates",
       "color": "Farbe",
       "noTherapistTypes": "Keine Typen hinterlegt."
+      },
+      "scope": {
+        "label": "Verfügbarkeit",
+        "global": "Alle Therapeut:innen",
+        "types": "Bestimmte Therapeuten-Typen",
+        "private": "Privat (nur Besitzer:in)"
       },
       "list": {
         "title": "Program Templates",
@@ -165,6 +179,7 @@
       "dashboard": "Dashboard",
       "admin": {
         "root": "Admin",
+        "therapists": "Therapeut:innen",
         "roles": "Rollenverwaltung",
         "templates": "Templates",
         "dashboard": "Admin"
@@ -187,6 +202,61 @@
         "programs": "Program Templates",
         "tasks": "Task Templates"
       }
+    }
+  },
+  "therapists": {
+    "title": "Therapeutenverwaltung",
+    "subtitle": "Erstelle Einladungen, verfolge den Onboarding-Status und verwalte die Zugriffszuteilung.",
+    "invites": {
+      "created": "Einladung erstellt. Teile den Code sicher mit der Therapeutin/dem Therapeuten.",
+      "revoked": "Einladung widerrufen.",
+      "deleted": "Einladung gelöscht.",
+      "restored": "Einladung reaktiviert.",
+      "codeCopied": "Einladungscode kopiert.",
+      "createTitle": "Therapeuten-Einladung erstellen",
+      "createHint": "Einladungscodes gewähren Zugriff auf HabitDesk und die Habit App. Codes sind einmalig verwendbar.",
+      "form": {
+        "email": "E-Mail (optional)",
+        "license": "Lizenz gültig bis",
+        "types": "Therapeuten-Typen",
+        "contract": "Vertragsreferenz",
+        "notes": "Interne Notizen"
+      },
+      "noTypes": "Noch keine Therapeuten-Typen hinterlegt.",
+      "actions": {
+        "creating": "Erstellen…",
+        "create": "Einladung erzeugen",
+        "reset": "Formular zurücksetzen",
+        "reload": "Neu laden",
+        "revoke": "Widerrufen",
+        "restore": "Reaktivieren",
+        "delete": "Löschen"
+      },
+      "listTitle": "Einladungsübersicht",
+      "listSubtitle": "Verfolge den Einladungsstatus und verwalte Codes.",
+      "empty": "Noch keine Einladungen. Erstelle oben eine neue, um eine Therapeutin/einen Therapeuten einzuladen.",
+      "table": {
+        "code": "Code",
+        "types": "Therapeuten-Typen",
+        "email": "E-Mail",
+        "status": "Status",
+        "updated": "Aktualisiert",
+        "actions": "Aktionen"
+      },
+      "linked": "Verknüpft mit {name}",
+      "typesAll": "Alle Typen"
+    },
+    "profiles": {
+      "title": "Aktive Therapeut:innen",
+      "empty": "Noch keine Therapeut:innen onboarded.",
+      "table": {
+        "name": "Name",
+        "email": "E-Mail",
+        "types": "Typen",
+        "license": "Lizenz gültig bis",
+        "contract": "Vertragsreferenz"
+      },
+      "typesUnknown": "Nicht angegeben"
     }
   },
   "roles": {

@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 const require = createRequire(new URL("../functions/package.json", import.meta.url));
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
+const { getFirestore } = require("firebase-admin/firestore");
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const serviceAccountPath = join(__dirname, "serviceAccountKey.json");
@@ -22,6 +23,26 @@ initializeApp({
 });
 
 const auth = getAuth();
-await auth.setCustomUserClaims(uid, { role: "admin" });
+const db = getFirestore();
+
+const userRecord = await auth.getUser(uid);
+const existingClaims = userRecord.customClaims ?? {};
+
+await auth.setCustomUserClaims(uid, { ...existingClaims, role: "admin" });
 await auth.revokeRefreshTokens(uid);
+
+await db
+  .collection("users")
+  .doc(uid)
+  .set(
+    {
+      uid,
+      email: userRecord.email ?? "",
+      displayName: userRecord.displayName ?? "",
+      role: "admin",
+      updatedAt: new Date(),
+    },
+    { merge: true }
+  );
+
 console.log(`Admin claim gesetzt für ${uid}`);

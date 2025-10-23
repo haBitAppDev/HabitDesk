@@ -15,6 +15,15 @@ service cloud.firestore {
       allow write: if hasRole('admin');
     }
 
+    match /therapist_invites/{id} {
+      allow read, write: if hasRole('admin');
+    }
+
+    match /therapist_types/{id} {
+      allow read: if hasRole('admin') || hasRole('therapist');
+      allow write: if hasRole('admin');
+    }
+
     match /programs/{id} {
       allow create: if hasRole('admin') || (
         hasRole('therapist') &&

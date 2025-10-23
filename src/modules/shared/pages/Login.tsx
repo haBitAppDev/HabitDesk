@@ -1,5 +1,6 @@
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { Alert, Avatar, Box, Button, Paper, TextField, Typography } from "@mui/material";
+import { alpha, darken } from "@mui/material/styles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -16,6 +17,8 @@ type LoginFormValues = {
   email: string;
   password: string;
 };
+
+const PATIENT_PRIMARY = "#AD8501";
 
 function resolveDashboardPath(role: UserRole | null) {
   if (role === "admin") return "/admin";
@@ -114,6 +117,27 @@ export function Login() {
                 autoComplete="email"
                 error={Boolean(errors.email)}
                 helperText={errors.email?.message}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "transparent",
+                    "& fieldset": {
+                      borderColor: "divider",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: PATIENT_PRIMARY,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: PATIENT_PRIMARY,
+                    },
+                    "& input": {
+                      backgroundColor: "transparent !important",
+                    },
+                    "& input:-webkit-autofill": {
+                      WebkitBoxShadow: "0 0 0 100px transparent inset",
+                      WebkitTextFillColor: "inherit",
+                    },
+                  },
+                }}
               />
             )}
           />
@@ -130,6 +154,27 @@ export function Login() {
                 autoComplete="current-password"
                 error={Boolean(errors.password)}
                 helperText={errors.password?.message}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "transparent",
+                    "& fieldset": {
+                      borderColor: "divider",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: PATIENT_PRIMARY,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: PATIENT_PRIMARY,
+                    },
+                    "& input": {
+                      backgroundColor: "transparent !important",
+                    },
+                    "& input:-webkit-autofill": {
+                      WebkitBoxShadow: "0 0 0 100px transparent inset",
+                      WebkitTextFillColor: "inherit",
+                    },
+                  },
+                }}
               />
             )}
           />
@@ -137,7 +182,17 @@ export function Login() {
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 2 }}
+            sx={{
+              mt: 2,
+              backgroundColor: PATIENT_PRIMARY,
+              "&:hover": {
+                backgroundColor: darken(PATIENT_PRIMARY, 0.15),
+              },
+              "&.Mui-disabled": {
+                backgroundColor: alpha(PATIENT_PRIMARY, 0.4),
+                color: "common.white",
+              },
+            }}
             disabled={isSubmitting}
           >
             {isSubmitting

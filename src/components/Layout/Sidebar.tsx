@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { ClipboardList, Gauge, Library, ListPlus, ShieldCheck, X } from "lucide-react";
+import { ClipboardList, Gauge, Library, ListPlus, ShieldCheck, UserCog, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useMemo } from "react";
 import { NavLink } from "react-router-dom";
@@ -27,6 +27,12 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const navItems = useMemo(() => {
     if (!role) return [];
     const items: NavItem[] = [
+      {
+        label: t("layout.sidebar.admin.therapists", "Therapists"),
+        path: "/admin/therapists",
+        icon: UserCog,
+        roles: ["admin"],
+      },
       {
         label: t("layout.sidebar.admin.roles", "Role Management"),
         path: "/admin/roles",

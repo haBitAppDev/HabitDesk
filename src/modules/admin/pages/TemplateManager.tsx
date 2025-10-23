@@ -28,6 +28,7 @@ import type {
   StateLogTaskConfig,
   TaskConfig,
   TaskTemplate,
+  TemplateScope as TemplateScopeType,
   TherapistType,
   TextInputConfig,
   TimerTaskConfig,
@@ -39,6 +40,7 @@ import {
   TaskFrequency,
   TaskType,
   TaskVisibility,
+  TemplateScope,
 } from "../../shared/types/domain";
 import { useI18n } from "../../../i18n/I18nProvider";
 
@@ -142,8 +144,11 @@ interface TaskTemplateFormState {
   frequency: TaskFrequency;
   visibility: TaskVisibility;
   rolesText: string;
+  scope: TemplateScopeType;
+  therapistTypes: string[];
   isPublished: boolean;
   config: TaskConfig;
+  ownerId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -159,6 +164,7 @@ interface ProgramTemplateFormState {
   therapistTypes: string[];
   ownerId: string;
   rolesText: string;
+  scope: TemplateScopeType;
   isPublished: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -172,8 +178,13 @@ const createEmptyTaskForm = (): TaskTemplateFormState => ({
   frequency: TaskFrequency.Daily,
   visibility: TaskVisibility.VisibleToPatients,
   rolesText: "",
+  scope: TemplateScope.Global,
+  therapistTypes: [],
   isPublished: true,
   config: defaultTaskConfig(TaskType.Timer),
+  ownerId: "",
+  createdAt: undefined,
+  updatedAt: undefined,
 });
 
 const createEmptyProgramForm = (): ProgramTemplateFormState => ({
@@ -187,7 +198,10 @@ const createEmptyProgramForm = (): ProgramTemplateFormState => ({
   therapistTypes: [],
   ownerId: "",
   rolesText: "",
+  scope: TemplateScope.Global,
   isPublished: true,
+  createdAt: undefined,
+  updatedAt: undefined,
 });
 
 const defaultTaskConfig = (type: TaskType): TaskConfig => {
@@ -277,6 +291,7 @@ interface TaskTemplatePaneProps {
   onReset: () => void;
   onEdit: (template: TaskTemplate) => void;
   onDelete: (id: string) => void;
+  therapistTypeOptions: Array<{ value: string; label: string }>;
   t: TranslateFn;
 }
 
@@ -381,6 +396,20 @@ export function TemplateManager() {
     }
 
     const config = ensureConfigMatchesType(taskForm.type, taskForm.config);
+    const therapistTypes =
+      taskForm.scope === TemplateScope.TherapistType
+        ? Array.from(
+            new Set(
+              taskForm.therapistTypes
+                .map((type) => type.trim())
+                .filter((type) => type.length > 0)
+            )
+          )
+        : [];
+    const scope: TemplateScopeType =
+      taskForm.scope === TemplateScope.TherapistType && therapistTypes.length === 0
+        ? TemplateScope.Global
+        : taskForm.scope;
     const payload: Omit<TaskTemplate, "id"> = {
       title: taskForm.title.trim(),
       description: taskForm.description.trim() || undefined,
@@ -389,6 +418,9 @@ export function TemplateManager() {
       frequency: taskForm.frequency,
       visibility: taskForm.visibility,
       roles: roleStringToArray(taskForm.rolesText),
+      scope,
+      therapistTypes,
+      ownerId: taskForm.ownerId?.trim() || undefined,
       isPublished: taskForm.isPublished,
       config,
       createdAt: taskForm.createdAt ?? new Date().toISOString(),
@@ -430,6 +462,21 @@ export function TemplateManager() {
       return;
     }
 
+    const therapistTypes =
+      programForm.scope === TemplateScope.TherapistType
+        ? Array.from(
+            new Set(
+              programForm.therapistTypes
+                .map((type) => type.trim())
+                .filter((type) => type.length > 0)
+            )
+          )
+        : [];
+    const scope: TemplateScopeType =
+      programForm.scope === TemplateScope.TherapistType && therapistTypes.length === 0
+        ? TemplateScope.Global
+        : programForm.scope;
+
     const payload: Omit<ProgramTemplate, "id"> = {
       title: programForm.title.trim(),
       subtitle: programForm.subtitle.trim(),
@@ -438,9 +485,10 @@ export function TemplateManager() {
       color: programForm.color,
       type: programForm.type,
       taskIds: programForm.taskIds,
-      therapistTypes: programForm.therapistTypes,
+      therapistTypes,
       ownerId: programForm.ownerId.trim(),
       roles: roleStringToArray(programForm.rolesText),
+      scope,
       isPublished: programForm.isPublished,
       createdAt: programForm.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -470,8 +518,13 @@ export function TemplateManager() {
       frequency: template.frequency,
       visibility: template.visibility,
       rolesText: roleArrayToString(template.roles),
+      scope:
+        template.scope ??
+        (template.therapistTypes?.length ? TemplateScope.TherapistType : TemplateScope.Global),
+      therapistTypes: template.therapistTypes ?? [],
       isPublished: template.isPublished,
       config: ensureConfigMatchesType(template.type, template.config),
+      ownerId: template.ownerId ?? "",
       createdAt: template.createdAt,
       updatedAt: template.updatedAt,
     });
@@ -491,6 +544,11 @@ export function TemplateManager() {
       therapistTypes: template.therapistTypes ?? [],
       ownerId: template.ownerId,
       rolesText: roleArrayToString(template.roles),
+      scope:
+        template.scope ??
+        (template.therapistTypes && template.therapistTypes.length
+          ? TemplateScope.TherapistType
+          : TemplateScope.Global),
       isPublished: template.isPublished,
       createdAt: template.createdAt,
       updatedAt: template.updatedAt,
@@ -595,6 +653,7 @@ export function TemplateManager() {
           onReset={resetTaskForm}
           onEdit={startEditTask}
           onDelete={handleDeleteTask}
+          therapistTypeOptions={therapistTypeOptions}
           t={t}
         />
       ) : (
@@ -676,6 +735,7 @@ function TaskTemplatePane({
   onReset,
   onEdit,
   onDelete,
+  therapistTypeOptions,
   t,
 }: TaskTemplatePaneProps) {
   const formTitle = editingId
@@ -728,6 +788,24 @@ function TaskTemplatePane({
   );
   const publishedBadge = t("templates.tasks.list.published", "Veröffentlicht");
   const draftBadge = t("templates.tasks.list.draft", "Entwurf");
+  const scopeLabel = t("templates.tasks.form.scope.label", "Availability");
+  const scopeAllLabel = t("templates.tasks.form.scope.global", "All therapists");
+  const scopeTypesLabel = t(
+    "templates.tasks.form.scope.types",
+    "Specific therapist types"
+  );
+  const scopePrivateLabel = t(
+    "templates.tasks.form.scope.private",
+    "Private (owner only)"
+  );
+  const therapistTypesLabel = t(
+    "templates.tasks.form.scope.typeList",
+    "Select therapist types"
+  );
+  const therapistTypesEmpty = t(
+    "templates.tasks.form.scope.noTypes",
+    "No therapist types available."
+  );
   const taskTypeOptions = [
     { value: TaskType.Timer, label: t("templates.taskTypes.timerTask", "Timer") },
     { value: TaskType.TextInput, label: t("templates.taskTypes.textInput", "Freitext") },
@@ -844,6 +922,25 @@ function TaskTemplatePane({
               </option>
             </Select>
           </Field>
+          <Field label={scopeLabel}>
+            <Select
+              value={form.scope}
+              onChange={(event) =>
+                setForm((prev) => ({
+                  ...prev,
+                  scope: event.target.value as TemplateScopeType,
+                  therapistTypes:
+                    event.target.value === TemplateScope.TherapistType
+                      ? prev.therapistTypes
+                      : [],
+                }))
+              }
+            >
+              <option value={TemplateScope.Global}>{scopeAllLabel}</option>
+              <option value={TemplateScope.TherapistType}>{scopeTypesLabel}</option>
+              <option value={TemplateScope.Private}>{scopePrivateLabel}</option>
+            </Select>
+          </Field>
           <Field label={t("templates.fields.roles", "Rollen (kommagetrennt, optional)")}>
             <Input
               placeholder={rolePlaceholder}
@@ -854,6 +951,41 @@ function TaskTemplatePane({
             />
           </Field>
         </div>
+
+        {form.scope === TemplateScope.TherapistType && (
+          <Field label={therapistTypesLabel} fullWidth>
+            {therapistTypeOptions.length === 0 ? (
+              <p className="text-sm text-brand-text-muted">{therapistTypesEmpty}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {therapistTypeOptions.map((option) => {
+                  const selected = form.therapistTypes.includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          therapistTypes: selected
+                            ? prev.therapistTypes.filter((value) => value !== option.value)
+                            : [...prev.therapistTypes, option.value],
+                        }))
+                      }
+                      className={`rounded-full border px-3 py-1 text-sm transition ${
+                        selected
+                          ? "border-brand-primary bg-brand-primary/10 text-brand-primary"
+                          : "border-brand-divider/70 text-brand-text hover:bg-brand-light/60"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </Field>
+        )}
 
         <div className="space-y-3 rounded-card border border-brand-divider/60 bg-brand-light/40 p-4">
           <Label className="text-sm font-semibold text-brand-text">
@@ -1027,6 +1159,16 @@ function ProgramTemplatePane({
     "Veröffentlicht"
   );
   const draftBadge = t("templates.programs.list.draft", "Entwurf");
+  const scopeLabel = t("templates.programs.form.scope.label", "Availability");
+  const scopeAllLabel = t("templates.programs.form.scope.global", "All therapists");
+  const scopeTypesLabel = t(
+    "templates.programs.form.scope.types",
+    "Specific therapist types"
+  );
+  const scopePrivateLabel = t(
+    "templates.programs.form.scope.private",
+    "Private (owner only)"
+  );
   return (
     <div className="space-y-6 xl:grid xl:grid-cols-3 xl:gap-6 xl:space-y-0">
       <Card className="space-y-6 p-6 xl:col-span-2">
@@ -1123,6 +1265,25 @@ function ProgramTemplatePane({
               }
             />
           </Field>
+          <Field label={scopeLabel} fullWidth>
+            <Select
+              value={form.scope}
+              onChange={(event) =>
+                setForm((prev) => ({
+                  ...prev,
+                  scope: event.target.value as TemplateScopeType,
+                  therapistTypes:
+                    event.target.value === TemplateScope.TherapistType
+                      ? prev.therapistTypes
+                      : [],
+                }))
+              }
+            >
+              <option value={TemplateScope.Global}>{scopeAllLabel}</option>
+              <option value={TemplateScope.TherapistType}>{scopeTypesLabel}</option>
+              <option value={TemplateScope.Private}>{scopePrivateLabel}</option>
+            </Select>
+          </Field>
         </div>
 
         <div className="space-y-3">
@@ -1154,42 +1315,44 @@ function ProgramTemplatePane({
           </div>
         </div>
 
-        <div className="space-y-4 rounded-card border border-brand-divider/60 bg-brand-light/40 p-4">
-          <Label className="text-sm font-semibold text-brand-text">
-            {therapistTypesLabel}
-          </Label>
-          <div className="flex flex-wrap gap-2">
-            {therapistTypeOptions.length === 0 && (
-              <span className="text-xs text-brand-text-muted">
-                {t("templates.programs.form.noTherapistTypes", "Keine Typen hinterlegt.")}
-              </span>
-            )}
-            {therapistTypeOptions.map((option) => {
-              const isSelected = form.therapistTypes.includes(option.value);
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() =>
-                    setForm((prev) => ({
-                      ...prev,
-                      therapistTypes: isSelected
-                        ? prev.therapistTypes.filter((item) => item !== option.value)
-                        : [...prev.therapistTypes, option.value],
-                    }))
-                  }
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    isSelected
-                      ? "bg-brand-primary text-white"
-                      : "bg-white text-brand-text hover:bg-brand-light/60"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
+        {form.scope === TemplateScope.TherapistType && (
+          <div className="space-y-4 rounded-card border border-brand-divider/60 bg-brand-light/40 p-4">
+            <Label className="text-sm font-semibold text-brand-text">
+              {therapistTypesLabel}
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {therapistTypeOptions.length === 0 && (
+                <span className="text-xs text-brand-text-muted">
+                  {t("templates.programs.form.noTherapistTypes", "Keine Typen hinterlegt.")}
+                </span>
+              )}
+              {therapistTypeOptions.map((option) => {
+                const isSelected = form.therapistTypes.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        therapistTypes: isSelected
+                          ? prev.therapistTypes.filter((item) => item !== option.value)
+                          : [...prev.therapistTypes, option.value],
+                      }))
+                    }
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      isSelected
+                        ? "bg-brand-primary text-white"
+                        : "bg-white text-brand-text hover:bg-brand-light/60"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="space-y-3 rounded-card border border-brand-divider/60 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">

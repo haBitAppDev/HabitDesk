@@ -6,6 +6,7 @@ import { AppLayout } from "../components/Layout/AppLayout";
 import { AdminDashboard } from "../modules/admin/pages/AdminDashboard";
 import { RolesManager } from "../modules/admin/pages/RolesManager";
 import { TemplateManager } from "../modules/admin/pages/TemplateManager";
+import { TherapistManager } from "../modules/admin/pages/TherapistManager";
 import { TherapistDashboard } from "../modules/therapist/pages/TherapistDashboard";
 import { ProgramBuilder } from "../modules/therapist/pages/ProgramBuilder";
 import { TaskLibrary } from "../modules/therapist/pages/TaskLibrary";
@@ -44,6 +45,7 @@ export function AppRoutes() {
           element: <AdminOutlet />,
           children: [
             { index: true, element: <AdminDashboard /> },
+            { path: "therapists", element: <TherapistManager /> },
             { path: "roles", element: <RolesManager /> },
             { path: "templates", element: <TemplateManager /> },
           ],

@@ -1,16 +1,83 @@
 import "dotenv/config";
 
-import {
-  seedProgramTemplates,
-  seedTaskTemplates,
-  seedTherapistTypes,
-} from "../src/modules/shared/services/seed";
+import { createRequire } from "module";
+import { readFile } from "fs/promises";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+import type {
+  ProgramTemplate,
+  TaskTemplate,
+} from "../src/modules/shared/types/domain";
 import {
   ProgramType,
   TaskFrequency,
   TaskType,
   TaskVisibility,
+  TemplateScope,
 } from "../src/modules/shared/types/domain";
+
+const require = createRequire(new URL("../functions/package.json", import.meta.url));
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const serviceAccountPath = join(__dirname, "serviceAccountKey.json");
+
+const rawServiceAccount = await readFile(serviceAccountPath, "utf8");
+const serviceAccount = JSON.parse(rawServiceAccount);
+
+initializeApp({
+  credential: cert(serviceAccount),
+});
+
+const db = getFirestore();
+
+const toId = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
+
+async function seedTherapistTypes(names: string[]) {
+  if (!names.length) return;
+
+  const batch = db.batch();
+
+  names.forEach((name) => {
+    const entry = { id: toId(name), name };
+    const ref = db.collection("therapist_types").doc(entry.id);
+    batch.set(ref, entry, { merge: true });
+  });
+
+  await batch.commit();
+}
+
+async function seedTaskTemplates(templates: TaskTemplate[]) {
+  if (!templates.length) return;
+
+  const batch = db.batch();
+
+  templates.forEach((template) => {
+    const { id, ...rest } = template;
+    const docId = id ?? toId(template.title);
+    const ref = db.collection("task_templates").doc(docId);
+    batch.set(ref, rest, { merge: true });
+  });
+
+  await batch.commit();
+}
+
+async function seedProgramTemplates(templates: ProgramTemplate[]) {
+  if (!templates.length) return;
+
+  const batch = db.batch();
+
+  templates.forEach((template) => {
+    const { id, ...rest } = template;
+    const docId = id ?? toId(template.title);
+    const ref = db.collection("program_templates").doc(docId);
+    batch.set(ref, rest, { merge: true });
+  });
+
+  await batch.commit();
+}
 
 async function run() {
   console.log("🚀 Starting HabitDesk seed script...\n");
@@ -30,6 +97,9 @@ async function run() {
       frequency: TaskFrequency.Daily,
       visibility: TaskVisibility.VisibleToPatients,
       roles: ["therapist"],
+      scope: TemplateScope.TherapistType,
+      therapistTypes: ["physiotherapie"],
+      ownerId: "",
       isPublished: true,
       createdAt: now,
       updatedAt: now,
@@ -49,6 +119,9 @@ async function run() {
       frequency: TaskFrequency.Weekly,
       visibility: TaskVisibility.VisibleToPatients,
       roles: ["therapist"],
+      scope: TemplateScope.TherapistType,
+      therapistTypes: ["ergotherapie", "psychotherapie"],
+      ownerId: "",
       isPublished: true,
       createdAt: now,
       updatedAt: now,
@@ -58,7 +131,7 @@ async function run() {
         explanation: "Select the correct coordination exercise.",
         options: [
           { label: "Bean bag toss", isCorrect: true },
-          { label: "Strength squats", isCorrect: false }
+          { label: "Strength squats", isCorrect: false },
         ],
       },
     },
@@ -71,6 +144,9 @@ async function run() {
       frequency: TaskFrequency.Daily,
       visibility: TaskVisibility.VisibleToPatients,
       roles: ["therapist"],
+      scope: TemplateScope.Global,
+      therapistTypes: [],
+      ownerId: "",
       isPublished: true,
       createdAt: now,
       updatedAt: now,
@@ -96,6 +172,7 @@ async function run() {
       color: "#1F6FEB",
       ownerId: "",
       roles: ["therapist"],
+      scope: TemplateScope.TherapistType,
       isPublished: true,
       createdAt: now,
       updatedAt: now,
@@ -112,6 +189,7 @@ async function run() {
       color: "#10B981",
       ownerId: "",
       roles: ["therapist"],
+      scope: TemplateScope.TherapistType,
       isPublished: true,
       createdAt: now,
       updatedAt: now,

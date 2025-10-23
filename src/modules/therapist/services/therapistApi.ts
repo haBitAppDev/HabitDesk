@@ -20,6 +20,7 @@ import {
   TaskFrequency,
   TaskType,
   TaskVisibility,
+  TemplateScope,
 } from "../../shared/types/domain";
 
 type FirestoreValue = unknown;
@@ -205,6 +206,14 @@ const parseTaskConfig = (
 
 const parseTaskTemplate = (raw: FirestoreDocument): TaskTemplate => {
   const type = (raw.type ?? raw.taskType ?? TaskType.Timer) as TaskType;
+  const therapistTypes = coerceStringArray(raw.therapistTypes);
+  const scopeValue =
+    typeof raw.scope === "string" &&
+    (Object.values(TemplateScope) as string[]).includes(raw.scope as string)
+      ? (raw.scope as TemplateScope)
+      : therapistTypes.length > 0
+      ? TemplateScope.TherapistType
+      : TemplateScope.Global;
   return {
     id: raw.id,
     title:
@@ -229,6 +238,14 @@ const parseTaskTemplate = (raw: FirestoreDocument): TaskTemplate => {
       TaskVisibility.VisibleToPatients,
     config: parseTaskConfig(type, raw.config),
     roles: coerceStringArray(raw.roles),
+    therapistTypes,
+    scope: scopeValue,
+    ownerId:
+      typeof raw.ownerId === "string"
+        ? raw.ownerId
+        : typeof raw.createdBy === "string"
+        ? raw.createdBy
+        : undefined,
     createdAt: timestampToIso(raw.createdAt),
     updatedAt: timestampToIso(raw.updatedAt),
     isPublished:
@@ -254,6 +271,9 @@ const taskTemplateToFirestore = (
     visibility: template.visibility,
     config: serializeTaskConfig(template.config),
     roles: template.roles,
+    therapistTypes: template.therapistTypes,
+    scope: template.scope,
+    ownerId: template.ownerId ?? null,
     createdAt: isoToDate(template.createdAt) ?? now,
     updatedAt: isoToDate(template.updatedAt) ?? now,
     isPublished: template.isPublished,
@@ -300,6 +320,13 @@ const parseProgramTemplate = (raw: FirestoreDocument): ProgramTemplate => ({
   ownerId:
     typeof raw.ownerId === "string" ? raw.ownerId : "",
   roles: coerceStringArray(raw.roles),
+  scope:
+    typeof raw.scope === "string" &&
+    (Object.values(TemplateScope) as string[]).includes(raw.scope as string)
+      ? (raw.scope as TemplateScope)
+      : coerceStringArray(raw.therapistTypes).length > 0
+      ? TemplateScope.TherapistType
+      : TemplateScope.Global,
   createdAt: timestampToIso(raw.createdAt),
   updatedAt: timestampToIso(raw.updatedAt),
   isPublished:
@@ -321,6 +348,7 @@ const programTemplateToFirestore = (
     color: template.color,
     ownerId: template.ownerId,
     roles: template.roles,
+    scope: template.scope,
     createdAt: isoToDate(template.createdAt) ?? now,
     updatedAt: isoToDate(template.updatedAt) ?? now,
     isPublished: template.isPublished,
@@ -356,6 +384,11 @@ const parseProgramInstance = (
     typeof raw.icon === "string" ? raw.icon : DEFAULT_TASK_ICON,
   color: typeof raw.color === "string" ? raw.color : "#1F6FEB",
   roles: coerceStringArray(raw.roles),
+  scope:
+    typeof raw.scope === "string" &&
+    (Object.values(TemplateScope) as string[]).includes(raw.scope as string)
+      ? (raw.scope as TemplateScope)
+      : undefined,
   createdAt: timestampToIso(raw.createdAt),
   updatedAt: timestampToIso(raw.updatedAt),
   startDate: timestampToIso(raw.startDate),
@@ -388,6 +421,7 @@ const programInstanceToFirestore = (
     icon: instance.icon,
     color: instance.color,
     roles: instance.roles,
+    scope: instance.scope ?? null,
     createdAt: isoToDate(instance.createdAt) ?? now,
     updatedAt: isoToDate(instance.updatedAt) ?? now,
     startDate: isoToDate(instance.startDate) ?? null,
