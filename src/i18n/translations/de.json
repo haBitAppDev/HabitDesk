@@ -1,39 +1,39 @@
 {
   "templates": {
     "header": {
-      "title": "Templates verwalten",
+      "title": "Vorlagen verwalten",
       "subtitle": "Steuere Aufgaben- und Programmvorlagen zentral und gib sie für dein Team frei."
     },
     "tabs": {
       "tasks": {
-        "title": "Task Templates",
+        "title": "Aufgabenvorlagen",
         "description": "Konfiguriere wiederverwendbare Aufgaben inklusive typabhängiger Einstellungen."
       },
       "programs": {
-        "title": "Program Templates",
-        "description": "Kombiniere Tasks zu Programmen und verwalte Rollen- sowie Sichtbarkeitseinstellungen."
+        "title": "Programvorlagen",
+        "description": "Kombiniere Aufgaen zu Programmen und verwalte Rollen- sowie Sichtbarkeitseinstellungen."
       }
     },
     "errors": {
-      "taskTitleRequired": "Bitte gib einen Titel für das Task Template an.",
+      "taskTitleRequired": "Bitte gib einen Titel für die Aufgabenvorlage an.",
       "programTitleRequired": "Bitte gib einen Titel für das Programm an.",
       "programTasksRequired": "Bitte wähle mindestens einen Task für das Programm aus."
     },
     "messages": {
-      "taskCreated": "Task Template erstellt.",
-      "taskUpdated": "Task Template aktualisiert.",
-      "taskDeleted": "Task Template gelöscht.",
-      "programCreated": "Program Template erstellt.",
-      "programUpdated": "Program Template aktualisiert.",
-      "programDeleted": "Program Template gelöscht."
+      "taskCreated": "Aufgabenvorlage erstellt.",
+      "taskUpdated": "Aufgabenvorlage aktualisiert.",
+      "taskDeleted": "Aufgabenvorlage gelöscht.",
+      "programCreated": "Aufgabenvorlageerstellt.",
+      "programUpdated": "Aufgabenvorlage aktualisiert.",
+      "programDeleted": "Aufgabenvorlage gelöscht."
     },
     "actions": {
       "resetForm": "Formular zurücksetzen",
       "startNew": "Neu beginnen",
-      "updateTask": "Task Template aktualisieren",
-      "saveTask": "Task Template speichern",
-      "updateProgram": "Program Template aktualisieren",
-      "saveProgram": "Program Template speichern",
+      "updateTask": "Aufgabenvorlage aktualisieren",
+      "saveTask": "Aufgabenvorlage speichern",
+      "updateProgram": "Aufgabenvorlage aktualisieren",
+      "saveProgram": "Aufgabenvorlage speichern",
       "published": "Veröffentlicht"
     },
     "fields": {
@@ -66,8 +66,8 @@
     },
     "tasks": {
       "form": {
-        "editTitle": "Task Template bearbeiten",
-        "newTitle": "Neues Task Template",
+        "editTitle": "Aufgabenvorlage bearbeiten",
+        "newTitle": "Neue Aufgabenvorlage",
         "subtitle": "Wähle den passenden Aufgabentyp und passe die Konfiguration an.",
         "configTitle": "Konfiguration",
         "config": {
@@ -86,8 +86,8 @@
         }
       },
       "list": {
-        "title": "Task Templates",
-        "empty": "Noch keine Task Templates vorhanden.",
+        "title": "Aufgabenvorlage",
+        "empty": "Noch keine Aufgabenvorlagen vorhanden.",
         "visibility": {
           "visible": "Sichtbar",
           "hidden": "Versteckt"
@@ -99,15 +99,15 @@
     },
     "programs": {
     "form": {
-      "editTitle": "Program Template bearbeiten",
-      "newTitle": "Neues Program Template",
+      "editTitle": "Programmvorlage bearbeiten",
+      "newTitle": "Neue Programmvorlage",
       "subtitle": "Kombiniere Tasks zu strukturierten Programmen und definiere den Zugriff.",
       "subtitleLabel": "Untertitel",
       "typeLabel": "Programmart",
       "owner": "Owner-ID (optional)",
       "tasksSelected": "Tasks ausgewählt",
       "therapistTypes": "Therapeuten-Typen",
-      "tasks": "Task Templates",
+      "tasks": "Augabenvorlage",
       "color": "Farbe",
       "noTherapistTypes": "Keine Typen hinterlegt."
       },
@@ -118,8 +118,8 @@
         "private": "Privat (nur Besitzer:in)"
       },
       "list": {
-        "title": "Program Templates",
-        "empty": "Noch keine Program Templates vorhanden.",
+        "title": "Programvorlagen",
+        "empty": "Noch keine Programvorlagen vorhanden.",
         "rolesEmpty": "Keine Rollenbindung",
         "therapistsEmpty": "Alle Therapeuten",
         "published": "Veröffentlicht",
@@ -190,7 +190,7 @@
         "taskLibrary": "Aufgabenbibliothek"
       },
       "tipTitle": "Tipp",
-      "tip": "Verwalte Rollen und Templates zentral, damit Therapeut:innen sich auf Patient:innen konzentrieren können."
+      "tip": "Verwalte Rollen und Vorlagen zentral, damit Therapeut:innen sich auf Patient:innen konzentrieren können."
     }
   },
   "admin": {
@@ -199,8 +199,8 @@
       "subtitle": "Schneller Überblick über Nutzer und verfügbare Vorlagen.",
       "stats": {
         "users": "Nutzer gesamt",
-        "programs": "Program Templates",
-        "tasks": "Task Templates"
+        "programs": "Programvorlagen",
+        "tasks": "Augabenvorlage"
       }
     }
   },
@@ -286,7 +286,7 @@
       "cards": {
         "builder": {
           "title": "Programm erstellen",
-          "description": "Starte den Builder, um individuelle Therapieprogramme zusammenzustellen.",
+          "description": "Starte den Editor, um individuelle Therapieprogramme zusammenzustellen.",
           "cta": "Zum Builder"
         },
         "library": {
@@ -297,15 +297,15 @@
         "activePrograms": {
           "title": "Aktive Programme",
           "description": "Du betreust derzeit {count} aktive Programme.",
-          "tip": "Tipp: Nutze Templates, um neue Programme schneller zu starten."
+          "tip": "Tipp: Nutze Vorlagen, um neue Programme schneller zu starten."
         }
       }
     },
     "programBuilder": {
-      "title": "Program Builder",
-      "subtitle": "Stelle Programme zusammen, indem du Tasks kombinierst oder bestehende Templates nutzt.",
+      "title": "Program-Editor",
+      "subtitle": "Stelle Programme zusammen, indem du Tasks kombinierst oder bestehende Vorlagen nutzt.",
       "fields": {
-        "template": "Basis-Template",
+        "template": "Basis-Vorlage",
         "title": "Programmtitel",
         "patientId": "Patient-ID",
         "notes": "Notizen (optional)",
@@ -344,10 +344,10 @@
     },
     "taskLibrary": {
       "title": "Task Library",
-      "subtitle": "Durchsuche die vorhandenen Task Templates und füge sie deinem Programm hinzu.",
+      "subtitle": "Durchsuche die vorhandenen Task Vorlagen und füge sie deinem Programm hinzu.",
       "search": "Nach Titel, Beschreibung oder Rolle suchen…",
       "feedback": "\"{title}\" zum Builder hinzugefügt.",
-      "empty": "Keine Tasks gefunden. Passe deine Suche an oder lege ein neues Template an.",
+      "empty": "Keine Tasks gefunden. Passe deine Suche an oder lege ein neues Vorlagen an.",
       "frequency": {
         "daily": "Täglich",
         "weekly": "Wöchentlich"
