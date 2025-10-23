@@ -1,8 +1,11 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
+import { useI18n } from "../../../i18n/I18nProvider";
+
 export function NotFound() {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   return (
     <Box sx={{ textAlign: "center", mt: 12 }}>
@@ -10,10 +13,10 @@ export function NotFound() {
         404
       </Typography>
       <Typography variant="h5" gutterBottom>
-        Die gewünschte Seite wurde nicht gefunden.
+        {t("notFound.subtitle", "The requested page could not be found.")}
       </Typography>
       <Button variant="contained" onClick={() => navigate("/")}>
-        Zurück zum Dashboard
+        {t("notFound.action", "Back to home")}
       </Button>
     </Box>
   );

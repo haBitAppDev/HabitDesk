@@ -7,6 +7,7 @@ import {
 } from "../../therapist/services/therapistApi";
 import { Card } from "../../../components/ui/card";
 import { Spinner } from "../../../components/ui/spinner";
+import { useI18n } from "../../../i18n/I18nProvider";
 
 interface DashboardStats {
   users: number;
@@ -15,6 +16,7 @@ interface DashboardStats {
 }
 
 export function AdminDashboard() {
+  const { t } = useI18n();
   const [stats, setStats] = useState<DashboardStats>({
     users: 0,
     programTemplates: 0,
@@ -56,22 +58,30 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">Admin Übersicht</h1>
+        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">
+          {t("admin.dashboard.title", "Admin Overview")}
+        </h1>
         <p className="mt-2 text-sm text-brand-text-muted">
-          Schneller Überblick über Nutzer und verfügbare Vorlagen.
+          {t("admin.dashboard.subtitle", "Quick insight into users and available templates.")}
         </p>
       </div>
       <div className="grid gap-5 md:grid-cols-3">
         <Card className="p-6">
-          <p className="text-sm font-medium text-brand-text-muted">Nutzer gesamt</p>
+          <p className="text-sm font-medium text-brand-text-muted">
+            {t("admin.dashboard.stats.users", "Total users")}
+          </p>
           <p className="mt-4 text-4xl font-semibold text-brand-text">{stats.users}</p>
         </Card>
         <Card className="p-6">
-          <p className="text-sm font-medium text-brand-text-muted">Programm-Vorlagen</p>
+          <p className="text-sm font-medium text-brand-text-muted">
+            {t("admin.dashboard.stats.programs", "Program templates")}
+          </p>
           <p className="mt-4 text-4xl font-semibold text-brand-text">{stats.programTemplates}</p>
         </Card>
         <Card className="p-6">
-          <p className="text-sm font-medium text-brand-text-muted">Task-Vorlagen</p>
+          <p className="text-sm font-medium text-brand-text-muted">
+            {t("admin.dashboard.stats.tasks", "Task templates")}
+          </p>
           <p className="mt-4 text-4xl font-semibold text-brand-text">{stats.taskTemplates}</p>
         </Card>
       </div>

@@ -5,6 +5,12 @@ import {
   seedTaskTemplates,
   seedTherapistTypes,
 } from "../src/modules/shared/services/seed";
+import {
+  ProgramType,
+  TaskFrequency,
+  TaskType,
+  TaskVisibility,
+} from "../src/modules/shared/types/domain";
 
 async function run() {
   console.log("🚀 Starting HabitDesk seed script...\n");
@@ -12,35 +18,66 @@ async function run() {
   await seedTherapistTypes(["Physiotherapie", "Ergotherapie", "Psychotherapie"]);
   console.log("✔️ Therapist types seeded");
 
+  const now = new Date().toISOString();
+
   await seedTaskTemplates([
     {
       id: "balance-training",
-      name: "Balance Training",
+      title: "Balance Training",
       description: "Improve patient balance with progressive stability exercises.",
-      tags: ["balance", "mobility"],
-      inputs: {
-        durationMinutes: 20,
-        equipment: ["balance board", "foam pad"],
+      icon: "directions_walk_rounded",
+      type: TaskType.Progress,
+      frequency: TaskFrequency.Daily,
+      visibility: TaskVisibility.VisibleToPatients,
+      roles: ["therapist"],
+      isPublished: true,
+      createdAt: now,
+      updatedAt: now,
+      config: {
+        taskType: TaskType.Progress,
+        target: 10,
+        allowPartial: true,
+        unit: "reps",
       },
     },
     {
       id: "fine-motor-drill",
-      name: "Fine Motor Drill",
+      title: "Fine Motor Drill",
       description: "Enhance hand-eye coordination and dexterity.",
-      tags: ["motor skills", "upper body"],
-      inputs: {
-        repetitions: 15,
-        tools: ["therapy putty", "peg board"],
+      icon: "auto_awesome_motion",
+      type: TaskType.Quiz,
+      frequency: TaskFrequency.Weekly,
+      visibility: TaskVisibility.VisibleToPatients,
+      roles: ["therapist"],
+      isPublished: true,
+      createdAt: now,
+      updatedAt: now,
+      config: {
+        taskType: TaskType.Quiz,
+        singleChoice: true,
+        explanation: "Select the correct coordination exercise.",
+        options: [
+          { label: "Bean bag toss", isCorrect: true },
+          { label: "Strength squats", isCorrect: false }
+        ],
       },
     },
     {
       id: "breathing-coaching",
-      name: "Breathing Coaching",
+      title: "Breathing Coaching",
       description: "Guided breathing exercises to reduce stress and improve focus.",
-      tags: ["mindfulness", "respiration"],
-      inputs: {
-        durationMinutes: 10,
-        tempo: "4-7-8",
+      icon: "favorite_rounded",
+      type: TaskType.Timer,
+      frequency: TaskFrequency.Daily,
+      visibility: TaskVisibility.VisibleToPatients,
+      roles: ["therapist"],
+      isPublished: true,
+      createdAt: now,
+      updatedAt: now,
+      config: {
+        taskType: TaskType.Timer,
+        seconds: 600,
+        allowPause: false,
       },
     },
   ]);
@@ -49,15 +86,35 @@ async function run() {
   await seedProgramTemplates([
     {
       id: "post-op-rehab",
-      name: "Post-Op Rehab Phase 1",
+      title: "Post-Op Rehab Phase 1",
+      subtitle: "Stabilisation & confidence",
+      description: "A gentle routine to rebuild balance and breathing control after surgery.",
+      type: ProgramType.Sequential,
+      taskIds: ["balance-training", "breathing-coaching"],
       therapistTypes: ["physiotherapie"],
-      taskTemplateIds: ["balance-training", "breathing-coaching"],
+      icon: "run_circle_rounded",
+      color: "#1F6FEB",
+      ownerId: "",
+      roles: ["therapist"],
+      isPublished: true,
+      createdAt: now,
+      updatedAt: now,
     },
     {
       id: "neuro-flex",
-      name: "Neuro-Flex Routine",
+      title: "Neuro-Flex Routine",
+      subtitle: "Cognition and dexterity",
+      description: "Cognitive and fine-motor stimulation routine for neurological patients.",
+      type: ProgramType.AdaptiveNormal,
+      taskIds: ["fine-motor-drill", "breathing-coaching"],
       therapistTypes: ["ergotherapie", "psychotherapie"],
-      taskTemplateIds: ["fine-motor-drill", "breathing-coaching"],
+      icon: "psychology_rounded",
+      color: "#10B981",
+      ownerId: "",
+      roles: ["therapist"],
+      isPublished: true,
+      createdAt: now,
+      updatedAt: now,
     },
   ]);
   console.log("✔️ Program templates seeded");

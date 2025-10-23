@@ -1,15 +1,7 @@
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  Paper,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Avatar, Box, Button, Paper, TextField, Typography } from "@mui/material";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -18,13 +10,12 @@ import { useAuthState } from "../../shared/hooks/useAuthState";
 import { useUserRole } from "../../shared/hooks/useUserRole";
 import type { UserRole } from "../../shared/types/domain";
 import { getIdTokenResult, signInWithEmailPassword } from "../services/auth";
+import { useI18n } from "../../../i18n/I18nProvider";
 
-const loginSchema = z.object({
-  email: z.string().email("Bitte eine gültige E-Mail eingeben"),
-  password: z.string().min(6, "Mindestens 6 Zeichen"),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
 
 function resolveDashboardPath(role: UserRole | null) {
   if (role === "admin") return "/admin";
@@ -37,6 +28,20 @@ export function Login() {
   const { user, loading: authLoading } = useAuthState();
   const { role } = useUserRole();
   const [formError, setFormError] = useState<string | null>(null);
+  const { t } = useI18n();
+
+  const loginSchema = useMemo(
+    () =>
+      z.object({
+        email: z
+          .string()
+          .email(t("auth.validation.email", "Please enter a valid email address.")),
+        password: z
+          .string()
+          .min(6, t("auth.validation.password", "At least 6 characters.")),
+      }),
+    [t]
+  );
 
   const {
     control,
@@ -62,7 +67,7 @@ export function Login() {
       navigate(resolveDashboardPath(nextRole), { replace: true });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Login fehlgeschlagen";
+        error instanceof Error ? error.message : t("auth.errors.generic", "Login failed.");
       setFormError(message);
     }
   });
@@ -85,11 +90,14 @@ export function Login() {
           </Avatar>
         </Box>
         <Typography component="h1" variant="h5" align="center" gutterBottom>
-          HabitDesk Login
+          {t("auth.title", "HabitDesk Login")}
+        </Typography>
+        <Typography align="center" sx={{ color: "text.secondary", fontSize: 14, mb: 2 }}>
+          {t("auth.subtitle", "Sign in to manage programs and tasks.")}
         </Typography>
         {formError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {formError}
+            {formError || t("auth.errors.generic", "Login failed.")}
           </Alert>
         )}
         <Box component="form" noValidate onSubmit={onSubmit}>
@@ -102,7 +110,7 @@ export function Login() {
                 type="email"
                 margin="normal"
                 fullWidth
-                label="E-Mail"
+                label={t("auth.fields.email", "Email")}
                 autoComplete="email"
                 error={Boolean(errors.email)}
                 helperText={errors.email?.message}
@@ -118,7 +126,7 @@ export function Login() {
                 type="password"
                 margin="normal"
                 fullWidth
-                label="Passwort"
+                label={t("auth.fields.password", "Password")}
                 autoComplete="current-password"
                 error={Boolean(errors.password)}
                 helperText={errors.password?.message}
@@ -132,7 +140,9 @@ export function Login() {
             sx={{ mt: 2 }}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Anmelden..." : "Anmelden"}
+            {isSubmitting
+              ? t("auth.actions.loggingIn", "Signing in…")
+              : t("auth.actions.login", "Sign in")}
           </Button>
         </Box>
       </Paper>

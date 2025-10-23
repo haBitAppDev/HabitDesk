@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 
+import { useI18n } from "../../i18n/I18nProvider";
 import { useUserRole } from "../../modules/shared/hooks/useUserRole";
 import type { UserRole } from "../../modules/shared/types/domain";
 
@@ -19,49 +20,59 @@ interface NavItem {
   roles: UserRole[];
 }
 
-const NAV_ITEMS: NavItem[] = [
-  {
-    label: "Roles",
-    path: "/admin/roles",
-    icon: ShieldCheck,
-    roles: ["admin"],
-  },
-  {
-    label: "Templates",
-    path: "/admin/templates",
-    icon: Library,
-    roles: ["admin"],
-  },
-  {
-    label: "Program Builder",
-    path: "/therapist/program-builder",
-    icon: ListPlus,
-    roles: ["therapist", "admin"],
-  },
-  {
-    label: "Task Library",
-    path: "/therapist/tasks",
-    icon: ClipboardList,
-    roles: ["therapist", "admin"],
-  },
-];
-
 export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const { role } = useUserRole();
+  const { t } = useI18n();
 
   const navItems = useMemo(() => {
     if (!role) return [];
-    return NAV_ITEMS.filter((item) => item.roles.includes(role));
-  }, [role]);
+    const items: NavItem[] = [
+      {
+        label: t("layout.sidebar.admin.roles", "Role Management"),
+        path: "/admin/roles",
+        icon: ShieldCheck,
+        roles: ["admin"],
+      },
+      {
+        label: t("layout.sidebar.admin.templates", "Templates"),
+        path: "/admin/templates",
+        icon: Library,
+        roles: ["admin"],
+      },
+      {
+        label: t("layout.sidebar.therapist.programBuilder", "Program Builder"),
+        path: "/therapist/program-builder",
+        icon: ListPlus,
+        roles: ["therapist", "admin"],
+      },
+      {
+        label: t("layout.sidebar.therapist.taskLibrary", "Task Library"),
+        path: "/therapist/tasks",
+        icon: ClipboardList,
+        roles: ["therapist", "admin"],
+      },
+    ];
+    return items.filter((item) => item.roles.includes(role));
+  }, [role, t]);
 
   const defaultDashboardPath = role === "admin" ? "/admin" : "/therapist";
+  const navigationLabel = t("layout.sidebar.navigation", "Navigation");
+  const dashboardLabel = t("layout.sidebar.dashboard", "Dashboard");
+  const tipTitle = t("layout.sidebar.tipTitle", "Tip");
+  const tipBody = t(
+    "layout.sidebar.tip",
+    "Manage roles and templates centrally so therapists can focus on patient work."
+  );
+  const adminRootLabel = t("layout.sidebar.admin.root", "Admin");
+  const therapistRootLabel = t("layout.sidebar.therapist.root", "Therapist");
+  const dashboardTitle = role === "admin" ? adminRootLabel : therapistRootLabel;
 
   const renderNav = () => (
     <div className="flex h-full flex-col">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-brand-text-muted">Navigation</p>
-          <h2 className="mt-2 text-lg font-semibold text-brand-text">Dashboard</h2>
+          <p className="text-xs uppercase tracking-wide text-brand-text-muted">{navigationLabel}</p>
+          <h2 className="mt-2 text-lg font-semibold text-brand-text">{dashboardTitle}</h2>
         </div>
         <button
           type="button"
@@ -87,7 +98,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
             onClick={onClose}
           >
             <Gauge className="h-4 w-4" />
-            Dashboard
+            {dashboardLabel}
           </NavLink>
         )}
         {navItems.map((item) => {
@@ -113,11 +124,8 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         })}
       </nav>
       <div className="mt-auto rounded-[12px] border border-brand-divider/60 bg-brand-light/40 p-4 text-xs text-brand-text-muted">
-        <p className="font-semibold text-brand-text">Tip</p>
-        <p className="mt-1">
-          Verwalte Rollen und Templates zentral, damit Therapeut:innen sich auf Programme
-          konzentrieren können.
-        </p>
+        <p className="font-semibold text-brand-text">{tipTitle}</p>
+        <p className="mt-1">{tipBody}</p>
       </div>
     </div>
   );

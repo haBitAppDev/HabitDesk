@@ -1,0 +1,298 @@
+{
+  "templates": {
+    "header": {
+      "title": "Templates verwalten",
+      "subtitle": "Steuere Aufgaben- und Programmvorlagen zentral und gib sie für dein Team frei."
+    },
+    "tabs": {
+      "tasks": {
+        "title": "Task Templates",
+        "description": "Konfiguriere wiederverwendbare Aufgaben inklusive typabhängiger Einstellungen."
+      },
+      "programs": {
+        "title": "Program Templates",
+        "description": "Kombiniere Tasks zu Programmen und verwalte Rollen- sowie Sichtbarkeitseinstellungen."
+      }
+    },
+    "errors": {
+      "taskTitleRequired": "Bitte gib einen Titel für das Task Template an.",
+      "programTitleRequired": "Bitte gib einen Titel für das Programm an.",
+      "programTasksRequired": "Bitte wähle mindestens einen Task für das Programm aus."
+    },
+    "messages": {
+      "taskCreated": "Task Template erstellt.",
+      "taskUpdated": "Task Template aktualisiert.",
+      "taskDeleted": "Task Template gelöscht.",
+      "programCreated": "Program Template erstellt.",
+      "programUpdated": "Program Template aktualisiert.",
+      "programDeleted": "Program Template gelöscht."
+    },
+    "actions": {
+      "resetForm": "Formular zurücksetzen",
+      "startNew": "Neu beginnen",
+      "updateTask": "Task Template aktualisieren",
+      "saveTask": "Task Template speichern",
+      "updateProgram": "Program Template aktualisieren",
+      "saveProgram": "Program Template speichern",
+      "published": "Veröffentlicht"
+    },
+    "fields": {
+      "title": "Titel",
+      "icon": "Icon",
+      "description": "Beschreibung",
+      "taskType": "Aufgabentyp",
+      "frequency": "Frequenz",
+      "visibility": "Sichtbarkeit",
+      "roles": "Rollen (kommagetrennt, optional)",
+      "rolesPlaceholder": "therapist, supervisor"
+    },
+    "taskTypes": {
+      "timerTask": "Timer",
+      "textInput": "Freitext",
+      "quizTask": "Quiz",
+      "progressTask": "Fortschritt",
+      "mediaTask": "Media",
+      "goalTask": "Zielsetzung",
+      "scaleTask": "Skala",
+      "stateLog": "Stimmungstagebuch"
+    },
+    "frequency": {
+      "daily": "Täglich",
+      "weekly": "Wöchentlich"
+    },
+    "visibility": {
+      "visibleToPatients": "Für Patienten sichtbar",
+      "hiddenFromPatients": "Für Patienten verborgen"
+    },
+    "tasks": {
+      "form": {
+        "editTitle": "Task Template bearbeiten",
+        "newTitle": "Neues Task Template",
+        "subtitle": "Wähle den passenden Aufgabentyp und passe die Konfiguration an.",
+        "configTitle": "Konfiguration",
+        "config": {
+          "timer": {
+            "duration": "Dauer (Sekunden)",
+            "allowPause": "Pause erlauben"
+          }
+        }
+      },
+      "list": {
+        "title": "Task Templates",
+        "empty": "Noch keine Task Templates vorhanden.",
+        "visibility": {
+          "visible": "Sichtbar",
+          "hidden": "Versteckt"
+        },
+        "rolesEmpty": "Keine Rollenbindung",
+        "published": "Veröffentlicht",
+        "draft": "Entwurf"
+      }
+    },
+    "programs": {
+    "form": {
+      "editTitle": "Program Template bearbeiten",
+      "newTitle": "Neues Program Template",
+      "subtitle": "Kombiniere Tasks zu strukturierten Programmen und definiere den Zugriff.",
+      "subtitleLabel": "Untertitel",
+      "typeLabel": "Programmart",
+      "owner": "Owner-ID (optional)",
+      "tasksSelected": "Tasks ausgewählt",
+      "therapistTypes": "Therapeuten-Typen",
+      "tasks": "Task Templates",
+      "color": "Farbe",
+      "noTherapistTypes": "Keine Typen hinterlegt."
+      },
+      "list": {
+        "title": "Program Templates",
+        "empty": "Noch keine Program Templates vorhanden.",
+        "rolesEmpty": "Keine Rollenbindung",
+        "therapistsEmpty": "Alle Therapeuten",
+        "published": "Veröffentlicht",
+        "draft": "Entwurf"
+      }
+    }
+  },
+  "i18n": {
+    "language": {
+      "de": "Deutsch",
+      "en": "Englisch"
+    },
+    "switcher": {
+      "label": "Sprache",
+      "helper": "Interface-Sprache auswählen"
+    }
+  },
+  "auth": {
+    "logout": "Abmelden",
+    "title": "HabitDesk Login",
+    "subtitle": "Melde dich an, um Programme und Tasks zu verwalten.",
+    "fields": {
+      "email": "E-Mail",
+      "password": "Passwort"
+    },
+    "actions": {
+      "login": "Anmelden",
+      "loggingIn": "Anmelden…"
+    },
+    "errors": {
+      "generic": "Login fehlgeschlagen."
+    },
+    "validation": {
+      "email": "Bitte eine gültige E-Mail eingeben.",
+      "password": "Mindestens 6 Zeichen."
+    }
+  },
+  "layout": {
+    "topbar": {
+      "brand": {
+        "prefix": "Habit",
+        "suffix": "Desk"
+      },
+      "roleBadge": {
+        "admin": "Admin",
+        "therapist": "Therapeut",
+        "patient": "Patient"
+      },
+      "menu": {
+        "title": "Konto",
+        "defaultName": "Angemeldeter Nutzer",
+        "logout": "Abmelden"
+      }
+    },
+    "sidebar": {
+      "navigation": "Navigation",
+      "dashboard": "Dashboard",
+      "admin": {
+        "root": "Admin",
+        "roles": "Rollenverwaltung",
+        "templates": "Templates",
+        "dashboard": "Admin"
+      },
+      "therapist": {
+        "root": "Therapeut",
+        "programBuilder": "Program Builder",
+        "taskLibrary": "Task Library"
+      },
+      "tipTitle": "Tipp",
+      "tip": "Verwalte Rollen und Templates zentral, damit Therapeut:innen sich auf Patient:innen konzentrieren können."
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Übersicht",
+      "subtitle": "Schneller Überblick über Nutzer und verfügbare Vorlagen.",
+      "stats": {
+        "users": "Nutzer gesamt",
+        "programs": "Program Templates",
+        "tasks": "Task Templates"
+      }
+    }
+  },
+  "roles": {
+    "manager": {
+      "title": "Rollen verwalten",
+      "subtitle": "Weise Rollen zu, um den Zugriff auf Admin- und Therapeutenfunktionen zu steuern.",
+      "table": {
+        "email": "E-Mail",
+        "name": "Name",
+        "role": "Rolle"
+      },
+      "messages": {
+        "roleUpdated": "Rolle erfolgreich auf {role} gesetzt."
+      }
+    },
+    "options": {
+      "admin": "Admin",
+      "therapist": "Therapeut",
+      "patient": "Patient"
+    }
+  },
+  "therapist": {
+    "dashboard": {
+      "title": "Willkommen zurück",
+      "titleWithName": "Willkommen zurück, {name}",
+      "subtitle": "Behalte deine Programme im Blick und erstelle neue Inhalte für Patient:innen.",
+      "cards": {
+        "builder": {
+          "title": "Programm erstellen",
+          "description": "Starte den Builder, um individuelle Therapieprogramme zusammenzustellen.",
+          "cta": "Zum Builder"
+        },
+        "library": {
+          "title": "Task Library",
+          "description": "Verwalte vorhandene Tasks und erweitere dein therapeutisches Repertoire.",
+          "cta": "Zur Bibliothek"
+        },
+        "activePrograms": {
+          "title": "Aktive Programme",
+          "description": "Du betreust derzeit {count} aktive Programme.",
+          "tip": "Tipp: Nutze Templates, um neue Programme schneller zu starten."
+        }
+      }
+    },
+    "programBuilder": {
+      "title": "Program Builder",
+      "subtitle": "Stelle Programme zusammen, indem du Tasks kombinierst oder bestehende Templates nutzt.",
+      "fields": {
+        "template": "Basis-Template",
+        "title": "Programmtitel",
+        "patientId": "Patient-ID",
+        "notes": "Notizen (optional)",
+        "none": "Keines"
+      },
+      "actions": {
+        "save": "Programm speichern",
+        "saving": "Speichern…",
+        "reset": "Auswahl zurücksetzen"
+      },
+      "messages": {
+        "loginRequired": "Bitte zuerst einloggen.",
+        "patientRequired": "Patient-ID ist erforderlich.",
+        "tasksRequired": "Mindestens ein Task muss ausgewählt sein.",
+        "success": "Programm erfolgreich gespeichert.",
+        "error": "Speichern fehlgeschlagen."
+      },
+      "defaultTitle": "Neues Programm",
+      "placeholders": {
+        "title": "z. B. Phase 1",
+        "patientId": "patient_123",
+        "notes": ""
+      },
+      "selectedTasks": {
+        "title": "Ausgewählte Tasks",
+        "empty": "Noch keine Tasks ausgewählt. Füge über die Bibliothek rechts Tasks hinzu.",
+        "step": "Schritt {index}"
+      },
+      "library": {
+        "title": "Task Bibliothek",
+        "subtitle": "Füge Tasks per Klick hinzu. Duplizierte Einträge werden automatisch verhindert.",
+        "add": "Hinzufügen",
+        "added": "Hinzugefügt",
+        "config": "Konfiguration anzeigen"
+      }
+    },
+    "taskLibrary": {
+      "title": "Task Library",
+      "subtitle": "Durchsuche die vorhandenen Task Templates und füge sie deinem Programm hinzu.",
+      "search": "Nach Titel, Beschreibung oder Rolle suchen…",
+      "feedback": "\"{title}\" zum Builder hinzugefügt.",
+      "empty": "Keine Tasks gefunden. Passe deine Suche an oder lege ein neues Template an.",
+      "frequency": {
+        "daily": "Täglich",
+        "weekly": "Wöchentlich"
+      },
+      "visibility": {
+        "visible": "Sichtbar",
+        "hidden": "Versteckt"
+      },
+      "rolesEmpty": "Keine Rollenbindung",
+      "noDescription": "Keine Beschreibung hinterlegt."
+    }
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "subtitle": "Die angeforderte Seite konnte nicht gefunden werden.",
+    "action": "Zur Startseite"
+  }
+}

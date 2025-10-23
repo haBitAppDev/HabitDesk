@@ -1,0 +1,298 @@
+{
+  "templates": {
+    "header": {
+      "title": "Manage Templates",
+      "subtitle": "Control task and program templates centrally and share them with your team."
+    },
+    "tabs": {
+      "tasks": {
+        "title": "Task Templates",
+        "description": "Configure reusable tasks including type specific settings."
+      },
+      "programs": {
+        "title": "Program Templates",
+        "description": "Combine tasks into programs and manage role access and visibility."
+      }
+    },
+    "errors": {
+      "taskTitleRequired": "Please provide a title for the task template.",
+      "programTitleRequired": "Please provide a title for the program.",
+      "programTasksRequired": "Select at least one task for the program."
+    },
+    "messages": {
+      "taskCreated": "Task template created.",
+      "taskUpdated": "Task template updated.",
+      "taskDeleted": "Task template deleted.",
+      "programCreated": "Program template created.",
+      "programUpdated": "Program template updated.",
+      "programDeleted": "Program template deleted."
+    },
+    "actions": {
+      "resetForm": "Reset form",
+      "startNew": "Start new",
+      "updateTask": "Update task template",
+      "saveTask": "Save task template",
+      "updateProgram": "Update program template",
+      "saveProgram": "Save program template",
+      "published": "Published"
+    },
+    "fields": {
+      "title": "Title",
+      "icon": "Icon",
+      "description": "Description",
+      "taskType": "Task type",
+      "frequency": "Frequency",
+      "visibility": "Visibility",
+      "roles": "Roles (comma separated, optional)",
+      "rolesPlaceholder": "therapist, supervisor"
+    },
+    "taskTypes": {
+      "timerTask": "Timer",
+      "textInput": "Free text",
+      "quizTask": "Quiz",
+      "progressTask": "Progress",
+      "mediaTask": "Media",
+      "goalTask": "Goal",
+      "scaleTask": "Scale",
+      "stateLog": "Mood log"
+    },
+    "frequency": {
+      "daily": "Daily",
+      "weekly": "Weekly"
+    },
+    "visibility": {
+      "visibleToPatients": "Visible to patients",
+      "hiddenFromPatients": "Hidden from patients"
+    },
+    "tasks": {
+      "form": {
+        "editTitle": "Edit task template",
+        "newTitle": "New task template",
+        "subtitle": "Choose the appropriate task type and adjust the configuration.",
+        "configTitle": "Configuration",
+        "config": {
+          "timer": {
+            "duration": "Duration (seconds)",
+            "allowPause": "Allow pause"
+          }
+        }
+      },
+      "list": {
+        "title": "Task templates",
+        "empty": "No task templates yet.",
+        "visibility": {
+          "visible": "Visible",
+          "hidden": "Hidden"
+        },
+        "rolesEmpty": "No role restriction",
+        "published": "Published",
+        "draft": "Draft"
+      }
+    },
+    "programs": {
+    "form": {
+      "editTitle": "Edit program template",
+      "newTitle": "New program template",
+      "subtitle": "Combine tasks into structured programs and define access.",
+      "subtitleLabel": "Subtitle",
+      "typeLabel": "Program type",
+      "owner": "Owner ID (optional)",
+      "tasksSelected": "Tasks selected",
+      "therapistTypes": "Therapist types",
+      "tasks": "Task templates",
+      "color": "Color",
+      "noTherapistTypes": "No therapist types yet"
+      },
+      "list": {
+        "title": "Program templates",
+        "empty": "No program templates yet.",
+        "rolesEmpty": "No role restriction",
+        "therapistsEmpty": "All therapists",
+        "published": "Published",
+        "draft": "Draft"
+      }
+    }
+  },
+  "i18n": {
+    "language": {
+      "de": "German",
+      "en": "English"
+    },
+    "switcher": {
+      "label": "Language",
+      "helper": "Choose interface language"
+    }
+  },
+  "auth": {
+    "logout": "Log out",
+    "title": "HabitDesk Login",
+    "subtitle": "Sign in to manage programs and tasks.",
+    "fields": {
+      "email": "Email",
+      "password": "Password"
+    },
+    "actions": {
+      "login": "Sign in",
+      "loggingIn": "Signing in…"
+    },
+    "errors": {
+      "generic": "Login failed."
+    },
+    "validation": {
+      "email": "Please enter a valid email address.",
+      "password": "At least 6 characters."
+    }
+  },
+  "layout": {
+    "topbar": {
+      "brand": {
+        "prefix": "Habit",
+        "suffix": "Desk"
+      },
+      "roleBadge": {
+        "admin": "Admin",
+        "therapist": "Therapist",
+        "patient": "Patient"
+      },
+      "menu": {
+        "title": "Account",
+        "defaultName": "Signed in user",
+        "logout": "Log out"
+      }
+    },
+    "sidebar": {
+      "navigation": "Navigation",
+      "dashboard": "Dashboard",
+      "admin": {
+        "root": "Admin",
+        "roles": "Role Management",
+        "templates": "Templates",
+        "dashboard": "Admin"
+      },
+      "therapist": {
+        "root": "Therapist",
+        "programBuilder": "Program Builder",
+        "taskLibrary": "Task Library"
+      },
+      "tipTitle": "Tip",
+      "tip": "Manage roles and templates centrally so therapists can focus on patient work."
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Overview",
+      "subtitle": "Quick insight into users and available templates.",
+      "stats": {
+        "users": "Total users",
+        "programs": "Program templates",
+        "tasks": "Task templates"
+      }
+    }
+  },
+  "roles": {
+    "manager": {
+      "title": "Manage Roles",
+      "subtitle": "Assign roles to control access to admin and therapist features.",
+      "table": {
+        "email": "Email",
+        "name": "Name",
+        "role": "Role"
+      },
+      "messages": {
+        "roleUpdated": "Role successfully set to {role}."
+      }
+    },
+    "options": {
+      "admin": "Admin",
+      "therapist": "Therapist",
+      "patient": "Patient"
+    }
+  },
+  "therapist": {
+    "dashboard": {
+      "title": "Welcome back",
+      "titleWithName": "Welcome back, {name}",
+      "subtitle": "Keep an eye on your programs and build new content for patients.",
+      "cards": {
+        "builder": {
+          "title": "Create program",
+          "description": "Launch the builder to assemble individual therapy programs.",
+          "cta": "Open builder"
+        },
+        "library": {
+          "title": "Task library",
+          "description": "Manage available tasks and extend your therapy toolkit.",
+          "cta": "Open library"
+        },
+        "activePrograms": {
+          "title": "Active programs",
+          "description": "You currently manage {count} active programs.",
+          "tip": "Tip: use templates to launch programs faster."
+        }
+      }
+    },
+    "programBuilder": {
+      "title": "Program Builder",
+      "subtitle": "Assemble programs by combining tasks or using templates.",
+      "fields": {
+        "template": "Base template",
+        "title": "Program title",
+        "patientId": "Patient ID",
+        "notes": "Notes (optional)",
+        "none": "None"
+      },
+      "actions": {
+        "save": "Save program",
+        "saving": "Saving…",
+        "reset": "Reset selection"
+      },
+      "messages": {
+        "loginRequired": "Please sign in first.",
+        "patientRequired": "Patient ID is required.",
+        "tasksRequired": "Select at least one task.",
+        "success": "Program saved successfully.",
+        "error": "Saving failed."
+      },
+      "defaultTitle": "New program",
+      "placeholders": {
+        "title": "e.g. Phase 1",
+        "patientId": "patient_123",
+        "notes": ""
+      },
+      "selectedTasks": {
+        "title": "Selected tasks",
+        "empty": "No tasks selected yet. Add tasks from the library.",
+        "step": "Step {index}"
+      },
+      "library": {
+        "title": "Task library",
+        "subtitle": "Add tasks with one click. Duplicate entries are prevented.",
+        "add": "Add",
+        "added": "Added",
+        "config": "Show configuration"
+      }
+    },
+    "taskLibrary": {
+      "title": "Task Library",
+      "subtitle": "Browse existing task templates and add them to your program.",
+      "search": "Search by title, description or role…",
+      "feedback": "\"{title}\" added to builder.",
+      "empty": "No tasks found. Adjust your search or create a new template.",
+      "frequency": {
+        "daily": "Daily",
+        "weekly": "Weekly"
+      },
+      "visibility": {
+        "visible": "Visible",
+        "hidden": "Hidden"
+      },
+      "rolesEmpty": "No role restriction",
+      "noDescription": "No description available."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "subtitle": "The requested page could not be located.",
+    "action": "Back to home"
+  }
+}

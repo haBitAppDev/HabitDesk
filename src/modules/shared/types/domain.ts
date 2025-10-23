@@ -12,42 +12,47 @@ export interface TherapistType {
   name: string;
 }
 
-export enum TaskFrequency {
-  Daily = "daily",
-  Weekly = "weekly",
-}
+export const TaskFrequency = {
+  Daily: "daily",
+  Weekly: "weekly",
+} as const;
+export type TaskFrequency = (typeof TaskFrequency)[keyof typeof TaskFrequency];
 
-export enum TaskVisibility {
-  VisibleToPatients = "visibleToPatients",
-  HiddenFromPatients = "hiddenFromPatients",
-}
+export const TaskVisibility = {
+  VisibleToPatients: "visibleToPatients",
+  HiddenFromPatients: "hiddenFromPatients",
+} as const;
+export type TaskVisibility =
+  (typeof TaskVisibility)[keyof typeof TaskVisibility];
 
-export enum TaskType {
-  Timer = "timerTask",
-  TextInput = "textInput",
-  Quiz = "quizTask",
-  Progress = "progressTask",
-  Media = "mediaTask",
-  Goal = "goalTask",
-  Scale = "scaleTask",
-  StateLog = "stateLog",
-}
+export const TaskType = {
+  Timer: "timerTask",
+  TextInput: "textInput",
+  Quiz: "quizTask",
+  Progress: "progressTask",
+  Media: "mediaTask",
+  Goal: "goalTask",
+  Scale: "scaleTask",
+  StateLog: "stateLog",
+} as const;
+export type TaskType = (typeof TaskType)[keyof typeof TaskType];
 
-export enum MediaKind {
-  Audio = "audio",
-  Video = "video",
-  Image = "image",
-  Document = "document",
-}
+export const MediaKind = {
+  Audio: "audio",
+  Video: "video",
+  Image: "image",
+  Document: "document",
+} as const;
+export type MediaKind = (typeof MediaKind)[keyof typeof MediaKind];
 
 export interface TimerTaskConfig {
-  taskType: TaskType.Timer;
+  taskType: typeof TaskType.Timer;
   seconds: number;
   allowPause: boolean;
 }
 
 export interface TextInputConfig {
-  taskType: TaskType.TextInput;
+  taskType: typeof TaskType.TextInput;
   minLength: number;
   maxLength: number;
   showHistory: boolean;
@@ -60,21 +65,21 @@ export interface QuizOption {
 }
 
 export interface QuizTaskConfig {
-  taskType: TaskType.Quiz;
+  taskType: typeof TaskType.Quiz;
   singleChoice: boolean;
   options: QuizOption[];
   explanation?: string;
 }
 
 export interface ProgressTaskConfig {
-  taskType: TaskType.Progress;
+  taskType: typeof TaskType.Progress;
   target: number;
   allowPartial: boolean;
   unit: string;
 }
 
 export interface MediaTaskConfig {
-  taskType: TaskType.Media;
+  taskType: typeof TaskType.Media;
   mediaUrl: string;
   kind: MediaKind;
   fileName?: string;
@@ -84,13 +89,13 @@ export interface MediaTaskConfig {
 }
 
 export interface GoalTaskConfig {
-  taskType: TaskType.Goal;
+  taskType: typeof TaskType.Goal;
   goalDescription: string;
   dueDate?: string;
 }
 
 export interface ScaleTaskConfig {
-  taskType: TaskType.Scale;
+  taskType: typeof TaskType.Scale;
   min: number;
   max: number;
   step: number;
@@ -99,7 +104,7 @@ export interface ScaleTaskConfig {
 }
 
 export interface StateLogTaskConfig {
-  taskType: TaskType.StateLog;
+  taskType: typeof TaskType.StateLog;
   emojiKeys: string[];
   showChart: boolean;
 }
@@ -134,11 +139,12 @@ export interface TaskInstance extends TaskTemplate {
   isTemplate: boolean;
 }
 
-export enum ProgramType {
-  Challenge = "challenge",
-  Sequential = "sequential",
-  AdaptiveNormal = "adaptiveNormal",
-}
+export const ProgramType = {
+  Challenge: "challenge",
+  Sequential: "sequential",
+  AdaptiveNormal: "adaptiveNormal",
+} as const;
+export type ProgramType = (typeof ProgramType)[keyof typeof ProgramType];
 
 export interface ProgramTemplate {
   id: string;
@@ -147,6 +153,7 @@ export interface ProgramTemplate {
   description: string;
   type: ProgramType;
   taskIds: string[];
+  therapistTypes?: string[];
   icon: string;
   color: string;
   ownerId: string;

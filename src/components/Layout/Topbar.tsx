@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { signOutUser } from "../../modules/shared/services/auth";
 import { useAuthState } from "../../modules/shared/hooks/useAuthState";
 import { useUserRole } from "../../modules/shared/hooks/useUserRole";
+import { useI18n } from "../../i18n/I18nProvider";
+import { LanguageSwitcher } from "../LanguageSwitcher";
 import { Avatar } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -17,6 +19,12 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
   const { role } = useUserRole();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
+  const brandPrefix = t("layout.topbar.brand.prefix", "Habit");
+  const brandSuffix = t("layout.topbar.brand.suffix", "Desk");
+  const defaultAccountLabel = t("layout.topbar.menu.defaultName", "Account");
+  const defaultMenuName = t("layout.topbar.menu.defaultName", "Signed in user");
+  const logoutLabel = t("layout.topbar.menu.logout", "Log out");
 
   useEffect(() => {
     const handleOutside = (event: MouseEvent) => {
@@ -53,15 +61,17 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
           <Menu className="h-5 w-5" />
         </Button>
         <span className="text-lg font-semibold tracking-tight text-brand-text">
-          Habit<span className="text-brand-primary">Desk</span>
+          {brandPrefix}
+          <span className="text-brand-primary">{brandSuffix}</span>
         </span>
         <div className="ml-auto flex items-center gap-3">
+          <LanguageSwitcher />
           {role && (
             <Badge
               variant={role === "admin" ? "primary" : "muted"}
               className="hidden sm:inline-flex"
             >
-              {role}
+              {t(`layout.topbar.roleBadge.${role}`, role)}
             </Badge>
           )}
           <div className="relative" ref={menuRef}>
@@ -72,7 +82,7 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
             >
               <Avatar name={user?.displayName ?? null} email={user?.email ?? null} />
               <div className="hidden flex-col text-left text-xs font-medium sm:flex">
-                <span className="text-brand-text">{user?.displayName ?? "Account"}</span>
+                <span className="text-brand-text">{user?.displayName ?? defaultAccountLabel}</span>
                 <span className="text-brand-text-muted">{user?.email}</span>
               </div>
             </button>
@@ -80,7 +90,7 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
               <div className="absolute right-0 top-full z-50 mt-3 w-60 rounded-card bg-white p-3 shadow-soft ring-1 ring-black/5">
                 <div className="border-b border-brand-divider/60 pb-3 text-sm">
                   <p className="font-semibold text-brand-text">
-                    {user?.displayName ?? "Angemeldeter Nutzer"}
+                    {user?.displayName ?? defaultMenuName}
                   </p>
                   <p className="text-brand-text-muted">{user?.email}</p>
                 </div>
@@ -90,7 +100,7 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
                   className="mt-3 flex w-full items-center gap-2 rounded-[12px] px-3 py-2 text-sm font-medium text-brand-text hover:bg-brand-light/50"
                 >
                   <LogOut className="h-4 w-4" />
-                  Abmelden
+                  {logoutLabel}
                 </button>
               </div>
             )}

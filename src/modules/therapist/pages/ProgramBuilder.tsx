@@ -1,7 +1,8 @@
-import { MinusCircle, PlusCircle } from "lucide-react";
-import { create } from "zustand";
+import { MinusCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { create } from "zustand";
 
+import { useI18n } from "../../../i18n/I18nProvider";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
@@ -10,6 +11,7 @@ import { Select } from "../../../components/ui/select";
 import { Spinner } from "../../../components/ui/spinner";
 import { useAuthState } from "../../shared/hooks/useAuthState";
 import type { ProgramTemplate, TaskTemplate } from "../../shared/types/domain";
+import { ProgramType, TaskVisibility } from "../../shared/types/domain";
 import {
   createProgramInstance,
   listProgramTemplates,
@@ -46,6 +48,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
 
 export function ProgramBuilder() {
   const { user } = useAuthState();
+  const { t } = useI18n();
   const { title, selectedTasks, addTask, removeTask, clear, setTitle, setTasks } =
     useBuilderStore();
   const [taskTemplates, setTaskTemplates] = useState<TaskTemplate[]>([]);
@@ -57,6 +60,54 @@ export function ProgramBuilder() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null
   );
+
+  const heading = t("therapist.programBuilder.title", "Program Builder");
+  const subheading = t(
+    "therapist.programBuilder.subtitle",
+    "Assemble programs by combining tasks or using templates."
+  );
+  const templateLabel = t("therapist.programBuilder.fields.template", "Base template");
+  const noneOptionLabel = t("therapist.programBuilder.fields.none", "None");
+  const titleLabel = t("therapist.programBuilder.fields.title", "Program title");
+  const patientLabel = t("therapist.programBuilder.fields.patientId", "Patient ID");
+  const saveLabel = t("therapist.programBuilder.actions.save", "Save program");
+  const savingLabel = t("therapist.programBuilder.actions.saving", "Saving…");
+  const resetLabel = t("therapist.programBuilder.actions.reset", "Reset selection");
+  const loginRequiredMsg = t(
+    "therapist.programBuilder.messages.loginRequired",
+    "Please sign in first."
+  );
+  const patientRequiredMsg = t(
+    "therapist.programBuilder.messages.patientRequired",
+    "Patient ID is required."
+  );
+  const tasksRequiredMsg = t(
+    "therapist.programBuilder.messages.tasksRequired",
+    "Select at least one task."
+  );
+  const successMsg = t(
+    "therapist.programBuilder.messages.success",
+    "Program saved successfully."
+  );
+  const genericErrorMsg = t("therapist.programBuilder.messages.error", "Saving failed.");
+  const selectedTasksTitle = t(
+    "therapist.programBuilder.selectedTasks.title",
+    "Selected tasks"
+  );
+  const selectedTasksEmpty = t(
+    "therapist.programBuilder.selectedTasks.empty",
+    "No tasks selected yet. Add tasks from the library."
+  );
+  const libraryTitle = t("therapist.programBuilder.library.title", "Task library");
+  const librarySubtitle = t(
+    "therapist.programBuilder.library.subtitle",
+    "Add tasks with one click. Duplicate entries are prevented."
+  );
+  const libraryAdd = t("therapist.programBuilder.library.add", "Add");
+  const libraryAdded = t("therapist.programBuilder.library.added", "Added");
+  const libraryConfig = t("therapist.programBuilder.library.config", "Show configuration");
+  const libraryVisibilityVisible = t("therapist.taskLibrary.visibility.visible", "Visible");
+  const libraryVisibilityHidden = t("therapist.taskLibrary.visibility.hidden", "Hidden");
 
   useEffect(() => {
     let active = true;
@@ -70,7 +121,7 @@ export function ProgramBuilder() {
         if (!active) return;
         setMessage({
           type: "error",
-          text: err instanceof Error ? err.message : String(err),
+          text: err instanceof Error ? err.message : genericErrorMsg,
         });
       })
       .finally(() => {
@@ -80,13 +131,13 @@ export function ProgramBuilder() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [genericErrorMsg]);
 
   const programTemplateOptions = useMemo(
     () =>
       programTemplates.map((program) => ({
         value: program.id,
-        label: program.name,
+        label: program.title,
       })),
     [programTemplates]
   );
@@ -99,41 +150,51 @@ export function ProgramBuilder() {
     }
     const template = programTemplates.find((item) => item.id === value);
     if (!template) return;
-    const tasks = template.taskTemplateIds
+    const tasks = template.taskIds
       .map((taskId) => taskTemplates.find((task) => task.id === taskId))
       .filter((task): task is TaskTemplate => Boolean(task));
     setTasks(tasks);
-    setTitle(template.name);
+    setTitle(template.title);
   };
 
   const handleSave = async () => {
     if (!user) {
-      setMessage({ type: "error", text: "Bitte zuerst einloggen." });
+      setMessage({ type: "error", text: loginRequiredMsg });
       return;
     }
     if (!patientId.trim()) {
-      setMessage({ type: "error", text: "Patient-ID ist erforderlich." });
+      setMessage({ type: "error", text: patientRequiredMsg });
       return;
     }
     if (!selectedTasks.length) {
-      setMessage({ type: "error", text: "Mindestens ein Task muss ausgewählt sein." });
+      setMessage({ type: "error", text: tasksRequiredMsg });
       return;
     }
 
     setSaving(true);
+    const activeTemplate = programTemplates.find((template) => template.id === templateId);
     try {
       await createProgramInstance({
         authorId: user.uid,
         patientId: patientId.trim(),
         therapistId: user.uid,
         templateId: templateId || undefined,
+        ownerId: user.uid,
+        title: title || t("therapist.programBuilder.defaultTitle", "New program"),
+        subtitle: activeTemplate?.subtitle ?? "",
+        description: activeTemplate?.description ?? "",
+        type: activeTemplate?.type ?? ProgramType.AdaptiveNormal,
+        taskIds: selectedTasks.map((task) => task.id),
         tasks: selectedTasks.map((task) => ({
           taskTemplateId: task.id,
-          config: task.inputs ?? undefined,
+          config: task.config,
         })),
-        title: title || undefined,
+        icon: activeTemplate?.icon ?? selectedTasks[0]?.icon ?? "favorite_rounded",
+        color: activeTemplate?.color ?? "#1F6FEB",
+        roles: activeTemplate?.roles ?? [],
+        isPublished: true,
       });
-      setMessage({ type: "success", text: "Programm erfolgreich gespeichert." });
+      setMessage({ type: "success", text: successMsg });
       clear();
       setTemplateId("");
       setPatientId("");
@@ -141,7 +202,7 @@ export function ProgramBuilder() {
     } catch (err) {
       setMessage({
         type: "error",
-        text: err instanceof Error ? err.message : String(err),
+        text: err instanceof Error ? err.message : genericErrorMsg,
       });
     } finally {
       setSaving(false);
@@ -162,10 +223,8 @@ export function ProgramBuilder() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">Program Builder</h1>
-        <p className="mt-2 text-sm text-brand-text-muted">
-          Stelle Programme zusammen, indem du Tasks kombinierst oder bestehende Templates nutzt.
-        </p>
+        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">{heading}</h1>
+        <p className="mt-2 text-sm text-brand-text-muted">{subheading}</p>
       </div>
 
       {message && (
@@ -180,18 +239,18 @@ export function ProgramBuilder() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="space-y-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
         <Card className="flex flex-col gap-6 p-6 lg:col-span-2">
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="template">Basis-Template</Label>
+                <Label htmlFor="template">{templateLabel}</Label>
                 <Select
                   id="template"
                   value={templateId}
                   onChange={(event) => handleTemplateSelect(event.target.value)}
                 >
-                  <option value="">Keines</option>
+                  <option value="">{noneOptionLabel}</option>
                   {programTemplateOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -200,39 +259,39 @@ export function ProgramBuilder() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="program-title">Programmtitel</Label>
+                <Label htmlFor="program-title">{titleLabel}</Label>
                 <Input
                   id="program-title"
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  placeholder="z. B. Aufbauprogramm Phase 1"
+                  placeholder={t("therapist.programBuilder.placeholders.title", "e.g. Phase 1")}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="patient-id">Patient-ID</Label>
+                <Label htmlFor="patient-id">{patientLabel}</Label>
                 <Input
                   id="patient-id"
                   value={patientId}
                   onChange={(event) => setPatientId(event.target.value)}
-                  placeholder="patient_123"
+                  placeholder={t("therapist.programBuilder.placeholders.patientId", "patient_123")}
                 />
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button type="button" onClick={handleSave} disabled={saving}>
-                {saving ? "Speichern..." : "Programm speichern"}
+                {saving ? savingLabel : saveLabel}
               </Button>
               <Button type="button" variant="outline" onClick={() => clear()}>
-                Auswahl zurücksetzen
+                {resetLabel}
               </Button>
             </div>
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-brand-text">Ausgewählte Tasks</h2>
+            <h2 className="text-lg font-semibold text-brand-text">{selectedTasksTitle}</h2>
             {programsEmpty ? (
               <div className="rounded-[14px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
-                Noch keine Tasks ausgewählt. Füge über die Bibliothek rechts Tasks hinzu.
+                {selectedTasksEmpty}
               </div>
             ) : (
               <div className="space-y-3">
@@ -241,26 +300,19 @@ export function ProgramBuilder() {
                     key={task.id}
                     className="flex items-start justify-between rounded-[14px] border border-brand-divider/70 bg-white px-4 py-3 shadow-sm"
                   >
-                    <div>
+                    <div className="space-y-1">
                       <p className="text-xs uppercase tracking-wide text-brand-text-muted">
-                        Schritt {index + 1}
+                        {t("therapist.programBuilder.selectedTasks.step", "Step {index}", {
+                          index: index + 1,
+                        })}
                       </p>
-                      <p className="text-sm font-semibold text-brand-text">{task.name}</p>
+                      <p className="text-sm font-semibold text-brand-text">{task.title}</p>
                       {task.description && (
-                        <p className="mt-1 text-sm text-brand-text-muted">{task.description}</p>
+                        <p className="text-sm text-brand-text-muted">{task.description}</p>
                       )}
-                      {task.tags && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {task.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      <p className="text-xs uppercase tracking-wide text-brand-text-muted">
+                        {t(`templates.taskTypes.${task.type}`, task.type)}
+                      </p>
                     </div>
                     <button
                       type="button"
@@ -278,14 +330,17 @@ export function ProgramBuilder() {
 
         <Card className="flex h-full flex-col gap-4 p-6">
           <div>
-            <h2 className="text-lg font-semibold text-brand-text">Task Bibliothek</h2>
-            <p className="mt-1 text-xs text-brand-text-muted">
-              Füge Tasks per Klick hinzu. Duplizierte Einträge werden automatisch verhindert.
-            </p>
+            <h2 className="text-lg font-semibold text-brand-text">{libraryTitle}</h2>
+            <p className="mt-1 text-xs text-brand-text-muted">{librarySubtitle}</p>
           </div>
           <div className="space-y-3 overflow-y-auto pr-1">
             {taskTemplates.map((task) => {
               const alreadySelected = selectedTasks.some((item) => item.id === task.id);
+              const visibilityLabel =
+                task.visibility === TaskVisibility.HiddenFromPatients
+                  ? libraryVisibilityHidden
+                  : libraryVisibilityVisible;
+
               return (
                 <div
                   key={task.id}
@@ -293,7 +348,7 @@ export function ProgramBuilder() {
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-brand-text">{task.name}</p>
+                      <p className="text-sm font-semibold text-brand-text">{task.title}</p>
                       {task.description && (
                         <p className="mt-1 text-sm text-brand-text-muted">{task.description}</p>
                       )}
@@ -308,28 +363,19 @@ export function ProgramBuilder() {
                           : "border-brand-primary text-brand-primary hover:bg-brand-primary/10"
                       }`}
                     >
-                      {alreadySelected ? "Hinzugefügt" : "Hinzufügen"}
+                      {alreadySelected ? libraryAdded : libraryAdd}
                     </button>
                   </div>
-                  {task.tags && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {task.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-brand-light px-2 py-1 text-[11px] font-medium uppercase tracking-wide text-brand-text-muted"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {task.inputs && (
+                  <p className="mt-2 text-xs uppercase tracking-wide text-brand-text-muted">
+                    {t(`templates.taskTypes.${task.type}`, task.type)} • {visibilityLabel}
+                  </p>
+                  {task.config && (
                     <details className="mt-2 rounded-[12px] border border-brand-divider/60 bg-brand-light/40 p-3 text-xs text-brand-text-muted">
                       <summary className="cursor-pointer select-none text-brand-primary">
-                        Konfiguration anzeigen
+                        {libraryConfig}
                       </summary>
                       <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px]">
-                        {JSON.stringify(task.inputs, null, 2)}
+                        {JSON.stringify(task.config, null, 2)}
                       </pre>
                     </details>
                   )}
@@ -338,7 +384,7 @@ export function ProgramBuilder() {
             })}
             {taskTemplates.length === 0 && (
               <p className="rounded-[14px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
-                Keine Task Templates vorhanden.
+                {t("therapist.taskLibrary.empty", "No tasks found.")}
               </p>
             )}
           </div>

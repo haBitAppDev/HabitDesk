@@ -4,6 +4,7 @@ import { Card } from "../../../components/ui/card";
 import { Label } from "../../../components/ui/label";
 import { Select } from "../../../components/ui/select";
 import { Spinner } from "../../../components/ui/spinner";
+import { useI18n } from "../../../i18n/I18nProvider";
 import type { UserProfile, UserRole } from "../../shared/types/domain";
 import { listUsers, setUserRole } from "../services/adminApi";
 
@@ -11,6 +12,7 @@ const ROLES: UserRole[] = ["admin", "therapist", "patient"];
 type UserRecord = UserProfile & { id: string };
 
 export function RolesManager() {
+  const { t } = useI18n();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -49,7 +51,12 @@ export function RolesManager() {
       setUsers((prev) =>
         prev.map((user) => (user.uid === uid ? { ...user, role } : user))
       );
-      setSnackbar(`Rolle erfolgreich auf ${role} gesetzt`);
+      const roleLabel = t(`roles.options.${role}`, role);
+      setSnackbar(
+        t("roles.manager.messages.roleUpdated", "Rolle erfolgreich aktualisiert.", {
+          role: roleLabel,
+        })
+      );
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -70,10 +77,14 @@ export function RolesManager() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">Rollen verwalten</h1>
+        <h1 className="text-2xl font-semibold text-brand-text md:text-3xl">
+          {t("roles.manager.title", "Manage Roles")}
+        </h1>
         <p className="mt-2 text-sm text-brand-text-muted">
-          Weise Nutzer:innen Rollen zu, um Zugriff auf Admin- und Therapeut:innenfunktionen zu
-          steuern.
+          {t(
+            "roles.manager.subtitle",
+            "Assign roles to control access to admin and therapist features."
+          )}
         </p>
       </div>
 
@@ -94,9 +105,9 @@ export function RolesManager() {
           <table className="min-w-full divide-y divide-brand-divider/70 text-sm">
             <thead className="bg-brand-light/40 text-left text-xs font-semibold uppercase tracking-wide text-brand-text-muted">
               <tr>
-                <th className="px-6 py-3">E-Mail</th>
-                <th className="px-6 py-3">Name</th>
-                <th className="px-6 py-3">Rolle</th>
+                <th className="px-6 py-3">{t("roles.manager.table.email", "Email")}</th>
+                <th className="px-6 py-3">{t("roles.manager.table.name", "Name")}</th>
+                <th className="px-6 py-3">{t("roles.manager.table.role", "Role")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-divider/60 bg-white">
@@ -109,7 +120,7 @@ export function RolesManager() {
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
                       <Label htmlFor={`role-${user.uid}`} className="text-xs text-brand-text-muted">
-                        Rolle
+                        {t("roles.manager.table.role", "Role")}
                       </Label>
                       <Select
                         id={`role-${user.uid}`}
@@ -119,9 +130,9 @@ export function RolesManager() {
                         }
                         disabled={updating === user.uid}
                       >
-                        {ROLES.map((role) => (
-                          <option key={role} value={role}>
-                            {role}
+                        {ROLES.map((roleValue) => (
+                          <option key={roleValue} value={roleValue}>
+                            {t(`roles.options.${roleValue}`, roleValue)}
                           </option>
                         ))}
                       </Select>
