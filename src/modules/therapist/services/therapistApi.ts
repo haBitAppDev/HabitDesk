@@ -7,13 +7,15 @@ import {
   updateDoc,
 } from "../../shared/services/firestore";
 import type {
-  ProgramInstance,
-  ProgramInstanceTask,
+  Program,
+  ProgramAssignment,
   ProgramTemplate,
+  Task,
   TaskConfig,
   TaskTemplate,
   TherapistType,
 } from "../../shared/types/domain";
+import { Patient } from "../../shared/types/domain";
 import {
   MediaKind,
   ProgramType,
@@ -280,25 +282,6 @@ const taskTemplateToFirestore = (
   };
 };
 
-const parseProgramTasks = (
-  raw: FirestoreValue
-): ProgramInstanceTask[] => {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((entry) => entry as FirestoreDocument)
-    .map((entry) => ({
-      taskTemplateId:
-        typeof entry.taskTemplateId === "string" ? entry.taskTemplateId : "",
-      config: entry.config
-        ? parseTaskConfig(
-            (entry.config as { taskType?: TaskType }).taskType ??
-              TaskType.Timer,
-            entry.config
-          )
-        : undefined,
-    }));
-};
-
 const parseProgramTemplate = (raw: FirestoreDocument): ProgramTemplate => ({
   id: raw.id,
   title:
@@ -333,6 +316,9 @@ const parseProgramTemplate = (raw: FirestoreDocument): ProgramTemplate => ({
     typeof raw.isPublished === "boolean" ? raw.isPublished : true,
 });
 
+const parsePatient = (raw: FirestoreDocument): Patient =>
+  Patient.fromFirestore(raw);
+
 const programTemplateToFirestore = (
   template: Omit<ProgramTemplate, "id">
 ): Record<string, unknown> => {
@@ -355,81 +341,243 @@ const programTemplateToFirestore = (
   };
 };
 
-const parseProgramInstance = (
-  raw: FirestoreDocument
-): ProgramInstance => ({
-  id: raw.id,
-  title:
-    typeof raw.title === "string"
-      ? raw.title
-      : typeof raw.name === "string"
-      ? raw.name
-      : "",
-  subtitle: typeof raw.subtitle === "string" ? raw.subtitle : "",
-  description:
-    typeof raw.description === "string" ? raw.description : "",
-  type:
-    (raw.type as ProgramType) ?? ProgramType.AdaptiveNormal,
-  patientId:
-    typeof raw.patientId === "string" ? raw.patientId : "",
-  therapistId:
-    typeof raw.therapistId === "string" ? raw.therapistId : "",
-  ownerId:
-    typeof raw.ownerId === "string" ? raw.ownerId : "",
-  templateId:
-    typeof raw.templateId === "string" ? raw.templateId : undefined,
-  tasks: parseProgramTasks(raw.tasks),
-  taskIds: coerceStringArray(raw.taskIds),
-  icon:
-    typeof raw.icon === "string" ? raw.icon : DEFAULT_TASK_ICON,
-  color: typeof raw.color === "string" ? raw.color : "#1F6FEB",
-  roles: coerceStringArray(raw.roles),
-  scope:
+const parseTask = (raw: FirestoreDocument): Task => {
+  const type = (raw.type ?? raw.taskType ?? TaskType.Timer) as TaskType;
+  return {
+    id: raw.id,
+    title:
+      typeof raw.title === "string"
+        ? raw.title
+        : typeof raw.name === "string"
+        ? raw.name
+        : "",
+    description:
+      typeof raw.description === "string" ? raw.description : undefined,
+    type,
+    icon:
+      typeof raw.icon === "string"
+        ? raw.icon
+        : typeof raw.iconKey === "string"
+        ? raw.iconKey
+        : DEFAULT_TASK_ICON,
+    frequency:
+      (raw.frequency as TaskFrequency) ?? TaskFrequency.Daily,
+    visibility:
+      (raw.visibility as TaskVisibility) ??
+      TaskVisibility.VisibleToPatients,
+    config: parseTaskConfig(type, raw.config),
+    ownerId:
+      typeof raw.ownerId === "string" && raw.ownerId.length > 0
+        ? raw.ownerId
+        : undefined,
+    createdAt: timestampToIso(raw.createdAt),
+    updatedAt: timestampToIso(raw.updatedAt),
+    roles: coerceStringArray(raw.roles),
+    isPublished:
+      typeof raw.isPublished === "boolean" ? raw.isPublished : true,
+    isTemplate: Boolean(raw.isTemplate),
+  };
+};
+
+const taskToFirestore = (
+  task: Task,
+  {
+    setCreatedAt,
+    timestamp,
+  }: { setCreatedAt?: boolean; timestamp?: Date } = {}
+): Record<string, unknown> => {
+  const now = timestamp ?? new Date();
+  const payload: Record<string, unknown> = {
+    title: task.title,
+    description: task.description ?? null,
+    type: task.type,
+    icon: task.icon ?? DEFAULT_TASK_ICON,
+    frequency: task.frequency,
+    visibility: task.visibility,
+    config: serializeTaskConfig(task.config),
+    ownerId: task.ownerId ?? null,
+    isTemplate: task.isTemplate,
+    roles: task.roles,
+    isPublished: task.isPublished,
+  };
+
+  if (setCreatedAt) {
+    payload.createdAt = isoToDate(task.createdAt) ?? now;
+  } else if (task.createdAt) {
+    const created = isoToDate(task.createdAt);
+    if (created) {
+      payload.createdAt = created;
+    }
+  }
+
+  payload.updatedAt = isoToDate(task.updatedAt) ?? now;
+
+  return payload;
+};
+
+const parseProgram = (raw: FirestoreDocument): Program => {
+  const therapistTypes = coerceStringArray(raw.therapistTypes);
+  const scopeValue =
     typeof raw.scope === "string" &&
     (Object.values(TemplateScope) as string[]).includes(raw.scope as string)
       ? (raw.scope as TemplateScope)
-      : undefined,
-  createdAt: timestampToIso(raw.createdAt),
-  updatedAt: timestampToIso(raw.updatedAt),
-  startDate: timestampToIso(raw.startDate),
-  endDate: timestampToIso(raw.endDate),
-  currentStreak: parseOptionalNumber(raw.currentStreak),
-  bestStreak: parseOptionalNumber(raw.bestStreak),
-  streakUpdatedAt: timestampToIso(raw.streakUpdatedAt),
-  isPublished:
-    typeof raw.isPublished === "boolean" ? raw.isPublished : true,
+      : therapistTypes.length > 0
+      ? TemplateScope.TherapistType
+      : TemplateScope.Global;
+  const resolvedTasks: Task[] = Array.isArray(raw.tasks)
+    ? (raw.tasks as FirestoreDocument[])
+        .map((entry) => ({
+          ...entry,
+          id: typeof entry.id === "string" ? entry.id : "",
+        }))
+        .map(parseTask)
+    : [];
+
+  return {
+    id: raw.id,
+    title:
+      typeof raw.title === "string"
+        ? raw.title
+        : typeof raw.name === "string"
+        ? raw.name
+        : "",
+    subtitle: typeof raw.subtitle === "string" ? raw.subtitle : "",
+    description:
+      typeof raw.description === "string" ? raw.description : "",
+    type:
+      (raw.type as ProgramType) ?? ProgramType.AdaptiveNormal,
+    taskIds: coerceStringArray(raw.taskIds),
+    tasks: resolvedTasks.length > 0 ? resolvedTasks : undefined,
+    therapistTypes,
+    icon:
+      typeof raw.icon === "string" ? raw.icon : DEFAULT_TASK_ICON,
+    color: typeof raw.color === "string" ? raw.color : "#1F6FEB",
+    ownerId:
+      typeof raw.ownerId === "string" ? raw.ownerId : "",
+    roles: coerceStringArray(raw.roles),
+    scope: scopeValue,
+    createdAt: timestampToIso(raw.createdAt),
+    updatedAt: timestampToIso(raw.updatedAt),
+    startDate: timestampToIso(raw.startDate),
+    endDate: timestampToIso(raw.endDate),
+    currentStreak: parseOptionalNumber(raw.currentStreak),
+    bestStreak: parseOptionalNumber(raw.bestStreak),
+    streakUpdatedAt: timestampToIso(raw.streakUpdatedAt),
+    isPublished:
+      typeof raw.isPublished === "boolean" ? raw.isPublished : true,
+  };
+};
+
+const programToFirestore = (
+  program: Program,
+  {
+    setCreatedAt,
+    timestamp,
+  }: { setCreatedAt?: boolean; timestamp?: Date } = {}
+): Record<string, unknown> => {
+  const now = timestamp ?? new Date();
+  const payload: Record<string, unknown> = {
+    title: program.title,
+    subtitle: program.subtitle,
+    description: program.description,
+    type: program.type,
+    taskIds: program.taskIds,
+    icon: program.icon,
+    color: program.color,
+    ownerId: program.ownerId,
+    roles: program.roles,
+    scope: program.scope,
+    therapistTypes: program.therapistTypes,
+    isPublished: program.isPublished,
+  };
+
+  if (setCreatedAt) {
+    payload.createdAt = isoToDate(program.createdAt) ?? now;
+  } else if (program.createdAt) {
+    const created = isoToDate(program.createdAt);
+    if (created) {
+      payload.createdAt = created;
+    }
+  }
+
+  payload.updatedAt = isoToDate(program.updatedAt) ?? now;
+
+  if (program.startDate) {
+    const start = isoToDate(program.startDate);
+    if (start) {
+      payload.startDate = start;
+    }
+  }
+
+  if (program.endDate) {
+    const end = isoToDate(program.endDate);
+    if (end) {
+      payload.endDate = end;
+    }
+  }
+
+  if (typeof program.currentStreak === "number") {
+    payload.currentStreak = program.currentStreak;
+  }
+
+  if (typeof program.bestStreak === "number") {
+    payload.bestStreak = program.bestStreak;
+  }
+
+  if (program.streakUpdatedAt) {
+    const streak = isoToDate(program.streakUpdatedAt);
+    if (streak) {
+      payload.streakUpdatedAt = streak;
+    }
+  }
+
+  return payload;
+};
+
+const parseProgramAssignment = (
+  raw: FirestoreDocument
+): ProgramAssignment => ({
+  id: raw.id,
+  programId:
+    typeof raw.programId === "string" ? raw.programId : "",
+  userId:
+    typeof raw.userId === "string" ? raw.userId : "",
+  assignedAt:
+    timestampToIso(raw.assignedAt) ?? new Date().toISOString(),
+  completedAt: timestampToIso(raw.completedAt),
+  isActive:
+    typeof raw.isActive === "boolean" ? raw.isActive : true,
+  progress:
+    typeof raw.progress === "number"
+      ? raw.progress
+      : parseNumber(raw.progress, 0),
+  currentTaskIndex: parseNumber(raw.currentTaskIndex, 0),
+  unlockedTaskIds: coerceStringArray(raw.unlockedTaskIds),
+  streakCount: parseNumber(raw.streakCount, 0),
+  bestStreak: parseNumber(raw.bestStreak, 0),
+  lastCompletionDate: timestampToIso(raw.lastCompletionDate),
 });
 
-const programInstanceToFirestore = (
-  instance: Omit<ProgramInstance, "id">
+const programAssignmentToFirestore = (
+  assignment: ProgramAssignment,
+  {
+    timestamp,
+  }: { timestamp?: Date } = {}
 ): Record<string, unknown> => {
-  const now = new Date();
+  const now = timestamp ?? new Date();
   return {
-    title: instance.title,
-    subtitle: instance.subtitle,
-    description: instance.description,
-    type: instance.type,
-    patientId: instance.patientId,
-    therapistId: instance.therapistId,
-    ownerId: instance.ownerId,
-    templateId: instance.templateId ?? null,
-    tasks: instance.tasks.map((task) => ({
-      taskTemplateId: task.taskTemplateId,
-      config: serializeTaskConfig(task.config),
-    })),
-    taskIds: instance.taskIds,
-    icon: instance.icon,
-    color: instance.color,
-    roles: instance.roles,
-    scope: instance.scope ?? null,
-    createdAt: isoToDate(instance.createdAt) ?? now,
-    updatedAt: isoToDate(instance.updatedAt) ?? now,
-    startDate: isoToDate(instance.startDate) ?? null,
-    endDate: isoToDate(instance.endDate) ?? null,
-    currentStreak: instance.currentStreak ?? null,
-    bestStreak: instance.bestStreak ?? null,
-    streakUpdatedAt: isoToDate(instance.streakUpdatedAt) ?? null,
-    isPublished: instance.isPublished,
+    programId: assignment.programId,
+    userId: assignment.userId,
+    assignedAt: isoToDate(assignment.assignedAt) ?? now,
+    completedAt: isoToDate(assignment.completedAt) ?? null,
+    isActive: assignment.isActive,
+    progress: assignment.progress,
+    currentTaskIndex: assignment.currentTaskIndex,
+    unlockedTaskIds: assignment.unlockedTaskIds,
+    streakCount: assignment.streakCount,
+    bestStreak: assignment.bestStreak,
+    lastCompletionDate:
+      isoToDate(assignment.lastCompletionDate) ?? null,
   };
 };
 
@@ -448,35 +596,219 @@ export async function listProgramTemplates(): Promise<ProgramTemplate[]> {
   return raw.map(parseProgramTemplate);
 }
 
-export interface CreateProgramInstanceInput
-  extends Omit<
-    ProgramInstance,
-    "id" | "createdAt" | "updatedAt" | "startDate" | "endDate"
-  > {
-  authorId: string;
-}
-
-export async function createProgramInstance(
-  payload: CreateProgramInstanceInput
-) {
-  const { authorId, ...rest } = payload;
-  const nowIso = new Date().toISOString();
-  const id = await addDoc("programs", {
-    ...programInstanceToFirestore({
-      ...rest,
-      ownerId: authorId,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    }),
-  });
-  return id;
-}
-
-export async function listProgramsByTherapist(therapistId: string) {
-  const raw = await queryBy<FirestoreDocument>("programs", [
+export async function listPatientsByTherapist(
+  therapistId: string
+): Promise<Patient[]> {
+  if (!therapistId) return [];
+  const raw = await queryBy<FirestoreDocument>("Patient", [
     ["therapistId", "==", therapistId],
   ]);
-  return raw.map(parseProgramInstance);
+  return raw.map(parsePatient);
+}
+
+export async function getPatient(id: string): Promise<Patient | null> {
+  if (!id) return null;
+  const doc = await getDoc<FirestoreDocument>("Patient", id);
+  return doc ? parsePatient(doc) : null;
+}
+
+export async function listTasksByOwner(ownerId: string): Promise<Task[]> {
+  if (!ownerId) return [];
+  const raw = await queryBy<FirestoreDocument>("tasks", [
+    ["ownerId", "==", ownerId],
+  ]);
+  return raw.map(parseTask);
+}
+
+export async function createTask(
+  data: Omit<Task, "id" | "createdAt" | "updatedAt">
+): Promise<Task> {
+  const now = new Date();
+  const record: Task = {
+    ...data,
+    id: "",
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+  };
+  const payload = taskToFirestore(record, {
+    setCreatedAt: true,
+    timestamp: now,
+  });
+  const id = await addDoc("tasks", payload);
+  const created = await getDoc<FirestoreDocument>("tasks", id);
+  return created ? parseTask(created) : { ...record, id };
+}
+
+export async function updateTask(
+  id: string,
+  changes: Partial<Task>
+): Promise<Task | null> {
+  const existingDoc = await getDoc<FirestoreDocument>("tasks", id);
+  if (!existingDoc) {
+    return null;
+  }
+  const existing = parseTask(existingDoc);
+  const now = new Date();
+  const merged: Task = {
+    ...existing,
+    ...changes,
+    id,
+    updatedAt: now.toISOString(),
+  };
+  const payload = taskToFirestore(merged, { timestamp: now });
+  await updateDoc("tasks", id, payload);
+  const updatedDoc = await getDoc<FirestoreDocument>("tasks", id);
+  return updatedDoc ? parseTask(updatedDoc) : merged;
+}
+
+export async function removeTask(id: string): Promise<void> {
+  await deleteDoc("tasks", id);
+}
+
+export async function listProgramsByOwner(ownerId: string): Promise<Program[]> {
+  if (!ownerId) return [];
+  const raw = await queryBy<FirestoreDocument>("programs", [
+    ["ownerId", "==", ownerId],
+  ]);
+  return raw.map(parseProgram);
+}
+
+export async function getProgram(id: string): Promise<Program | null> {
+  const doc = await getDoc<FirestoreDocument>("programs", id);
+  return doc ? parseProgram(doc) : null;
+}
+
+export async function createProgram(
+  data: Omit<Program, "id" | "createdAt" | "updatedAt">
+): Promise<Program> {
+  const now = new Date();
+  const record: Program = {
+    ...data,
+    id: "",
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+  };
+  const payload = programToFirestore(record, {
+    setCreatedAt: true,
+    timestamp: now,
+  });
+  const id = await addDoc("programs", payload);
+  const created = await getDoc<FirestoreDocument>("programs", id);
+  return created ? parseProgram(created) : { ...record, id };
+}
+
+export async function updateProgram(
+  id: string,
+  changes: Partial<Program>
+): Promise<Program | null> {
+  const existingDoc = await getDoc<FirestoreDocument>("programs", id);
+  if (!existingDoc) {
+    return null;
+  }
+  const existing = parseProgram(existingDoc);
+  const now = new Date();
+  const merged: Program = {
+    ...existing,
+    ...changes,
+    id,
+    updatedAt: now.toISOString(),
+  };
+  const payload = programToFirestore(merged, { timestamp: now });
+  await updateDoc("programs", id, payload);
+  const updatedDoc = await getDoc<FirestoreDocument>("programs", id);
+  return updatedDoc ? parseProgram(updatedDoc) : merged;
+}
+
+export async function removeProgram(id: string): Promise<void> {
+  await deleteDoc("programs", id);
+}
+
+export interface AssignProgramInput {
+  programId: string;
+  userId: string;
+  assignedAt?: string;
+  isActive?: boolean;
+}
+
+export async function assignProgramToUser(
+  input: AssignProgramInput
+): Promise<ProgramAssignment> {
+  const now = new Date();
+  const assignment: ProgramAssignment = {
+    id: "",
+    programId: input.programId,
+    userId: input.userId,
+    assignedAt: input.assignedAt ?? now.toISOString(),
+    completedAt: undefined,
+    isActive: input.isActive ?? true,
+    progress: 0,
+    currentTaskIndex: 0,
+    unlockedTaskIds: [],
+    streakCount: 0,
+    bestStreak: 0,
+    lastCompletionDate: undefined,
+  };
+  const payload = programAssignmentToFirestore(assignment, {
+    timestamp: now,
+  });
+  const id = await addDoc("program_assignments", payload);
+  const created = await getDoc<FirestoreDocument>(
+    "program_assignments",
+    id
+  );
+  return created ? parseProgramAssignment(created) : { ...assignment, id };
+}
+
+export async function updateProgramAssignment(
+  id: string,
+  changes: Partial<ProgramAssignment>
+): Promise<ProgramAssignment | null> {
+  const existingDoc = await getDoc<FirestoreDocument>(
+    "program_assignments",
+    id
+  );
+  if (!existingDoc) {
+    return null;
+  }
+  const existing = parseProgramAssignment(existingDoc);
+  const now = new Date();
+  const merged: ProgramAssignment = {
+    ...existing,
+    ...changes,
+    id,
+    assignedAt: changes.assignedAt ?? existing.assignedAt,
+  };
+  const payload = programAssignmentToFirestore(merged, { timestamp: now });
+  await updateDoc("program_assignments", id, payload);
+  const updatedDoc = await getDoc<FirestoreDocument>(
+    "program_assignments",
+    id
+  );
+  return updatedDoc ? parseProgramAssignment(updatedDoc) : merged;
+}
+
+export async function removeProgramAssignment(id: string): Promise<void> {
+  await deleteDoc("program_assignments", id);
+}
+
+export async function listAssignmentsByUser(
+  userId: string
+): Promise<ProgramAssignment[]> {
+  if (!userId) return [];
+  const raw = await queryBy<FirestoreDocument>("program_assignments", [
+    ["userId", "==", userId],
+  ]);
+  return raw.map(parseProgramAssignment);
+}
+
+export async function listAssignmentsForProgram(
+  programId: string
+): Promise<ProgramAssignment[]> {
+  if (!programId) return [];
+  const raw = await queryBy<FirestoreDocument>("program_assignments", [
+    ["programId", "==", programId],
+  ]);
+  return raw.map(parseProgramAssignment);
 }
 
 export async function listTherapistTypes() {

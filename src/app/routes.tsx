@@ -10,6 +10,7 @@ import { TherapistManager } from "../modules/admin/pages/TherapistManager";
 import { TherapistDashboard } from "../modules/therapist/pages/TherapistDashboard";
 import { ProgramBuilder } from "../modules/therapist/pages/ProgramBuilder";
 import { TaskLibrary } from "../modules/therapist/pages/TaskLibrary";
+import { PatientManagement } from "../modules/therapist/pages/PatientManagement";
 import { Login } from "../modules/shared/pages/Login";
 import { NotFound } from "../modules/shared/pages/NotFound";
 import { DefaultDashboardRedirect } from "./shell/DefaultDashboardRedirect";
@@ -56,6 +57,7 @@ export function AppRoutes() {
           element: <TherapistOutlet />,
           children: [
             { index: true, element: <TherapistDashboard /> },
+            { path: "patients", element: <PatientManagement /> },
             { path: "program-builder", element: <ProgramBuilder /> },
             { path: "tasks", element: <TaskLibrary /> },
           ],

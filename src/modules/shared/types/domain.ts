@@ -151,8 +151,20 @@ export interface TaskTemplate {
   isPublished: boolean;
 }
 
-export interface TaskInstance extends TaskTemplate {
+export interface Task {
+  id: string;
+  title: string;
+  type: TaskType;
+  icon: string;
+  description?: string;
+  frequency: TaskFrequency;
+  visibility: TaskVisibility;
+  config?: TaskConfig;
   ownerId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  roles: string[];
+  isPublished: boolean;
   isTemplate: boolean;
 }
 
@@ -163,45 +175,20 @@ export const ProgramType = {
 } as const;
 export type ProgramType = (typeof ProgramType)[keyof typeof ProgramType];
 
-export interface ProgramTemplate {
+export interface Program {
   id: string;
   title: string;
   subtitle: string;
   description: string;
   type: ProgramType;
   taskIds: string[];
-  therapistTypes?: string[];
+  tasks?: Task[];
+  therapistTypes: string[];
   icon: string;
   color: string;
   ownerId: string;
   roles: string[];
   scope: TemplateScope;
-  createdAt?: string;
-  updatedAt?: string;
-  isPublished: boolean;
-}
-
-export interface ProgramInstanceTask {
-  taskTemplateId: string;
-  config?: TaskConfig;
-}
-
-export interface ProgramInstance {
-  id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  type: ProgramType;
-  patientId: string;
-  therapistId: string;
-  ownerId: string;
-  templateId?: string;
-  tasks: ProgramInstanceTask[];
-  taskIds: string[];
-  icon: string;
-  color: string;
-  roles: string[];
-  scope?: TemplateScope;
   createdAt?: string;
   updatedAt?: string;
   startDate?: string;
@@ -210,6 +197,23 @@ export interface ProgramInstance {
   bestStreak?: number;
   streakUpdatedAt?: string;
   isPublished: boolean;
+}
+
+export type ProgramTemplate = Program;
+
+export interface ProgramAssignment {
+  id: string;
+  programId: string;
+  userId: string;
+  assignedAt: string;
+  completedAt?: string;
+  isActive: boolean;
+  progress: number;
+  currentTaskIndex: number;
+  unlockedTaskIds: string[];
+  streakCount: number;
+  bestStreak: number;
+  lastCompletionDate?: string;
 }
 
 export type TherapistInviteStatus = "pending" | "used" | "revoked";

@@ -188,11 +188,36 @@
       },
       "therapist": {
         "root": "Therapeut",
+        "patients": "Patienten",
         "programBuilder": "Program Builder",
         "taskLibrary": "Aufgabenbibliothek"
       },
       "tipTitle": "Tipp",
       "tip": "Verwalte Rollen und Vorlagen zentral, damit Therapeut:innen sich auf Patient:innen konzentrieren können."
+    }
+  },
+  "therapist": {
+    "patients": {
+      "heading": "Patientenverwaltung",
+      "subtitle": "Behalte deine Patient:innen im Blick, prüfe zugewiesene Programme und vergebe neue Zuweisungen.",
+      "loading": "Patientendaten werden geladen…",
+      "empty": "Noch keine Patient:innen zugewiesen.",
+      "assign": "Programm zuweisen",
+      "cancel": "Abbrechen",
+      "selectProgram": "Programm auswählen",
+      "noPrograms": "Bitte zuerst ein Programm erstellen, bevor es zugewiesen wird.",
+      "saveAssignment": "Zuweisung speichern",
+      "removeAssignment": "Entfernen",
+      "assignedPrograms": "Zugewiesene Programme",
+      "noAssignments": "Noch keine Programme zugewiesen.",
+      "search": "Nach Patient:innen suchen",
+      "nextAppointment": "Nächster Termin",
+      "saving": "Speichern…",
+      "feedback": {
+        "assigned": "Programm erfolgreich zugewiesen.",
+        "removed": "Zuweisung entfernt.",
+        "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+      }
     }
   },
   "admin": {

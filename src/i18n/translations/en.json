@@ -188,11 +188,36 @@
       },
       "therapist": {
         "root": "Therapist",
+        "patients": "Patients",
         "programBuilder": "Program Builder",
         "taskLibrary": "Task Library"
       },
       "tipTitle": "Tip",
       "tip": "Manage roles and templates centrally so therapists can focus on patient work."
+    }
+  },
+  "therapist": {
+    "patients": {
+      "heading": "Patient management",
+      "subtitle": "See your assigned patients, review their programmes and manage new assignments.",
+      "loading": "Loading patient data…",
+      "empty": "No patients assigned yet.",
+      "assign": "Assign program",
+      "cancel": "Cancel",
+      "selectProgram": "Choose a program",
+      "noPrograms": "Create a program first before assigning it.",
+      "saveAssignment": "Save assignment",
+      "removeAssignment": "Remove",
+      "assignedPrograms": "Assigned programs",
+      "noAssignments": "No programs assigned yet.",
+      "search": "Search by patient name",
+      "nextAppointment": "Next appointment",
+      "saving": "Saving…",
+      "feedback": {
+        "assigned": "Program assigned successfully.",
+        "removed": "Assignment removed.",
+        "error": "Something went wrong. Please try again."
+      }
     }
   },
   "admin": {

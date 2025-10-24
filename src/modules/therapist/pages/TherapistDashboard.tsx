@@ -5,20 +5,20 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { useAuthState } from "../../shared/hooks/useAuthState";
-import type { ProgramInstance } from "../../shared/types/domain";
-import { listProgramsByTherapist } from "../services/therapistApi";
+import type { Program } from "../../shared/types/domain";
+import { listProgramsByOwner } from "../services/therapistApi";
 import { useI18n } from "../../../i18n/I18nProvider";
 
 export function TherapistDashboard() {
   const navigate = useNavigate();
   const { user } = useAuthState();
-  const [programs, setPrograms] = useState<ProgramInstance[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
   const { t } = useI18n();
 
   useEffect(() => {
     if (!user) return;
     let active = true;
-    listProgramsByTherapist(user.uid).then((result) => {
+    listProgramsByOwner(user.uid).then((result) => {
       if (!active) return;
       setPrograms(result);
     });

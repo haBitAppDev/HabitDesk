@@ -1,5 +1,14 @@
 import type { LucideIcon } from "lucide-react";
-import { ClipboardList, Gauge, Library, ListPlus, ShieldCheck, UserCog, X } from "lucide-react";
+import {
+  ClipboardList,
+  Gauge,
+  Library,
+  ListPlus,
+  ShieldCheck,
+  UserCog,
+  Users,
+  X,
+} from "lucide-react";
 import { clsx } from "clsx";
 import { useMemo } from "react";
 import { NavLink } from "react-router-dom";
@@ -44,6 +53,12 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         path: "/admin/templates",
         icon: Library,
         roles: ["admin"],
+      },
+      {
+        label: t("layout.sidebar.therapist.patients", "Patients"),
+        path: "/therapist/patients",
+        icon: Users,
+        roles: ["therapist", "admin"],
       },
       {
         label: t("layout.sidebar.therapist.programBuilder", "Program Builder"),

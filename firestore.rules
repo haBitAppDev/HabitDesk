@@ -43,6 +43,32 @@ service cloud.firestore {
       );
     }
 
+    match /tasks/{id} {
+      allow read: if hasAnyRole();
+      allow create: if hasRole('therapist') &&
+        request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if hasRole('therapist') &&
+        resource.data.ownerId == request.auth.uid &&
+        request.resource.data.ownerId == request.auth.uid;
+    }
+
+    match /program_assignments/{id} {
+      allow create: if hasRole('therapist') &&
+        request.resource.data.userId is string &&
+        request.resource.data.programId is string;
+      allow read: if hasRole('admin') ||
+        hasRole('therapist') ||
+        (hasRole('patient') && resource.data.userId == request.auth.uid);
+      allow update: if hasRole('admin') ||
+        (hasRole('therapist') &&
+          resource.data.userId == request.resource.data.userId &&
+          request.resource.data.userId is string) ||
+        (hasRole('patient') &&
+          resource.data.userId == request.auth.uid &&
+          request.resource.data.userId == request.auth.uid);
+      allow delete: if hasRole('admin') || hasRole('therapist');
+    }
+
     match /users/{uid} {
       allow read, update: if request.auth != null &&
         (request.auth.uid == uid || hasRole('admin'));

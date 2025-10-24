@@ -11,9 +11,17 @@ import { Select } from "../../../components/ui/select";
 import { Spinner } from "../../../components/ui/spinner";
 import { useAuthState } from "../../shared/hooks/useAuthState";
 import type { ProgramTemplate, TaskTemplate } from "../../shared/types/domain";
-import { ProgramType, TaskVisibility } from "../../shared/types/domain";
 import {
-  createProgramInstance,
+  ProgramType,
+  TaskVisibility,
+  TemplateScope,
+} from "../../shared/types/domain";
+import {
+  assignProgramToUser,
+  createProgram,
+  createTask,
+  removeProgram,
+  removeTask as removeTaskFromApi,
   listProgramTemplates,
   listTaskTemplates,
 } from "../services/therapistApi";
@@ -49,8 +57,15 @@ export const useBuilderStore = create<BuilderState>((set) => ({
 export function ProgramBuilder() {
   const { user } = useAuthState();
   const { t } = useI18n();
-  const { title, selectedTasks, addTask, removeTask, clear, setTitle, setTasks } =
-    useBuilderStore();
+  const {
+    title,
+    selectedTasks,
+    addTask,
+    removeTask: removeTaskFromSelection,
+    clear,
+    setTitle,
+    setTasks,
+  } = useBuilderStore();
   const [taskTemplates, setTaskTemplates] = useState<TaskTemplate[]>([]);
   const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
   const [templateId, setTemplateId] = useState<string>("");
@@ -172,34 +187,76 @@ export function ProgramBuilder() {
     }
 
     setSaving(true);
-    const activeTemplate = programTemplates.find((template) => template.id === templateId);
+    const createdTaskIds: string[] = [];
+    let createdProgramId: string | null = null;
+    const activeTemplate = programTemplates.find(
+      (template) => template.id === templateId
+    );
+
     try {
-      await createProgramInstance({
-        authorId: user.uid,
-        patientId: patientId.trim(),
-        therapistId: user.uid,
-        templateId: templateId || undefined,
-        ownerId: user.uid,
-        title: title || t("therapist.programBuilder.defaultTitle", "New program"),
+      const createdTasks = [];
+      for (const template of selectedTasks) {
+        const created = await createTask({
+          title: template.title,
+          description: template.description,
+          type: template.type,
+          icon: template.icon,
+          frequency: template.frequency,
+          visibility: template.visibility,
+          config: template.config,
+          ownerId: user.uid,
+          roles: template.roles,
+          isPublished: template.isPublished,
+          isTemplate: false,
+        });
+        createdTasks.push(created);
+        createdTaskIds.push(created.id);
+      }
+
+      const program = await createProgram({
+        title:
+          title.trim() ||
+          activeTemplate?.title ||
+          t("therapist.programBuilder.defaultTitle", "New program"),
         subtitle: activeTemplate?.subtitle ?? "",
         description: activeTemplate?.description ?? "",
         type: activeTemplate?.type ?? ProgramType.AdaptiveNormal,
-        taskIds: selectedTasks.map((task) => task.id),
-        tasks: selectedTasks.map((task) => ({
-          taskTemplateId: task.id,
-          config: task.config,
-        })),
-        icon: activeTemplate?.icon ?? selectedTasks[0]?.icon ?? "favorite_rounded",
+        taskIds: createdTasks.map((task) => task.id),
+        icon:
+          activeTemplate?.icon ??
+          selectedTasks[0]?.icon ??
+          "favorite_rounded",
         color: activeTemplate?.color ?? "#1F6FEB",
+        ownerId: user.uid,
         roles: activeTemplate?.roles ?? [],
+        scope: TemplateScope.Private,
+        therapistTypes: [],
         isPublished: true,
       });
+
+      createdProgramId = program.id;
+
+      await assignProgramToUser({
+        programId: program.id,
+        userId: patientId.trim(),
+      });
+
       setMessage({ type: "success", text: successMsg });
       clear();
       setTemplateId("");
       setPatientId("");
       setTitle("");
     } catch (err) {
+      if (createdProgramId) {
+        await removeProgram(createdProgramId).catch(() => undefined);
+      }
+      if (createdTaskIds.length) {
+        await Promise.all(
+          createdTaskIds.map((id) =>
+            removeTaskFromApi(id).catch(() => undefined)
+          )
+        );
+      }
       setMessage({
         type: "error",
         text: err instanceof Error ? err.message : genericErrorMsg,
@@ -316,7 +373,7 @@ export function ProgramBuilder() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => removeTask(task.id)}
+                      onClick={() => removeTaskFromSelection(task.id)}
                       className="rounded-full border border-red-200 p-2 text-red-500 transition hover:bg-red-50"
                     >
                       <MinusCircle className="h-4 w-4" />
