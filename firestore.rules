@@ -2,8 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function hasRole(r) { return request.auth.token.role == r; }
-    function hasAnyRole() { return request.auth.token.role in ['admin','therapist','patient']; }
+    function hasRole(role) {
+      return request.auth != null && request.auth.token.role == role;
+    }
+
+    function hasAnyRole() {
+      return request.auth != null &&
+        request.auth.token.role in ['admin', 'therapist', 'patient'];
+    }
 
     match /program_templates/{id} {
       allow read: if hasRole('admin') || hasRole('therapist');
@@ -38,8 +44,29 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow read, update: if request.auth.uid == uid || hasRole('admin');
+      allow read, update: if request.auth != null &&
+        (request.auth.uid == uid || hasRole('admin'));
       allow create: if hasAnyRole();
+    }
+
+    match /Patient/{uid} {
+      allow read: if hasRole('admin') ||
+        (hasRole('therapist') && resource.data.therapistId == request.auth.uid) ||
+        (hasRole('patient') && request.auth.uid == uid);
+      allow create: if hasRole('admin') ||
+        (hasRole('patient') && request.auth.uid == uid);
+      allow update: if hasRole('admin') ||
+        (hasRole('patient') && request.auth.uid == uid) ||
+        (hasRole('therapist') && resource.data.therapistId == request.auth.uid &&
+          request.resource.data.therapistId == request.auth.uid);
+    }
+
+    match /Therapist/{uid} {
+      allow read: if hasAnyRole();
+      allow create: if hasRole('admin') ||
+        (hasRole('therapist') && request.auth.uid == uid);
+      allow update, delete: if hasRole('admin') ||
+        (hasRole('therapist') && request.auth.uid == uid);
     }
   }
 }

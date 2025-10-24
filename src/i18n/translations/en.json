@@ -109,6 +109,8 @@
       "therapistTypes": "Therapist types",
       "tasks": "Task templates",
       "color": "Color",
+      "customColor": "Custom color",
+      "colorHint": "Pick an accent color or define your own.",
       "noTherapistTypes": "No therapist types yet"
       },
       "scope": {
@@ -361,8 +363,9 @@
     }
   },
   "notFound": {
-    "title": "Page not found",
-    "subtitle": "The requested page could not be located.",
-    "action": "Back to home"
+    "title": "We hit a blank spot",
+    "tagline": "HabitDesk will be right back for you.",
+    "helper": "Check the address or return to your dashboard.",
+    "action": "Return to dashboard"
   }
 }

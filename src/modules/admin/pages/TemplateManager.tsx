@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
+import { ColorPicker } from "../../../components/ui/color-picker";
+import { IconPicker } from "../../../components/ui/icon-picker";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Select } from "../../../components/ui/select";
@@ -845,18 +847,16 @@ function TaskTemplatePane({
             />
           </Field>
           <Field label={t("templates.fields.icon", "Icon")}>
-            <Select
+            <IconPicker
+              icons={TASK_ICON_OPTIONS}
               value={form.icon}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, icon: event.target.value }))
+              onChange={(icon) => setForm((prev) => ({ ...prev, icon }))}
+              preview={
+                <p className="text-xs uppercase tracking-wide text-brand-text-muted">
+                  {form.icon}
+                </p>
               }
-            >
-              {TASK_ICON_OPTIONS.map((icon) => (
-                <option key={icon} value={icon}>
-                  {icon}
-                </option>
-              ))}
-            </Select>
+            />
           </Field>
         </div>
 
@@ -1169,6 +1169,14 @@ function ProgramTemplatePane({
     "templates.programs.form.scope.private",
     "Private (owner only)"
   );
+  const customColorLabel = t(
+    "templates.programs.form.customColor",
+    "Eigene Farbe"
+  );
+  const customColorHint = t(
+    "templates.programs.form.colorHint",
+    "Wähle eine Akzentfarbe oder definiere eine eigene."
+  );
   return (
     <div className="space-y-6 xl:grid xl:grid-cols-3 xl:gap-6 xl:space-y-0">
       <Card className="space-y-6 p-6 xl:col-span-2">
@@ -1236,18 +1244,16 @@ function ProgramTemplatePane({
             </Select>
           </Field>
           <Field label={t("templates.fields.icon", "Icon")}>
-            <Select
+            <IconPicker
+              icons={PROGRAM_ICON_OPTIONS}
               value={form.icon}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, icon: event.target.value }))
+              onChange={(icon) => setForm((prev) => ({ ...prev, icon }))}
+              preview={
+                <p className="text-xs uppercase tracking-wide text-brand-text-muted">
+                  {form.icon}
+                </p>
               }
-            >
-              {PROGRAM_ICON_OPTIONS.map((icon) => (
-                <option key={icon} value={icon}>
-                  {icon}
-                </option>
-              ))}
-            </Select>
+            />
           </Field>
           <Field label={t("templates.programs.form.owner", "Owner-ID (optional)")}>
             <Input
@@ -1290,29 +1296,19 @@ function ProgramTemplatePane({
           <Label className="text-sm font-semibold text-brand-text">
             {t("templates.programs.form.color", "Farbe")}
           </Label>
-          <div className="flex flex-wrap gap-3">
-            {PROGRAM_COLOR_OPTIONS.map((color) => {
-              const isSelected = form.color === color;
-              return (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() =>
-                    setForm((prev) => ({
-                      ...prev,
-                      color,
-                    }))
-                  }
-                  className={`h-9 w-9 rounded-full border ${
-                    isSelected ? "border-brand-primary ring-2 ring-brand-primary/60" : "border-transparent"
-                  }`}
-                  style={{ backgroundColor: color }}
-                >
-                  <span className="sr-only">{color}</span>
-                </button>
-              );
-            })}
-          </div>
+          <ColorPicker
+            colors={PROGRAM_COLOR_OPTIONS}
+            value={form.color}
+            onChange={(color) =>
+              setForm((prev) => ({
+                ...prev,
+                color,
+              }))
+            }
+            allowCustom
+            customLabel={customColorLabel}
+            customHint={customColorHint}
+          />
         </div>
 
         {form.scope === TemplateScope.TherapistType && (

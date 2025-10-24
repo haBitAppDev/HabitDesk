@@ -1,7 +1,9 @@
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import type { UserRecord } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions";
 import { auth } from "firebase-functions/v1";
 
 initializeApp();
@@ -30,26 +32,71 @@ export const setUserRole = onCall(async (request) => {
   }
 
   const auth = getAuth();
-  const userRecord = await auth.getUser(uid);
+  let userRecord: UserRecord;
+  try {
+    userRecord = await auth.getUser(uid);
+  } catch (error) {
+    if (typeof error === "object" && error && (error as { code?: string }).code === "auth/user-not-found") {
+      throw new HttpsError("not-found", "Firebase user not found");
+    }
+    throw error;
+  }
   const existingClaims = { ...(userRecord.customClaims ?? {}) };
   if (role !== "therapist") {
     delete (existingClaims as Record<string, unknown>).therapistTypes;
   }
   await auth.setCustomUserClaims(uid, { ...existingClaims, role });
-  await auth.revokeRefreshTokens(uid);
 
   return { success: true };
 });
 
 export const createUserProfile = auth.user().onCreate(async (user) => {
+  const existingClaims = user.customClaims ?? {};
+  const rawRole = typeof existingClaims.role === "string" ? existingClaims.role : undefined;
+  const role = rawRole && allowedRoles.has(rawRole) ? rawRole : "patient";
+
+  if (!rawRole || !allowedRoles.has(rawRole)) {
+    const authAdmin = getAuth();
+    await authAdmin.setCustomUserClaims(user.uid, { ...existingClaims, role });
+  }
+
   const userProfile = {
     uid: user.uid,
     email: user.email ?? "",
     displayName: user.displayName ?? "",
-    role: (user.customClaims?.role as string | undefined) ?? "patient",
+    role,
   };
 
   await db.collection("users").doc(user.uid).set(userProfile, { merge: true });
+});
+
+export const ensureDefaultUserRole = onCall(async (request) => {
+  const caller = request.auth;
+  if (!caller) {
+    throw new HttpsError("unauthenticated", "Authentication required");
+  }
+
+  const authAdmin = getAuth();
+  let userRecord: UserRecord;
+  try {
+    userRecord = await authAdmin.getUser(caller.uid);
+  } catch (error) {
+    if (typeof error === "object" && error && (error as { code?: string }).code === "auth/user-not-found") {
+      throw new HttpsError("not-found", "Firebase user not found");
+    }
+    throw error;
+  }
+  const currentClaims = userRecord.customClaims ?? {};
+  const rawRole = typeof currentClaims.role === "string" ? currentClaims.role : undefined;
+
+  if (rawRole && allowedRoles.has(rawRole)) {
+    return { role: rawRole };
+  }
+
+  const role = "patient";
+  await authAdmin.setCustomUserClaims(caller.uid, { ...currentClaims, role });
+
+  return { role };
 });
 
 interface ClaimInviteRequest {
@@ -58,6 +105,16 @@ interface ClaimInviteRequest {
 }
 
 export const claimTherapistInvite = onCall(async (request) => {
+  const hasAuthorizationHeader =
+    typeof request.rawRequest?.headers?.authorization === "string" &&
+    request.rawRequest.headers.authorization.length > 0;
+
+  logger.info("[claimTherapistInvite] incoming request", {
+    hasAuthContext: Boolean(request.auth),
+    hasAuthorizationHeader,
+    appCheckTokenAppId: request.app?.appId?? null,
+  });
+
   const caller = request.auth;
   if (!caller) {
     throw new HttpsError("unauthenticated", "Authentication required");
@@ -113,7 +170,15 @@ export const claimTherapistInvite = onCall(async (request) => {
     : [];
 
   const authAdmin = getAuth();
-  const userRecord = await authAdmin.getUser(caller.uid);
+  let userRecord: UserRecord;
+  try {
+    userRecord = await authAdmin.getUser(caller.uid);
+  } catch (error) {
+    if (typeof error === "object" && error && (error as { code?: string }).code === "auth/user-not-found") {
+      throw new HttpsError("not-found", "Firebase user not found");
+    }
+    throw error;
+  }
 
   const now = new Date();
   await inviteDoc.ref.set(
@@ -134,7 +199,6 @@ export const claimTherapistInvite = onCall(async (request) => {
     role: "therapist",
     therapistTypes,
   });
-  await authAdmin.revokeRefreshTokens(caller.uid);
 
   const displayName =
     typeof data.displayName === "string" && data.displayName.trim().length > 0

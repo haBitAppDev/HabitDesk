@@ -109,6 +109,8 @@
       "therapistTypes": "Therapeuten-Typen",
       "tasks": "Augabenvorlage",
       "color": "Farbe",
+      "customColor": "Eigene Farbe",
+      "colorHint": "Wähle eine Akzentfarbe oder lege einen eigenen Farbwert fest.",
       "noTherapistTypes": "Keine Typen hinterlegt."
       },
       "scope": {
@@ -181,7 +183,7 @@
         "root": "Admin",
         "therapists": "Therapeut:innen",
         "roles": "Rollenverwaltung",
-        "templates": "Vorlagen",
+        "templates": "Aufgaben",
         "dashboard": "Admin"
       },
       "therapist": {
@@ -361,8 +363,9 @@
     }
   },
   "notFound": {
-    "title": "Seite nicht gefunden",
-    "subtitle": "Die angeforderte Seite konnte nicht gefunden werden.",
-    "action": "Zur Startseite"
+    "title": "Oops, hier ist gerade Pause",
+    "tagline": "HabitDesk ist gleich wieder für dich da.",
+    "helper": "Überprüfe den Link oder kehre zurück zum Dashboard.",
+    "action": "Zurück zum Dashboard"
   }
 }
