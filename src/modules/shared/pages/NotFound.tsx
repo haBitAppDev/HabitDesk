@@ -64,7 +64,7 @@ export function NotFound() {
           maxWidth: 560,
           p: { xs: 4, sm: 6 },
           borderRadius: 4,
-          textAlign: "center",
+          textAlign: "left",
           position: "relative",
           overflow: "hidden",
           color: "common.white",
@@ -125,7 +125,7 @@ export function NotFound() {
           }}
         />
 
-        <Stack spacing={3} sx={{ position: "relative" }}>
+        <Stack spacing={3} sx={{ position: "relative", alignItems: "flex-start" }}>
           <Typography
             variant="overline"
             sx={{
@@ -162,7 +162,7 @@ export function NotFound() {
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={2}
-            justifyContent="center"
+            justifyContent="flex-start"
             sx={{ pt: 1 }}
           >
             <Button

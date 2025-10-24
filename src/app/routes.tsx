@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useRoutes } from "react-router-dom";
+import { Outlet, useRoutes } from "react-router-dom";
 
 import { RequireAuth } from "./guards/RequireAuth";
 import { RequireRole } from "./guards/RequireRole";
@@ -12,6 +12,7 @@ import { ProgramBuilder } from "../modules/therapist/pages/ProgramBuilder";
 import { TaskLibrary } from "../modules/therapist/pages/TaskLibrary";
 import { Login } from "../modules/shared/pages/Login";
 import { NotFound } from "../modules/shared/pages/NotFound";
+import { DefaultDashboardRedirect } from "./shell/DefaultDashboardRedirect";
 
 const AdminOutlet = () => (
   <RequireRole allowed={["admin"]}>
@@ -39,7 +40,7 @@ export function AppRoutes() {
         </RequireAuth>
       ),
       children: [
-        { index: true, element: <Navigate to="/therapist" replace /> },
+        { index: true, element: <DefaultDashboardRedirect /> },
         {
           path: "admin",
           element: <AdminOutlet />,

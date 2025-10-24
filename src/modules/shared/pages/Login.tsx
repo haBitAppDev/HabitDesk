@@ -86,16 +86,16 @@ export function Login() {
         p: 2,
       }}
     >
-      <Paper elevation={3} sx={{ p: 4, maxWidth: 400, width: "100%" }}>
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+      <Paper elevation={3} sx={{ p: 4, maxWidth: 420, width: "100%", textAlign: "left" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
           <Avatar sx={{ bgcolor: "primary.main" }}>
             <LockOutlinedIcon />
           </Avatar>
+          <Typography component="h1" variant="h5" sx={{ fontWeight: 600 }}>
+            {t("auth.title", "HabitDesk Login")}
+          </Typography>
         </Box>
-        <Typography component="h1" variant="h5" align="center" gutterBottom>
-          {t("auth.title", "HabitDesk Login")}
-        </Typography>
-        <Typography align="center" sx={{ color: "text.secondary", fontSize: 14, mb: 2 }}>
+        <Typography sx={{ color: "text.secondary", fontSize: 14, mb: 3 }}>
           {t("auth.subtitle", "Sign in to manage programs and tasks.")}
         </Typography>
         {formError && (
