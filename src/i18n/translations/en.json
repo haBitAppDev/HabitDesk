@@ -56,6 +56,12 @@
       "scaleTask": "Scale",
       "stateLog": "Mood log"
     },
+    "media": {
+      "audio": "Audio",
+      "video": "Video",
+      "image": "Image",
+      "document": "Document"
+    },
     "frequency": {
       "daily": "Daily",
       "weekly": "Weekly"
@@ -65,6 +71,65 @@
       "hiddenFromPatients": "Hidden from patients"
     },
     "tasks": {
+      "config": {
+        "timer": {
+          "duration": "Duration (seconds)",
+          "allowPause": "Allow pause"
+        },
+        "text": {
+          "min": "Minimum length",
+          "max": "Maximum length",
+          "showHistory": "Show history to patients"
+        },
+        "quiz": {
+          "singleChoice": "Allow only one correct answer",
+          "prompt": "Prompt / explanation",
+          "promptPlaceholder": "Optional explanation for patients",
+          "answers": "Answer options",
+          "add": "Add option",
+          "option": "New option",
+          "answer": "Answer"
+        },
+        "progress": {
+          "target": "Target value",
+          "unit": "Unit (e.g. min, steps)",
+          "allowPartial": "Allow partial progress"
+        },
+        "media": {
+          "kind": "Media type",
+          "uploadLabel": "Upload file",
+          "selectFile": "Select file",
+          "replaceFile": "Replace file",
+          "removeFile": "Remove file",
+          "uploading": "Uploading…",
+          "fileInfo": "Current file: {name} {size}",
+          "uploadHint": "Supported formats depend on the selected type.",
+          "source": "Video source",
+          "sourceUpload": "Upload file",
+          "sourceLink": "Use link",
+          "videoUrl": "Video link",
+          "videoUrlPlaceholder": "https://example.com/video",
+          "linkInfo": "Current link: {url}",
+          "videoUrlHint": "Supports e.g. YouTube, Vimeo or direct streaming links.",
+          "uploadError": "Upload failed. Please try again.",
+          "removeError": "The existing file could not be removed."
+        },
+        "goal": {
+          "description": "Goal description",
+          "dueDate": "Due date (optional)"
+        },
+        "scale": {
+          "min": "Minimum",
+          "max": "Maximum",
+          "step": "Step",
+          "leftLabel": "Left label",
+          "rightLabel": "Right label"
+        },
+        "stateLog": {
+          "emojis": "Emojis (comma separated)",
+          "showChart": "Show history chart"
+        }
+      },
       "form": {
         "editTitle": "Edit task template",
         "newTitle": "New task template",
@@ -384,7 +449,33 @@
         "hidden": "Hidden"
       },
       "rolesEmpty": "No role restriction",
-      "noDescription": "No description available."
+      "noDescription": "No description available.",
+      "create": {
+        "title": "Create task template",
+        "button": "Create task template",
+        "cancel": "Cancel",
+        "reset": "Reset",
+        "titleLabel": "Title",
+        "iconLabel": "Icon",
+        "descriptionLabel": "Description",
+        "rolesLabel": "Roles (comma separated)",
+        "typeLabel": "Task type",
+        "typeHelp": "Select a task type to configure task-specific settings.",
+        "frequencyLabel": "Frequency",
+        "visibilityLabel": "Visibility",
+        "secondsLabel": "Duration (seconds)",
+        "allowPauseLabel": "Allow pause",
+        "minLengthLabel": "Minimum length",
+        "maxLengthLabel": "Maximum length",
+        "showHistoryLabel": "Show history to patients",
+        "submit": "Save template",
+        "loginRequired": "You need to be signed in to create task templates.",
+        "titleRequired": "Please add a title before saving.",
+      "unsupportedType": "This task type is not supported yet.",
+      "mediaRequired": "Please upload a file or provide a link for media tasks.",
+      "success": "\"{title}\" created.",
+      "error": "Saving the task template failed."
+      }
     }
   },
   "notFound": {

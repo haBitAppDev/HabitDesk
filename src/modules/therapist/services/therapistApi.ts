@@ -118,10 +118,6 @@ const parseTaskConfig = (
         minLength: parseNumber(config.minLength, 0),
         maxLength: parseNumber(config.maxLength, 500),
         showHistory: Boolean(config.showHistory),
-        exampleResponse:
-          typeof config.exampleResponse === "string"
-            ? config.exampleResponse
-            : undefined,
       };
     case TaskType.Quiz: {
       const optionsRaw = Array.isArray(config.options)

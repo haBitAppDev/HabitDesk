@@ -17,7 +17,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { useUserRole } from "../../modules/shared/hooks/useUserRole";
 import type { UserRole } from "../../modules/shared/types/domain";
 
-type SidebarProps = {
+type SidebarProps = React.HTMLAttributes<HTMLElement> & {
   mobileOpen: boolean;
   onClose: () => void;
 };
@@ -29,7 +29,7 @@ interface NavItem {
   roles: UserRole[];
 }
 
-export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
+export function Sidebar({ mobileOpen, onClose, className }: SidebarProps) {
   const { role } = useUserRole();
   const { t } = useI18n();
 
@@ -164,7 +164,8 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         className={clsx(
           "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-brand-divider/60 bg-white px-6 py-8 shadow-soft transition-transform md:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
-          "md:static md:flex md:h-auto md:w-72 md:shadow-none"
+          "md:static md:flex md:h-auto md:w-72 md:shadow-none",
+          className // ⬅ kommt vom Prop
         )}
       >
         {renderNav()}

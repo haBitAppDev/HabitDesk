@@ -16,12 +16,19 @@ export function AppLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-brand-background text-brand-text">
-      <Topbar onMenuToggle={handleMenuToggle} />
-      <Sidebar mobileOpen={mobileOpen} onClose={handleClose} />
-      <main className="relative flex-1 px-4 pb-10 pt-24 md:ml-72 md:px-10">
-        <Outlet />
-      </main>
-    </div>
+<div className="flex min-h-screen bg-brand-background text-brand-text">
+  <Sidebar mobileOpen={mobileOpen} onClose={handleClose} className="h-screen pt-20" />
+
+  <div className="flex flex-col flex-1">
+    <Topbar onMenuToggle={handleMenuToggle} />
+
+    {/* Abstand nach oben, z. B. 64 px falls Topbar 4 rem hoch ist */}
+    <main className="relative flex-1 px-4 pb-10 pt-20 md:px-10">
+      <Outlet />
+    </main>
+  </div>
+</div>
+
+
   );
 }

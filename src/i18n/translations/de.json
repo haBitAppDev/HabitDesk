@@ -56,6 +56,12 @@
       "scaleTask": "Skala",
       "stateLog": "Stimmungstagebuch"
     },
+    "media": {
+      "audio": "Audio",
+      "video": "Video",
+      "image": "Bild",
+      "document": "Dokument"
+    },
     "frequency": {
       "daily": "Täglich",
       "weekly": "Wöchentlich"
@@ -83,6 +89,65 @@
           "private": "Privat (nur Besitzer:in)",
           "typeList": "Therapeuten-Typen auswählen",
           "noTypes": "Keine Therapeuten-Typen vorhanden."
+        }
+      },
+      "config": {
+        "timer": {
+          "duration": "Dauer (Sekunden)",
+          "allowPause": "Pause erlauben"
+        },
+        "text": {
+          "min": "Minimale Zeichen",
+          "max": "Maximale Zeichen",
+          "showHistory": "Verlauf für Patient:innen anzeigen"
+        },
+        "quiz": {
+          "singleChoice": "Nur eine Antwort erlauben",
+          "prompt": "Beispielfrage / Hinweis",
+          "promptPlaceholder": "Optionale Erläuterung für Patient:innen",
+          "answers": "Antwortmöglichkeiten",
+          "add": "Option hinzufügen",
+          "option": "Neue Option",
+          "answer": "Antwort"
+        },
+        "progress": {
+          "target": "Zielwert",
+          "unit": "Einheit (z. B. Min, Schritte)",
+          "allowPartial": "Teilfortschritt erlauben"
+        },
+        "media": {
+          "kind": "Medientyp",
+          "uploadLabel": "Datei hochladen",
+          "selectFile": "Datei auswählen",
+          "replaceFile": "Datei ersetzen",
+          "removeFile": "Datei entfernen",
+          "uploading": "Upload läuft…",
+          "fileInfo": "Aktuelle Datei: {name} {size}",
+          "uploadHint": "Unterstützte Formate entsprechend der Auswahl.",
+          "source": "Videoquelle",
+          "sourceUpload": "Datei hochladen",
+          "sourceLink": "Link verwenden",
+          "videoUrl": "Video-Link",
+          "videoUrlPlaceholder": "https://beispiel.de/video",
+          "linkInfo": "Aktueller Link: {url}",
+          "videoUrlHint": "Unterstützt z. B. YouTube, Vimeo oder Streaming-Links.",
+          "uploadError": "Upload fehlgeschlagen. Bitte versuche es erneut.",
+          "removeError": "Die bestehende Datei konnte nicht entfernt werden."
+        },
+        "goal": {
+          "description": "Zielbeschreibung",
+          "dueDate": "Fälligkeitsdatum (optional)"
+        },
+        "scale": {
+          "min": "Minimum",
+          "max": "Maximum",
+          "step": "Schritte",
+          "leftLabel": "Linke Beschriftung",
+          "rightLabel": "Rechte Beschriftung"
+        },
+        "stateLog": {
+          "emojis": "Emojis (durch Komma trennen)",
+          "showChart": "Verlaufsgrafik anzeigen"
         }
       },
       "list": {
@@ -189,7 +254,7 @@
       "therapist": {
         "root": "Therapeut",
         "patients": "Patienten",
-        "programBuilder": "Program Builder",
+        "programBuilder": "Program-Editor",
         "taskLibrary": "Aufgabenbibliothek"
       },
       "tipTitle": "Tipp",
@@ -384,7 +449,33 @@
         "hidden": "Versteckt"
       },
       "rolesEmpty": "Keine Rollenbindung",
-      "noDescription": "Keine Beschreibung hinterlegt."
+      "noDescription": "Keine Beschreibung hinterlegt.",
+      "create": {
+        "title": "Task Vorlage erstellen",
+        "button": "Task Vorlage erstellen",
+        "cancel": "Abbrechen",
+        "reset": "Zurücksetzen",
+        "titleLabel": "Titel",
+        "iconLabel": "Icon",
+        "descriptionLabel": "Beschreibung",
+        "rolesLabel": "Rollen (Komma getrennt)",
+        "typeLabel": "Task Typ",
+        "typeHelp": "Wähle einen Task Typ aus, um die passenden Einstellungen zu konfigurieren.",
+        "frequencyLabel": "Frequenz",
+        "visibilityLabel": "Sichtbarkeit",
+        "secondsLabel": "Dauer (Sekunden)",
+        "allowPauseLabel": "Pause erlauben",
+        "minLengthLabel": "Mindestlänge",
+        "maxLengthLabel": "Maximallänge",
+        "showHistoryLabel": "Verlauf für Patienten anzeigen",
+        "submit": "Vorlage speichern",
+        "loginRequired": "Zum Erstellen einer Vorlage musst du angemeldet sein.",
+        "titleRequired": "Bitte gib vor dem Speichern einen Titel an.",
+      "unsupportedType": "Dieser Task Typ wird noch nicht unterstützt.",
+      "mediaRequired": "Bitte lade eine Datei hoch oder hinterlege einen Link für Media-Tasks.",
+      "success": "\"{title}\" erstellt.",
+      "error": "Das Speichern der Task Vorlage ist fehlgeschlagen."
+      }
     }
   },
   "notFound": {

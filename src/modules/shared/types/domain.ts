@@ -1,5 +1,13 @@
 export type UserRole = "admin" | "therapist" | "patient";
 
+export const AccountType = {
+  Patient: "patient",
+  Psychologe: "psychologe",
+  Logopaede: "logopaede",
+  Physio: "physio",
+} as const;
+export type AccountType = (typeof AccountType)[keyof typeof AccountType];
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -70,7 +78,6 @@ export interface TextInputConfig {
   minLength: number;
   maxLength: number;
   showHistory: boolean;
-  exampleResponse?: string;
 }
 
 export interface QuizOption {
@@ -245,8 +252,8 @@ export interface TherapistProfile {
   updatedAt?: string;
 }
 
-export type TherapistRole = Extract<UserRole, "therapist"> | "psychologe";
-export type PatientRole = Extract<UserRole, "patient">;
+export type TherapistRole = Exclude<AccountType, typeof AccountType.Patient>;
+export type PatientRole = typeof AccountType.Patient;
 
 type FirestoreRecord = Record<string, unknown>;
 
@@ -270,15 +277,52 @@ const coalesce = (...values: unknown[]): unknown => {
   return "";
 };
 
+const toStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      if (typeof entry === "string") return entry.trim();
+      if (typeof entry === "number" || typeof entry === "boolean") {
+        return String(entry).trim();
+      }
+      if (entry && typeof entry === "object" && "toString" in entry) {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        return String(entry).trim();
+      }
+      return "";
+    })
+    .filter(Boolean);
+};
+
+const timestampToIsoString = (value: unknown): string | undefined => {
+  if (!value) return undefined;
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "seconds" in value &&
+    typeof (value as { seconds: number }).seconds === "number"
+  ) {
+    const seconds = (value as { seconds: number; nanoseconds?: number }).seconds * 1000;
+    const nanos =
+      ((value as { nanoseconds?: number }).nanoseconds ?? 0) / 1_000_000;
+    const date = new Date(seconds + nanos);
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+  }
+  return undefined;
+};
+
 const toTherapistRole = (value: string): TherapistRole => {
   const normalized = value.toLowerCase();
-  if (normalized === "therapist") return "therapist";
-  if (normalized === "psychologe") return "psychologe";
-  return "psychologe";
+  if (normalized === AccountType.Psychologe) return AccountType.Psychologe;
+  if (normalized === AccountType.Logopaede) return AccountType.Logopaede;
+  if (normalized === AccountType.Physio) return AccountType.Physio;
+  return AccountType.Psychologe;
 };
 
 const toPatientRole = (value: string): PatientRole =>
-  value.toLowerCase() === "patient" ? "patient" : "patient";
+  value.toLowerCase() === AccountType.Patient ? AccountType.Patient : AccountType.Patient;
 
 export interface TherapistInit {
   id: string;
@@ -286,14 +330,18 @@ export interface TherapistInit {
   lastname: string;
   email: string;
   phone: string;
-  specialization: string;
   image: string;
   inviteCode?: string;
+  therapistTypes?: string[];
+  inviteId?: string;
+  licenseValidUntil?: string;
+  contractReference?: string;
   role?: TherapistRole;
 }
 
 export interface TherapistSnapshot extends TherapistInit {
   inviteCode: string;
+  therapistTypes: string[];
   role: TherapistRole;
 }
 
@@ -303,9 +351,12 @@ export class Therapist {
   readonly lastname: string;
   readonly email: string;
   readonly phone: string;
-  readonly specialization: string;
   readonly image: string;
   readonly inviteCode: string;
+  readonly therapistTypes: string[];
+  readonly inviteId?: string;
+  readonly licenseValidUntil?: string;
+  readonly contractReference?: string;
   readonly role: TherapistRole;
 
   constructor({
@@ -314,9 +365,12 @@ export class Therapist {
     lastname,
     email,
     phone,
-    specialization,
     image,
     inviteCode = "",
+    therapistTypes = [],
+    inviteId,
+    licenseValidUntil,
+    contractReference,
     role = "psychologe",
   }: TherapistInit) {
     this.id = id;
@@ -324,13 +378,26 @@ export class Therapist {
     this.lastname = lastname;
     this.email = email;
     this.phone = phone;
-    this.specialization = specialization;
     this.image = image;
     this.inviteCode = inviteCode;
+    this.therapistTypes = therapistTypes;
+    this.inviteId = inviteId;
+    this.licenseValidUntil = licenseValidUntil;
+    this.contractReference = contractReference;
     this.role = role;
   }
 
   static fromFirestore(firestore: FirestoreRecord): Therapist {
+    const therapistTypes = toStringArray(firestore["therapistTypes"]);
+    const licenseValidUntil = timestampToIsoString(
+      coalesce(firestore["licenseValidUntil"], firestore["licenseUntil"])
+    );
+    const contractReferenceRaw = toStringSafe(
+      coalesce(firestore["contractReference"], "")
+    ).trim();
+    const contractReference =
+      contractReferenceRaw.length > 0 ? contractReferenceRaw : undefined;
+
     return new Therapist({
       id: toStringSafe(coalesce(firestore["id"], "")),
       firstname: toStringSafe(
@@ -341,9 +408,14 @@ export class Therapist {
       ),
       email: toStringSafe(coalesce(firestore["email"], "")),
       phone: toStringSafe(coalesce(firestore["phone"], "")),
-      specialization: toStringSafe(coalesce(firestore["specialization"], "")),
       image: toStringSafe(coalesce(firestore["image"], "")),
       inviteCode: toStringSafe(coalesce(firestore["inviteCode"], "")),
+      therapistTypes,
+      inviteId: toStringSafe(
+        coalesce(firestore["inviteId"], firestore["inviteRef"], "")
+      ).trim() || undefined,
+      licenseValidUntil,
+      contractReference,
       role: toTherapistRole(
         toStringSafe(coalesce(firestore["role"], "psychologe"))
       ),
@@ -361,19 +433,27 @@ export class Therapist {
       lastname: this.lastname,
       email: this.email,
       phone: this.phone,
-      specialization: this.specialization,
       image: this.image,
       inviteCode: this.inviteCode,
+      therapistTypes: this.therapistTypes,
+      inviteId: this.inviteId,
+      licenseValidUntil: this.licenseValidUntil,
+      contractReference: this.contractReference,
       role: this.role,
     };
   }
 
   toFirestore(): Record<string, unknown> {
     const base = this.toObject();
-    return {
+    const payload: Record<string, unknown> = {
       ...base,
       name: this.fullName,
-    } as Record<string, unknown>;
+      role: this.role,
+    };
+    if (!this.inviteId) delete payload.inviteId;
+    if (!this.licenseValidUntil) delete payload.licenseValidUntil;
+    if (!this.contractReference) delete payload.contractReference;
+    return payload;
   }
 
   copyWith(update: Partial<TherapistInit>): Therapist {
