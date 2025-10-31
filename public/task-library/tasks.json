@@ -16,7 +16,6 @@
       "description": "Dokumentiere täglich, wie viele Minuten der betroffene Arm bei der Constraint-Induced Movement Therapy aktiv eingesetzt wurde.",
       "icon": "pan_tool_alt_rounded",
       "type": "progressTask",
-      "frequency": "daily",
       "therapistTypes": [
         "ergotherapie"
       ],
@@ -50,7 +49,6 @@
       "description": "Halte wöchentlich fest, wie zufrieden du mit einer selbstgewählten Alltagsaktivität bist und welche Fortschritte du bemerkst.",
       "icon": "rate_review_rounded",
       "type": "textInput",
-      "frequency": "weekly",
       "therapistTypes": [
         "ergotherapie"
       ],
@@ -84,7 +82,6 @@
       "description": "Formuliere ein konkretes, messbares Trainingsziel für eine Aktivität des täglichen Lebens und lege die Anzahl der Wiederholungen pro Übungstag fest.",
       "icon": "checklist_rounded",
       "type": "goalTask",
-      "frequency": "weekly",
       "therapistTypes": [
         "ergotherapie"
       ],
@@ -116,7 +113,6 @@
       "description": "Protokolliere, wie viele Sätze aus dem Otago-Programm (Kniebeugen, Tandemstand, Einbeinstand) du absolviert hast.",
       "icon": "self_improvement_rounded",
       "type": "progressTask",
-      "frequency": "weekly",
       "therapistTypes": [
         "physiotherapie"
       ],
@@ -150,7 +146,6 @@
       "description": "Starte ein 20-minütiges Ausdauertraining (z. B. Gehen auf ebener Strecke) und halte Pausen so kurz wie möglich.",
       "icon": "directions_run_rounded",
       "type": "timerTask",
-      "frequency": "daily",
       "therapistTypes": [
         "physiotherapie"
       ],
@@ -183,7 +178,6 @@
       "description": "Bewerte nach jeder Trainingseinheit deine wahrgenommene Anstrengung auf der Borg-Skala (6–20).",
       "icon": "speed_rounded",
       "type": "scaleTask",
-      "frequency": "daily",
       "therapistTypes": [
         "physiotherapie"
       ],
@@ -219,7 +213,6 @@
       "description": "Reflektiere täglich, welche Handlung dir Sinn vermittelt hat und welche Werte du erlebt hast.",
       "icon": "menu_book_rounded",
       "type": "textInput",
-      "frequency": "daily",
       "therapistTypes": [
         "psychotherapie"
       ],
@@ -253,7 +246,6 @@
       "description": "Formuliere ein Wochenziel, das einen deiner zentralen Werte aktiv verwirklicht, und beschreibe konkrete Schritte.",
       "icon": "flag_rounded",
       "type": "goalTask",
-      "frequency": "weekly",
       "therapistTypes": [
         "psychotherapie"
       ],
@@ -285,7 +277,6 @@
       "description": "Erfasse auslösende Situationen, automatische Gedanken, Gefühle und alternative Bewertungen.",
       "icon": "psychology_rounded",
       "type": "textInput",
-      "frequency": "daily",
       "therapistTypes": [
         "psychotherapie"
       ],
@@ -319,7 +310,6 @@
       "description": "Dokumentiere täglich deine positive und negative Affektlage anhand repräsentativer Emotions-Emojis.",
       "icon": "mood_rounded",
       "type": "stateLog",
-      "frequency": "daily",
       "therapistTypes": [
         "psychotherapie"
       ],
@@ -358,7 +348,6 @@
       "description": "Führe täglich eine 10-minütige Atemachtsamkeit nach dem MBSR-Protokoll durch.",
       "icon": "self_improvement",
       "type": "timerTask",
-      "frequency": "daily",
       "therapistTypes": [
         "psychotherapie"
       ],

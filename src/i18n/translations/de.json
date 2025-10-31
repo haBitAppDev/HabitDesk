@@ -173,6 +173,7 @@
       "tasksSelected": "Tasks ausgewählt",
       "therapistTypes": "Therapeuten-Typen",
       "tasks": "Augabenvorlage",
+      "cadenceInfo": "Ausführungsrhythmus",
       "color": "Farbe",
       "customColor": "Eigene Farbe",
       "colorHint": "Wähle eine Akzentfarbe oder lege einen eigenen Farbwert fest.",
@@ -247,7 +248,7 @@
       "admin": {
         "root": "Admin",
         "therapists": "Therapeut:innen",
-        "roles": "Rollenverwaltung",
+        "users": "User",
         "templates": "Aufgaben",
         "dashboard": "Admin"
       },
@@ -400,6 +401,7 @@
         "template": "Basis-Vorlage",
         "title": "Programmtitel",
         "patientId": "Patient-ID",
+        "frequency": "Ausführungsrhythmus",
         "notes": "Notizen (optional)",
         "none": "Keines"
       },
@@ -426,6 +428,7 @@
         "empty": "Noch keine Tasks ausgewählt. Füge über die Bibliothek rechts Tasks hinzu.",
         "step": "Schritt {index}"
       },
+      "frequencyHint": "Ausführungsrhythmus",
       "library": {
         "title": "Task Bibliothek",
         "subtitle": "Füge Tasks per Klick hinzu. Duplizierte Einträge werden automatisch verhindert.",
@@ -437,13 +440,10 @@
     "taskLibrary": {
       "title": "Task Library",
       "subtitle": "Durchsuche die vorhandenen Task Vorlagen und füge sie deinem Programm hinzu.",
+      "cadenceInfo": "Die Ausführungsrhythmik wird vom Programmtyp festgelegt.",
       "search": "Nach Titel, Beschreibung oder Rolle suchen…",
       "feedback": "\"{title}\" zum Builder hinzugefügt.",
       "empty": "Keine Tasks gefunden. Passe deine Suche an oder lege ein neues Vorlagen an.",
-      "frequency": {
-        "daily": "Täglich",
-        "weekly": "Wöchentlich"
-      },
       "visibility": {
         "visible": "Sichtbar",
         "hidden": "Versteckt"
@@ -461,7 +461,6 @@
         "rolesLabel": "Rollen (Komma getrennt)",
         "typeLabel": "Task Typ",
         "typeHelp": "Wähle einen Task Typ aus, um die passenden Einstellungen zu konfigurieren.",
-        "frequencyLabel": "Frequenz",
         "visibilityLabel": "Sichtbarkeit",
         "secondsLabel": "Dauer (Sekunden)",
         "allowPauseLabel": "Pause erlauben",

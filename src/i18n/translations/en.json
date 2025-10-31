@@ -173,6 +173,7 @@
       "tasksSelected": "Tasks selected",
       "therapistTypes": "Therapist types",
       "tasks": "Task templates",
+      "cadenceInfo": "Cadence",
       "color": "Color",
       "customColor": "Custom color",
       "colorHint": "Pick an accent color or define your own.",
@@ -247,7 +248,7 @@
       "admin": {
         "root": "Admin",
         "therapists": "Therapists",
-        "roles": "Role Management",
+        "users": "User",
         "templates": "Templates",
         "dashboard": "Admin"
       },
@@ -400,6 +401,7 @@
         "template": "Base template",
         "title": "Program title",
         "patientId": "Patient ID",
+        "frequency": "Cadence",
         "notes": "Notes (optional)",
         "none": "None"
       },
@@ -426,6 +428,7 @@
         "empty": "No tasks selected yet. Add tasks from the library.",
         "step": "Step {index}"
       },
+      "frequencyHint": "Cadence",
       "library": {
         "title": "Task library",
         "subtitle": "Add tasks with one click. Duplicate entries are prevented.",
@@ -437,13 +440,10 @@
     "taskLibrary": {
       "title": "Task Library",
       "subtitle": "Browse existing task templates and add them to your program.",
+      "cadenceInfo": "Cadence is determined by the program type.",
       "search": "Search by title, description or role…",
       "feedback": "\"{title}\" added to builder.",
       "empty": "No tasks found. Adjust your search or create a new template.",
-      "frequency": {
-        "daily": "Daily",
-        "weekly": "Weekly"
-      },
       "visibility": {
         "visible": "Visible",
         "hidden": "Hidden"
@@ -461,7 +461,6 @@
         "rolesLabel": "Roles (comma separated)",
         "typeLabel": "Task type",
         "typeHelp": "Select a task type to configure task-specific settings.",
-        "frequencyLabel": "Frequency",
         "visibilityLabel": "Visibility",
         "secondsLabel": "Duration (seconds)",
         "allowPauseLabel": "Allow pause",

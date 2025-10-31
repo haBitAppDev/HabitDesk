@@ -9,13 +9,6 @@ import type {
   ProgramTemplate,
   TaskTemplate,
 } from "../src/modules/shared/types/domain";
-import {
-  ProgramType,
-  TaskFrequency,
-  TaskType,
-  TaskVisibility,
-  TemplateScope,
-} from "../src/modules/shared/types/domain";
 
 const require = createRequire(new URL("../functions/package.json", import.meta.url));
 const { initializeApp, cert } = require("firebase-admin/app");
@@ -64,20 +57,7 @@ async function seedTaskTemplates(templates: TaskTemplate[]) {
   await batch.commit();
 }
 
-async function seedProgramTemplates(templates: ProgramTemplate[]) {
-  if (!templates.length) return;
 
-  const batch = db.batch();
-
-  templates.forEach((template) => {
-    const { id, ...rest } = template;
-    const docId = id ?? toId(template.title);
-    const ref = db.collection("program_templates").doc(docId);
-    batch.set(ref, rest, { merge: true });
-  });
-
-  await batch.commit();
-}
 
 async function run() {
   console.log("🚀 Starting HabitDesk seed script...\n");

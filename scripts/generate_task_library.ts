@@ -3,7 +3,6 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  TaskFrequency,
   TaskTemplate,
   TaskType,
   TaskVisibility,
@@ -42,9 +41,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Dokumentiere täglich, wie viele Minuten der betroffene Arm bei der Constraint-Induced Movement Therapy aktiv eingesetzt wurde.",
     icon: "pan_tool_alt_rounded",
-    type: TaskType.Progress,
-    frequency: TaskFrequency.Daily,
-    therapistTypes: ["ergotherapie"],
+    type: TaskType.Progress,    therapistTypes: ["ergotherapie"],
     config: {
       taskType: TaskType.Progress,
       target: 180,
@@ -68,9 +65,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Halte wöchentlich fest, wie zufrieden du mit einer selbstgewählten Alltagsaktivität bist und welche Fortschritte du bemerkst.",
     icon: "rate_review_rounded",
-    type: TaskType.TextInput,
-    frequency: TaskFrequency.Weekly,
-    therapistTypes: ["ergotherapie"],
+    type: TaskType.TextInput,    therapistTypes: ["ergotherapie"],
     config: {
       taskType: TaskType.TextInput,
       minLength: 40,
@@ -94,9 +89,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Formuliere ein konkretes, messbares Trainingsziel für eine Aktivität des täglichen Lebens und lege die Anzahl der Wiederholungen pro Übungstag fest.",
     icon: "checklist_rounded",
-    type: TaskType.Goal,
-    frequency: TaskFrequency.Weekly,
-    therapistTypes: ["ergotherapie"],
+    type: TaskType.Goal,    therapistTypes: ["ergotherapie"],
     config: {
       taskType: TaskType.Goal,
       goalDescription:
@@ -119,9 +112,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Protokolliere, wie viele Sätze aus dem Otago-Programm (Kniebeugen, Tandemstand, Einbeinstand) du absolviert hast.",
     icon: "self_improvement_rounded",
-    type: TaskType.Progress,
-    frequency: TaskFrequency.Weekly,
-    therapistTypes: ["physiotherapie"],
+    type: TaskType.Progress,    therapistTypes: ["physiotherapie"],
     config: {
       taskType: TaskType.Progress,
       target: 12,
@@ -145,9 +136,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Starte ein 20-minütiges Ausdauertraining (z. B. Gehen auf ebener Strecke) und halte Pausen so kurz wie möglich.",
     icon: "directions_run_rounded",
-    type: TaskType.Timer,
-    frequency: TaskFrequency.Daily,
-    therapistTypes: ["physiotherapie"],
+    type: TaskType.Timer,    therapistTypes: ["physiotherapie"],
     config: {
       taskType: TaskType.Timer,
       seconds: 1200,
@@ -170,9 +159,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Bewerte nach jeder Trainingseinheit deine wahrgenommene Anstrengung auf der Borg-Skala (6–20).",
     icon: "speed_rounded",
-    type: TaskType.Scale,
-    frequency: TaskFrequency.Daily,
-    therapistTypes: ["physiotherapie"],
+    type: TaskType.Scale,    therapistTypes: ["physiotherapie"],
     config: {
       taskType: TaskType.Scale,
       min: 6,
@@ -198,9 +185,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Reflektiere täglich, welche Handlung dir Sinn vermittelt hat und welche Werte du erlebt hast.",
     icon: "menu_book_rounded",
-    type: TaskType.TextInput,
-    frequency: TaskFrequency.Daily,
-    therapistTypes: ["psychotherapie"],
+    type: TaskType.TextInput,    therapistTypes: ["psychotherapie"],
     config: {
       taskType: TaskType.TextInput,
       minLength: 40,
@@ -224,9 +209,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Formuliere ein Wochenziel, das einen deiner zentralen Werte aktiv verwirklicht, und beschreibe konkrete Schritte.",
     icon: "flag_rounded",
-    type: TaskType.Goal,
-    frequency: TaskFrequency.Weekly,
-    therapistTypes: ["psychotherapie"],
+    type: TaskType.Goal,    therapistTypes: ["psychotherapie"],
     config: {
       taskType: TaskType.Goal,
       goalDescription:
@@ -249,9 +232,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Erfasse auslösende Situationen, automatische Gedanken, Gefühle und alternative Bewertungen.",
     icon: "psychology_rounded",
-    type: TaskType.TextInput,
-    frequency: TaskFrequency.Daily,
-    therapistTypes: ["psychotherapie"],
+    type: TaskType.TextInput,    therapistTypes: ["psychotherapie"],
     config: {
       taskType: TaskType.TextInput,
       minLength: 60,
@@ -275,9 +256,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Dokumentiere täglich deine positive und negative Affektlage anhand repräsentativer Emotions-Emojis.",
     icon: "mood_rounded",
-    type: TaskType.StateLog,
-    frequency: TaskFrequency.Daily,
-    therapistTypes: ["psychotherapie"],
+    type: TaskType.StateLog,    therapistTypes: ["psychotherapie"],
     config: {
       taskType: TaskType.StateLog,
       emojiKeys: ["😀", "🙂", "😐", "😔", "😢"],
@@ -300,9 +279,7 @@ const evidenceBackedTasks: EvidenceTask[] = [
     description:
       "Führe täglich eine 10-minütige Atemachtsamkeit nach dem MBSR-Protokoll durch.",
     icon: "self_improvement",
-    type: TaskType.Timer,
-    frequency: TaskFrequency.Daily,
-    therapistTypes: ["psychotherapie"],
+    type: TaskType.Timer,    therapistTypes: ["psychotherapie"],
     config: {
       taskType: TaskType.Timer,
       seconds: 600,

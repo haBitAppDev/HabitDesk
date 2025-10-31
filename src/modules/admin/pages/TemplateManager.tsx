@@ -31,10 +31,10 @@ import type {
 } from "../../shared/types/domain";
 import {
   ProgramType,
-  TaskFrequency,
   TaskType,
   TaskVisibility,
   TemplateScope,
+  programTypeToCadence,
 } from "../../shared/types/domain";
 import {
   Field,
@@ -141,7 +141,6 @@ interface TaskTemplateFormState {
   description: string;
   icon: string;
   type: TaskType;
-  frequency: TaskFrequency;
   visibility: TaskVisibility;
   rolesText: string;
   scope: TemplateScopeType;
@@ -175,7 +174,6 @@ const createEmptyTaskForm = (): TaskTemplateFormState => ({
   description: "",
   icon: TASK_ICON_OPTIONS[0],
   type: TaskType.Timer,
-  frequency: TaskFrequency.Daily,
   visibility: TaskVisibility.VisibleToPatients,
   rolesText: "",
   scope: TemplateScope.Global,
@@ -330,7 +328,6 @@ export function TemplateManager() {
       description: taskForm.description.trim() || undefined,
       icon: taskForm.icon,
       type: taskForm.type,
-      frequency: taskForm.frequency,
       visibility: taskForm.visibility,
       roles: roleStringToArray(taskForm.rolesText),
       scope,
@@ -430,7 +427,6 @@ export function TemplateManager() {
       description: template.description ?? "",
       icon: template.icon,
       type: template.type,
-      frequency: template.frequency,
       visibility: template.visibility,
       rolesText: roleArrayToString(template.roles),
       scope:
@@ -673,8 +669,6 @@ function TaskTemplatePane({
     "templates.tasks.form.configTitle",
     "Konfiguration"
   );
-  const frequencyDaily = t("templates.frequency.daily", "Täglich");
-  const frequencyWeekly = t("templates.frequency.weekly", "Wöchentlich");
   const visibilityPatient = t(
     "templates.visibility.visibleToPatients",
     "Für Patienten sichtbar"
@@ -801,20 +795,6 @@ function TaskTemplatePane({
                   {option.label}
                 </option>
               ))}
-            </Select>
-          </Field>
-          <Field label={t("templates.fields.frequency", "Frequenz")}>
-            <Select
-              value={form.frequency}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  frequency: event.target.value as TaskFrequency,
-                }))
-              }
-            >
-              <option value={TaskFrequency.Daily}>{frequencyDaily}</option>
-              <option value={TaskFrequency.Weekly}>{frequencyWeekly}</option>
             </Select>
           </Field>
           <Field label={t("templates.fields.visibility", "Sichtbarkeit")}>
@@ -972,8 +952,7 @@ function TaskTemplatePane({
                       {template.title}
                     </p>
                     <p className="text-xs uppercase tracking-wide text-brand-text-muted">
-                      {t(`templates.taskTypes.${template.type}`, template.type)} •{" "}
-                      {template.frequency === TaskFrequency.Daily ? frequencyDaily : frequencyWeekly}
+                      {t(`templates.taskTypes.${template.type}`, template.type)}
                     </p>
                     {template.description && (
                       <p className="mt-1 text-xs text-brand-text-muted">
@@ -1090,6 +1069,8 @@ function ProgramTemplatePane({
     "templates.programs.form.colorHint",
     "Wähle eine Akzentfarbe oder definiere eine eigene."
   );
+  const frequencyDaily = t("templates.frequency.daily", "Täglich");
+  const frequencyWeekly = t("templates.frequency.weekly", "Wöchentlich");
   return (
     <div className="space-y-6 xl:grid xl:grid-cols-3 xl:gap-6 xl:space-y-0">
       <Card className="space-y-6 p-6 xl:col-span-2">
@@ -1142,19 +1123,24 @@ function ProgramTemplatePane({
 
         <div className="grid gap-4 md:grid-cols-2">
           <Field label={t("templates.programs.form.typeLabel", "Programmart")}>
-            <Select
-              value={form.type}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  type: event.target.value as ProgramType,
-                }))
-              }
-            >
-              <option value={ProgramType.Challenge}>Challenge</option>
-              <option value={ProgramType.Sequential}>Sequenziell</option>
-              <option value={ProgramType.AdaptiveNormal}>Adaptiv / Normal</option>
-            </Select>
+            <div className="space-y-2">
+              <Select
+                value={form.type}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    type: event.target.value as ProgramType,
+                  }))
+                }
+              >
+                <option value={ProgramType.Challenge}>Challenge</option>
+                <option value={ProgramType.Sequential}>Sequenziell</option>
+                <option value={ProgramType.AdaptiveNormal}>Adaptiv / Normal</option>
+              </Select>
+              <p className="text-xs text-brand-text-muted">
+                {t("templates.programs.form.cadenceInfo", "Cadence")}: {programTypeToCadence(form.type) === "daily" ? frequencyDaily : frequencyWeekly}
+              </p>
+            </div>
           </Field>
           <Field label={t("templates.fields.icon", "Icon")}>
             <IconPicker
@@ -1370,7 +1356,7 @@ function ProgramTemplatePane({
                       {template.taskIds.length} {tasksLabel} • {t(
                         `templates.taskTypes.${template.type}`,
                         template.type
-                      )}
+                      )} • {programTypeToCadence(template.type) === "daily" ? frequencyDaily : frequencyWeekly}
                     </p>
                   </div>
                   <span
