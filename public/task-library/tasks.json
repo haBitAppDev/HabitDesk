@@ -1,7 +1,16 @@
 {
-  "generatedAt": "2025-10-31T09:28:34.604Z",
+  "generatedAt": "2025-10-31T09:59:48.191Z",
   "tasks": [
     {
+      "ownerId": "",
+      "roles": [
+        "therapist"
+      ],
+      "visibility": "visibleToPatients",
+      "scope": "therapistType",
+      "isPublished": true,
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "ergotherapie-cimt-protokoll",
       "title": "CIMT-Handeinsatz protokollieren",
       "description": "Dokumentiere täglich, wie viele Minuten der betroffene Arm bei der Constraint-Induced Movement Therapy aktiv eingesetzt wurde.",
@@ -24,7 +33,9 @@
           "citation": "Deutsche Gesellschaft für Neurologie (2020). S3-Leitlinie 030/073: Schlaganfall – Rehabilitation, Teil 1.",
           "url": "https://www.dgn.org/leitlinien/ll-030-073-schlaganfall-rehabilitation"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -32,10 +43,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "ergotherapie-copm-reflexion",
       "title": "COPM-Reflexion zum Alltag",
       "description": "Halte wöchentlich fest, wie zufrieden du mit einer selbstgewählten Alltagsaktivität bist und welche Fortschritte du bemerkst.",
@@ -58,7 +67,9 @@
           "citation": "Law, M. et al. (1990). The Canadian Occupational Performance Measure: an outcome measure for occupational therapy. Canadian Journal of Occupational Therapy, 57(2), 82–87.",
           "url": "https://doi.org/10.1177/000841749005700207"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -66,10 +77,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "ergotherapie-adl-intervention",
       "title": "Aufgabenorientiertes ADL-Training planen",
       "description": "Formuliere ein konkretes, messbares Trainingsziel für eine Aktivität des täglichen Lebens und lege die Anzahl der Wiederholungen pro Übungstag fest.",
@@ -90,7 +99,9 @@
           "citation": "Lang, C. E. et al. (2009). Dose response of task-specific training in the upper extremity after stroke. Stroke, 40(9), 315–320.",
           "url": "https://doi.org/10.1161/STROKEAHA.108.560863"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -98,10 +109,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "physiotherapie-otago-balance",
       "title": "Otago-Gleichgewichtsübungen zählen",
       "description": "Protokolliere, wie viele Sätze aus dem Otago-Programm (Kniebeugen, Tandemstand, Einbeinstand) du absolviert hast.",
@@ -124,7 +133,9 @@
           "citation": "Campbell, A. J. et al. (1997). Randomised controlled trial of a general practitioner programme of home based exercise to prevent falls in elderly women. BMJ, 315(7115), 1065–1069.",
           "url": "https://doi.org/10.1136/bmj.315.7115.1065"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -132,10 +143,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "physiotherapie-ausdauer-copd",
       "title": "Ausdauertraining bei COPD steuern",
       "description": "Starte ein 20-minütiges Ausdauertraining (z. B. Gehen auf ebener Strecke) und halte Pausen so kurz wie möglich.",
@@ -157,7 +166,9 @@
           "citation": "Deutsche Atemwegsliga & Deutsche Gesellschaft für Pneumologie (2021). S2k-Leitlinie COPD.",
           "url": "https://register.awmf.org/de/leitlinien/detail/080-009"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -165,10 +176,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "physiotherapie-borg-monitoring",
       "title": "Belastung mit Borg-Skala erfassen",
       "description": "Bewerte nach jeder Trainingseinheit deine wahrgenommene Anstrengung auf der Borg-Skala (6–20).",
@@ -193,7 +202,9 @@
           "citation": "Borg, G. A. V. (1982). Psychophysical bases of perceived exertion. Medicine & Science in Sports & Exercise, 14(5), 377–381.",
           "url": "https://doi.org/10.1249/00005768-198205000-00012"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -201,10 +212,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "logotherapie-sinn-tagebuch",
       "title": "Sinn-Tagebuch führen",
       "description": "Reflektiere täglich, welche Handlung dir Sinn vermittelt hat und welche Werte du erlebt hast.",
@@ -227,7 +236,9 @@
           "citation": "Frankl, V. E. (2011). Der Mensch auf der Suche nach Sinn. München: Kösel.",
           "url": "https://www.viktorfrankl.org/"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -235,10 +246,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "logotherapie-werte-wochenziel",
       "title": "Werteorientiertes Wochenziel",
       "description": "Formuliere ein Wochenziel, das einen deiner zentralen Werte aktiv verwirklicht, und beschreibe konkrete Schritte.",
@@ -259,7 +268,9 @@
           "citation": "Lukas, E., & Hirsch, R. (2016). Sinnzentrierte Psychotherapie – Logotherapie und Existenzanalyse in der Praxis. München: Kösel.",
           "url": "https://www.klett-cotta.de/buch/Psychotherapie/Sinnzentrierte_Psychotherapie/70741"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -267,10 +278,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "psychotherapie-gedankenprotokoll",
       "title": "Kognitives Gedankenprotokoll",
       "description": "Erfasse auslösende Situationen, automatische Gedanken, Gefühle und alternative Bewertungen.",
@@ -293,7 +302,9 @@
           "citation": "Beck, A. T., Rush, A. J., Shaw, B. F., & Emery, G. (1979). Cognitive Therapy of Depression. New York: Guilford Press.",
           "url": "https://doi.org/10.1037/0003-066X.36.2.111"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -301,10 +312,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "psychotherapie-emotionslog",
       "title": "Emotionstagebuch (PANAS)",
       "description": "Dokumentiere täglich deine positive und negative Affektlage anhand repräsentativer Emotions-Emojis.",
@@ -332,7 +341,9 @@
           "citation": "Watson, D., Clark, L. A., & Tellegen, A. (1988). Development and validation of brief measures of positive and negative affect: The PANAS scales. Journal of Personality and Social Psychology, 54(6), 1063–1070.",
           "url": "https://doi.org/10.1037/0022-3514.54.6.1063"
         }
-      ],
+      ]
+    },
+    {
       "ownerId": "",
       "roles": [
         "therapist"
@@ -340,10 +351,8 @@
       "visibility": "visibleToPatients",
       "scope": "therapistType",
       "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
-    },
-    {
+      "createdAt": "2025-10-31T09:59:48.191Z",
+      "updatedAt": "2025-10-31T09:59:48.191Z",
       "id": "psychotherapie-achtsamkeitszeit",
       "title": "Achtsamkeitsmeditation",
       "description": "Führe täglich eine 10-minütige Atemachtsamkeit nach dem MBSR-Protokoll durch.",
@@ -365,16 +374,7 @@
           "citation": "Kabat-Zinn, J. (1990). Full Catastrophe Living. New York: Delacorte.",
           "url": "https://www.umassmed.edu/cfm/"
         }
-      ],
-      "ownerId": "",
-      "roles": [
-        "therapist"
-      ],
-      "visibility": "visibleToPatients",
-      "scope": "therapistType",
-      "isPublished": true,
-      "createdAt": "2025-10-31T09:28:34.604Z",
-      "updatedAt": "2025-10-31T09:28:34.604Z"
+      ]
     }
   ]
 }
