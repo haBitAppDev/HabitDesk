@@ -15,7 +15,6 @@ import { NavLink } from "react-router-dom";
 
 import { useI18n } from "../../i18n/I18nProvider";
 import { useUserRole } from "../../modules/shared/hooks/useUserRole";
-import type { UserRole } from "../../modules/shared/types/domain";
 
 type SidebarProps = React.HTMLAttributes<HTMLElement> & {
   mobileOpen: boolean;
@@ -26,7 +25,6 @@ interface NavItem {
   label: string;
   path: string;
   icon: LucideIcon;
-  roles: UserRole[];
 }
 
 export function Sidebar({ mobileOpen, onClose, className }: SidebarProps) {
@@ -35,45 +33,58 @@ export function Sidebar({ mobileOpen, onClose, className }: SidebarProps) {
 
   const navItems = useMemo(() => {
     if (!role) return [];
-    const items: NavItem[] = [
-      {
-        label: t("layout.sidebar.admin.therapists", "Therapists"),
-        path: "/admin/therapists",
-        icon: UserCog,
-        roles: ["admin"],
-      },
-      {
-        label: t("layout.sidebar.admin.roles", "Role Management"),
-        path: "/admin/roles",
-        icon: ShieldCheck,
-        roles: ["admin"],
-      },
-      {
-        label: t("layout.sidebar.admin.templates", "Templates"),
-        path: "/admin/templates",
-        icon: Library,
-        roles: ["admin"],
-      },
-      {
-        label: t("layout.sidebar.therapist.patients", "Patients"),
-        path: "/therapist/patients",
-        icon: Users,
-        roles: ["therapist", "admin"],
-      },
-      {
-        label: t("layout.sidebar.therapist.programBuilder", "Program Builder"),
-        path: "/therapist/program-builder",
-        icon: ListPlus,
-        roles: ["therapist", "admin"],
-      },
-      {
-        label: t("layout.sidebar.therapist.taskLibrary", "Task Library"),
-        path: "/therapist/tasks",
-        icon: ClipboardList,
-        roles: ["therapist", "admin"],
-      },
-    ];
-    return items.filter((item) => item.roles.includes(role));
+
+    if (role === "admin") {
+      return [
+        {
+          label: t("layout.sidebar.admin.therapists", "Therapists"),
+          path: "/admin/therapists",
+          icon: UserCog,
+        },
+        {
+          label: t("layout.sidebar.admin.users", "User"),
+          path: "/admin/users",
+          icon: ShieldCheck,
+        },
+        {
+          label: t("layout.sidebar.admin.templates", "Templates"),
+          path: "/admin/templates",
+          icon: Library,
+        },
+        {
+          label: t("layout.sidebar.therapist.programBuilder", "Program Builder"),
+          path: "/therapist/program-builder",
+          icon: ListPlus,
+        },
+        {
+          label: t("layout.sidebar.therapist.taskLibrary", "Task Library"),
+          path: "/therapist/tasks",
+          icon: ClipboardList,
+        },
+      ];
+    }
+
+    if (role === "therapist") {
+      return [
+        {
+          label: t("layout.sidebar.therapist.patients", "Patients"),
+          path: "/therapist/patients",
+          icon: Users,
+        },
+        {
+          label: t("layout.sidebar.therapist.programBuilder", "Program Builder"),
+          path: "/therapist/program-builder",
+          icon: ListPlus,
+        },
+        {
+          label: t("layout.sidebar.therapist.taskLibrary", "Task Library"),
+          path: "/therapist/tasks",
+          icon: ClipboardList,
+        },
+      ];
+    }
+
+    return [];
   }, [role, t]);
 
   const defaultDashboardPath = role === "admin" ? "/admin" : "/therapist";

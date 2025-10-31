@@ -11,6 +11,15 @@ service cloud.firestore {
         request.auth.token.role in ['admin', 'therapist', 'patient'];
     }
 
+    function canAccessAssignment(assignmentId) {
+      return hasRole('admin') ||
+        hasRole('therapist') ||
+        (hasRole('patient') &&
+          exists(/databases/$(database)/documents/program_assignments/$(assignmentId)) &&
+          get(/databases/$(database)/documents/program_assignments/$(assignmentId)).data.userId ==
+            request.auth.uid);
+    }
+
     match /program_templates/{id} {
       allow read: if hasRole('admin') || hasRole('therapist');
       allow write: if hasRole('admin');
@@ -30,12 +39,18 @@ service cloud.firestore {
       allow write: if hasRole('admin');
     }
 
+    function isPatientAssignedToProgram() {
+      return hasRole('patient') &&
+        resource.data.assignedUserIds is list &&
+        request.auth.uid in resource.data.assignedUserIds;
+    }
+
     match /programs/{id} {
       allow create: if hasRole('admin') || (
         hasRole('therapist') &&
         request.resource.data.ownerId == request.auth.uid
       );
-      allow read: if hasRole('admin') || hasRole('therapist');
+      allow read: if hasRole('admin') || hasRole('therapist') || isPatientAssignedToProgram();
       allow update, delete: if hasRole('admin') || (
         hasRole('therapist') &&
         resource.data.ownerId == request.auth.uid &&
@@ -67,6 +82,13 @@ service cloud.firestore {
           resource.data.userId == request.auth.uid &&
           request.resource.data.userId == request.auth.uid);
       allow delete: if hasRole('admin') || hasRole('therapist');
+
+      match /TaskResults/{resultId} {
+        allow read: if canAccessAssignment(id);
+        allow create, update: if hasRole('therapist') ||
+          (hasRole('patient') && canAccessAssignment(id));
+        allow delete: if hasRole('admin') || hasRole('therapist');
+      }
     }
 
     match /users/{uid} {

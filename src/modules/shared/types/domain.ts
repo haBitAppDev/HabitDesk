@@ -34,12 +34,6 @@ export const TemplateScope = {
 export type TemplateScope =
   (typeof TemplateScope)[keyof typeof TemplateScope];
 
-export const TaskFrequency = {
-  Daily: "daily",
-  Weekly: "weekly",
-} as const;
-export type TaskFrequency = (typeof TaskFrequency)[keyof typeof TaskFrequency];
-
 export const TaskVisibility = {
   VisibleToPatients: "visibleToPatients",
   HiddenFromPatients: "hiddenFromPatients",
@@ -146,7 +140,6 @@ export interface TaskTemplate {
   type: TaskType;
   icon: string;
   description?: string;
-  frequency: TaskFrequency;
   visibility: TaskVisibility;
   config?: TaskConfig;
   roles: string[];
@@ -164,7 +157,6 @@ export interface Task {
   type: TaskType;
   icon: string;
   description?: string;
-  frequency: TaskFrequency;
   visibility: TaskVisibility;
   config?: TaskConfig;
   ownerId?: string;
@@ -196,6 +188,7 @@ export interface Program {
   ownerId: string;
   roles: string[];
   scope: TemplateScope;
+  assignedUserIds?: string[];
   createdAt?: string;
   updatedAt?: string;
   startDate?: string;
@@ -205,6 +198,18 @@ export interface Program {
   streakUpdatedAt?: string;
   isPublished: boolean;
 }
+
+export type ProgramCadence = "daily" | "weekly";
+
+const programCadenceByType: Record<ProgramType, ProgramCadence> = {
+  [ProgramType.Challenge]: "daily",
+  [ProgramType.Sequential]: "weekly",
+  [ProgramType.AdaptiveNormal]: "daily",
+};
+
+export const programTypeToCadence = (
+  type: ProgramType
+): ProgramCadence => programCadenceByType[type] ?? "daily";
 
 export type ProgramTemplate = Program;
 

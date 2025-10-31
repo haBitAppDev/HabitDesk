@@ -48,7 +48,7 @@ export function AppRoutes() {
           children: [
             { index: true, element: <AdminDashboard /> },
             { path: "therapists", element: <TherapistManager /> },
-            { path: "roles", element: <RolesManager /> },
+            { path: "users", element: <RolesManager /> },
             { path: "templates", element: <TemplateManager /> },
           ],
         },

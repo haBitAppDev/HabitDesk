@@ -29,6 +29,9 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Copy .htaccess into dist
+        run: cp public/.htaccess dist/.htaccess
+
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -36,6 +39,6 @@ jobs:
           server: ${{ secrets.SFTP_HOST }}
           password: ${{ secrets.SFTP_PASSWORD }}
           port: ${{ secrets.SFTP_PORT }}
-          local_path: ./dist/*
+          local_path: ./dist/
           remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
           sftp_only: true

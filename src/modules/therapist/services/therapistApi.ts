@@ -1,3 +1,5 @@
+import { arrayRemove, arrayUnion } from "firebase/firestore";
+
 import {
   addDoc,
   deleteDoc,
@@ -19,10 +21,10 @@ import { Patient } from "../../shared/types/domain";
 import {
   MediaKind,
   ProgramType,
-  TaskFrequency,
   TaskType,
   TaskVisibility,
   TemplateScope,
+  programTypeToCadence,
 } from "../../shared/types/domain";
 
 type FirestoreValue = unknown;
@@ -229,8 +231,6 @@ const parseTaskTemplate = (raw: FirestoreDocument): TaskTemplate => {
         : typeof raw.iconKey === "string"
         ? raw.iconKey
         : DEFAULT_TASK_ICON,
-    frequency:
-      (raw.frequency as TaskFrequency) ?? TaskFrequency.Daily,
     visibility:
       (raw.visibility as TaskVisibility) ??
       TaskVisibility.VisibleToPatients,
@@ -251,9 +251,34 @@ const parseTaskTemplate = (raw: FirestoreDocument): TaskTemplate => {
   };
 };
 
-const serializeTaskConfig = (config?: TaskConfig) => {
+const sanitizeForFirestore = (input: unknown): unknown => {
+  if (input === undefined) return undefined;
+  if (Array.isArray(input)) {
+    return input
+      .map((item) => sanitizeForFirestore(item))
+      .filter((item) => item !== undefined);
+  }
+  if (input && typeof input === "object") {
+    if (input instanceof Date) {
+      return input;
+    }
+    const sanitized: Record<string, unknown> = {};
+    Object.entries(input as Record<string, unknown>).forEach(([key, value]) => {
+      const cleaned = sanitizeForFirestore(value);
+      if (cleaned !== undefined) {
+        sanitized[key] = cleaned;
+      }
+    });
+    return sanitized;
+  }
+  return input;
+};
+
+const serializeTaskConfig = (
+  config?: TaskConfig
+): Record<string, unknown> | undefined => {
   if (!config) return undefined;
-  return { ...config };
+  return sanitizeForFirestore({ ...config }) as Record<string, unknown>;
 };
 
 const taskTemplateToFirestore = (
@@ -265,7 +290,6 @@ const taskTemplateToFirestore = (
     description: template.description ?? null,
     type: template.type,
     icon: template.icon ?? DEFAULT_TASK_ICON,
-    frequency: template.frequency,
     visibility: template.visibility,
     config: serializeTaskConfig(template.config),
     roles: template.roles,
@@ -278,39 +302,42 @@ const taskTemplateToFirestore = (
   };
 };
 
-const parseProgramTemplate = (raw: FirestoreDocument): ProgramTemplate => ({
-  id: raw.id,
-  title:
-    typeof raw.title === "string"
-      ? raw.title
-      : typeof raw.name === "string"
-      ? raw.name
-      : "",
-  subtitle: typeof raw.subtitle === "string" ? raw.subtitle : "",
-  description:
-    typeof raw.description === "string" ? raw.description : "",
-  type:
-    (raw.type as ProgramType) ?? ProgramType.AdaptiveNormal,
-  taskIds: coerceStringArray(raw.taskIds),
-  therapistTypes: coerceStringArray(raw.therapistTypes),
-  icon:
-    typeof raw.icon === "string" ? raw.icon : DEFAULT_TASK_ICON,
-  color: typeof raw.color === "string" ? raw.color : "#1F6FEB",
-  ownerId:
-    typeof raw.ownerId === "string" ? raw.ownerId : "",
-  roles: coerceStringArray(raw.roles),
-  scope:
-    typeof raw.scope === "string" &&
-    (Object.values(TemplateScope) as string[]).includes(raw.scope as string)
-      ? (raw.scope as TemplateScope)
-      : coerceStringArray(raw.therapistTypes).length > 0
-      ? TemplateScope.TherapistType
-      : TemplateScope.Global,
-  createdAt: timestampToIso(raw.createdAt),
-  updatedAt: timestampToIso(raw.updatedAt),
-  isPublished:
-    typeof raw.isPublished === "boolean" ? raw.isPublished : true,
-});
+const parseProgramTemplate = (raw: FirestoreDocument): ProgramTemplate => {
+  return {
+    id: raw.id,
+    title:
+      typeof raw.title === "string"
+        ? raw.title
+        : typeof raw.name === "string"
+        ? raw.name
+        : "",
+    subtitle: typeof raw.subtitle === "string" ? raw.subtitle : "",
+    description:
+      typeof raw.description === "string" ? raw.description : "",
+    type:
+      (raw.type as ProgramType) ?? ProgramType.AdaptiveNormal,
+    taskIds: coerceStringArray(raw.taskIds),
+    assignedUserIds: coerceStringArray(raw.assignedUserIds),
+    therapistTypes: coerceStringArray(raw.therapistTypes),
+    icon:
+      typeof raw.icon === "string" ? raw.icon : DEFAULT_TASK_ICON,
+    color: typeof raw.color === "string" ? raw.color : "#1F6FEB",
+    ownerId:
+      typeof raw.ownerId === "string" ? raw.ownerId : "",
+    roles: coerceStringArray(raw.roles),
+    scope:
+      typeof raw.scope === "string" &&
+      (Object.values(TemplateScope) as string[]).includes(raw.scope as string)
+        ? (raw.scope as TemplateScope)
+        : coerceStringArray(raw.therapistTypes).length > 0
+        ? TemplateScope.TherapistType
+        : TemplateScope.Global,
+    createdAt: timestampToIso(raw.createdAt),
+    updatedAt: timestampToIso(raw.updatedAt),
+    isPublished:
+      typeof raw.isPublished === "boolean" ? raw.isPublished : true,
+  };
+};
 
 const parsePatient = (raw: FirestoreDocument): Patient =>
   Patient.fromFirestore(raw);
@@ -324,7 +351,9 @@ const programTemplateToFirestore = (
     subtitle: template.subtitle,
     description: template.description,
     type: template.type,
+    frequency: programTypeToCadence(template.type),
     taskIds: template.taskIds,
+    assignedUserIds: template.assignedUserIds ?? [],
     therapistTypes: template.therapistTypes ?? [],
     icon: template.icon,
     color: template.color,
@@ -356,8 +385,6 @@ const parseTask = (raw: FirestoreDocument): Task => {
         : typeof raw.iconKey === "string"
         ? raw.iconKey
         : DEFAULT_TASK_ICON,
-    frequency:
-      (raw.frequency as TaskFrequency) ?? TaskFrequency.Daily,
     visibility:
       (raw.visibility as TaskVisibility) ??
       TaskVisibility.VisibleToPatients,
@@ -388,7 +415,6 @@ const taskToFirestore = (
     description: task.description ?? null,
     type: task.type,
     icon: task.icon ?? DEFAULT_TASK_ICON,
-    frequency: task.frequency,
     visibility: task.visibility,
     config: serializeTaskConfig(task.config),
     ownerId: task.ownerId ?? null,
@@ -428,7 +454,6 @@ const parseProgram = (raw: FirestoreDocument): Program => {
         }))
         .map(parseTask)
     : [];
-
   return {
     id: raw.id,
     title:
@@ -444,6 +469,7 @@ const parseProgram = (raw: FirestoreDocument): Program => {
       (raw.type as ProgramType) ?? ProgramType.AdaptiveNormal,
     taskIds: coerceStringArray(raw.taskIds),
     tasks: resolvedTasks.length > 0 ? resolvedTasks : undefined,
+    assignedUserIds: coerceStringArray(raw.assignedUserIds),
     therapistTypes,
     icon:
       typeof raw.icon === "string" ? raw.icon : DEFAULT_TASK_ICON,
@@ -477,6 +503,7 @@ const programToFirestore = (
     subtitle: program.subtitle,
     description: program.description,
     type: program.type,
+    frequency: programTypeToCadence(program.type),
     taskIds: program.taskIds,
     icon: program.icon,
     color: program.color,
@@ -484,6 +511,7 @@ const programToFirestore = (
     roles: program.roles,
     scope: program.scope,
     therapistTypes: program.therapistTypes,
+    assignedUserIds: program.assignedUserIds ?? [],
     isPublished: program.isPublished,
   };
 
@@ -752,6 +780,9 @@ export async function assignProgramToUser(
     "program_assignments",
     id
   );
+  await updateDoc("programs", input.programId, {
+    assignedUserIds: arrayUnion(input.userId),
+  }).catch(() => undefined);
   return created ? parseProgramAssignment(created) : { ...assignment, id };
 }
 
@@ -784,7 +815,20 @@ export async function updateProgramAssignment(
 }
 
 export async function removeProgramAssignment(id: string): Promise<void> {
+  const existing = await getDoc<FirestoreDocument>(
+    "program_assignments",
+    id
+  );
   await deleteDoc("program_assignments", id);
+  if (existing) {
+    const programId = typeof existing.programId === "string" ? existing.programId : undefined;
+    const userId = typeof existing.userId === "string" ? existing.userId : undefined;
+    if (programId && userId) {
+      await updateDoc("programs", programId, {
+        assignedUserIds: arrayRemove(userId),
+      }).catch(() => undefined);
+    }
+  }
 }
 
 export async function listAssignmentsByUser(

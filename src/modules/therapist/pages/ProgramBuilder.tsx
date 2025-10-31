@@ -15,6 +15,7 @@ import {
   ProgramType,
   TaskVisibility,
   TemplateScope,
+  programTypeToCadence,
 } from "../../shared/types/domain";
 import {
   assignProgramToUser,
@@ -76,6 +77,11 @@ export function ProgramBuilder() {
     null
   );
 
+  const activeTemplate = useMemo(() => {
+    if (!templateId) return null;
+    return programTemplates.find((template) => template.id === templateId) ?? null;
+  }, [programTemplates, templateId]);
+
   const heading = t("therapist.programBuilder.title", "Program Builder");
   const subheading = t(
     "therapist.programBuilder.subtitle",
@@ -85,6 +91,10 @@ export function ProgramBuilder() {
   const noneOptionLabel = t("therapist.programBuilder.fields.none", "None");
   const titleLabel = t("therapist.programBuilder.fields.title", "Program title");
   const patientLabel = t("therapist.programBuilder.fields.patientId", "Patient ID");
+  const frequencyLabel = t(
+    "therapist.programBuilder.fields.frequency",
+    "Frequency"
+  );
   const saveLabel = t("therapist.programBuilder.actions.save", "Save program");
   const savingLabel = t("therapist.programBuilder.actions.saving", "Saving…");
   const resetLabel = t("therapist.programBuilder.actions.reset", "Reset selection");
@@ -123,6 +133,10 @@ export function ProgramBuilder() {
   const libraryConfig = t("therapist.programBuilder.library.config", "Show configuration");
   const libraryVisibilityVisible = t("therapist.taskLibrary.visibility.visible", "Visible");
   const libraryVisibilityHidden = t("therapist.taskLibrary.visibility.hidden", "Hidden");
+  const frequencyDaily = t("templates.frequency.daily", "Daily");
+  const frequencyWeekly = t("templates.frequency.weekly", "Weekly");
+  const cadenceKey = programTypeToCadence(activeTemplate?.type ?? ProgramType.AdaptiveNormal);
+  const cadenceLabel = cadenceKey === "daily" ? frequencyDaily : frequencyWeekly;
 
   useEffect(() => {
     let active = true;
@@ -189,10 +203,6 @@ export function ProgramBuilder() {
     setSaving(true);
     const createdTaskIds: string[] = [];
     let createdProgramId: string | null = null;
-    const activeTemplate = programTemplates.find(
-      (template) => template.id === templateId
-    );
-
     try {
       const createdTasks = [];
       for (const template of selectedTasks) {
@@ -201,7 +211,6 @@ export function ProgramBuilder() {
           description: template.description,
           type: template.type,
           icon: template.icon,
-          frequency: template.frequency,
           visibility: template.visibility,
           config: template.config,
           ownerId: user.uid,
@@ -231,6 +240,7 @@ export function ProgramBuilder() {
         roles: activeTemplate?.roles ?? [],
         scope: TemplateScope.Private,
         therapistTypes: [],
+        assignedUserIds: [],
         isPublished: true,
       });
 
@@ -333,6 +343,12 @@ export function ProgramBuilder() {
                   placeholder={t("therapist.programBuilder.placeholders.patientId", "patient_123")}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>{frequencyLabel}</Label>
+                <div className="rounded-[12px] border border-brand-divider/60 bg-brand-light/40 px-3 py-2 text-sm text-brand-text">
+                  {cadenceLabel}
+                </div>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button type="button" onClick={handleSave} disabled={saving}>
@@ -346,6 +362,9 @@ export function ProgramBuilder() {
 
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-brand-text">{selectedTasksTitle}</h2>
+            <p className="text-xs text-brand-text-muted">
+              {t("therapist.programBuilder.frequencyHint", "Cadence")}: {cadenceLabel}
+            </p>
             {programsEmpty ? (
               <div className="rounded-[14px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
                 {selectedTasksEmpty}

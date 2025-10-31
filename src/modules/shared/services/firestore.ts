@@ -49,7 +49,7 @@ export async function addDoc<T>(
 export async function updateDoc<T>(
   path: string,
   id: string,
-  data: Partial<T>
+  data: Partial<T> | Record<string, unknown>
 ): Promise<void> {
   await updateDocFirestore(doc(db, path, id), data as DocumentData);
 }

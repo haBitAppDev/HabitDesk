@@ -18,13 +18,7 @@ import { useI18n } from "../../../i18n/I18nProvider";
 import { useAuthState } from "../../shared/hooks/useAuthState";
 import { TaskConfigEditor } from "../../shared/components/TaskConfigEditor";
 import type { MediaTaskConfig, TaskConfig, TaskTemplate } from "../../shared/types/domain";
-import {
-  MediaKind,
-  TaskFrequency,
-  TaskType,
-  TaskVisibility,
-  TemplateScope,
-} from "../../shared/types/domain";
+import { MediaKind, TaskType, TaskVisibility, TemplateScope } from "../../shared/types/domain";
 import {
   defaultTaskConfig,
   ensureConfigMatchesType,
@@ -42,7 +36,6 @@ interface TaskTemplateDraft {
   description: string;
   icon: string;
   type: TaskType;
-  frequency: TaskFrequency;
   visibility: TaskVisibility;
   rolesText: string;
   config: TaskConfig;
@@ -64,7 +57,6 @@ const createEmptyDraft = (): TaskTemplateDraft => ({
   description: "",
   icon: "assignment",
   type: TaskType.Timer,
-  frequency: TaskFrequency.Daily,
   visibility: TaskVisibility.VisibleToPatients,
   rolesText: "",
   config: defaultTaskConfig(TaskType.Timer),
@@ -91,6 +83,10 @@ export function TaskLibrary() {
     "therapist.taskLibrary.subtitle",
     "Browse existing task templates and add them to your program."
   );
+  const cadenceInfo = t(
+    "therapist.taskLibrary.cadenceInfo",
+    "Cadence is defined by the program type."
+  );
   const searchPlaceholder = t(
     "therapist.taskLibrary.search",
     "Search by title, description or role…"
@@ -103,8 +99,6 @@ export function TaskLibrary() {
     "therapist.taskLibrary.rolesEmpty",
     "No role restriction"
   );
-  const frequencyDaily = t("therapist.taskLibrary.frequency.daily", "Daily");
-  const frequencyWeekly = t("therapist.taskLibrary.frequency.weekly", "Weekly");
   const visibilityVisible = t(
     "therapist.taskLibrary.visibility.visible",
     "Visible"
@@ -148,10 +142,6 @@ export function TaskLibrary() {
   const createTypeHelp = t(
     "therapist.taskLibrary.create.typeHelp",
     "Select a task type to configure task-specific settings."
-  );
-  const createFrequencyLabel = t(
-    "therapist.taskLibrary.create.frequencyLabel",
-    "Frequency"
   );
   const createVisibilityLabel = t(
     "therapist.taskLibrary.create.visibilityLabel",
@@ -287,7 +277,6 @@ export function TaskLibrary() {
       description: createForm.description.trim() || undefined,
       icon: createForm.icon.trim() || "assignment",
       type: createForm.type,
-      frequency: createForm.frequency,
       visibility: createForm.visibility,
       roles: createForm.rolesText
         .split(",")
@@ -382,6 +371,7 @@ export function TaskLibrary() {
           <p className="mt-2 text-sm text-brand-text-muted">
             {subtitleText}
           </p>
+          <p className="text-xs text-brand-text-muted">{cadenceInfo}</p>
         </div>
         <div className="flex gap-2">
           {isCreating ? (
@@ -463,27 +453,6 @@ export function TaskLibrary() {
                       {t(`templates.taskTypes.${type}`, type)}
                     </option>
                   ))}
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="task-frequency">{createFrequencyLabel}</Label>
-                <Select
-                  id="task-frequency"
-                  value={createForm.frequency}
-                  onChange={(event) =>
-                    setCreateForm((prev) => ({
-                      ...prev,
-                      frequency: event.target.value as TaskFrequency,
-                    }))
-                  }
-                  disabled={createLoading}
-                >
-                  <option value={TaskFrequency.Daily}>
-                    {frequencyDaily}
-                  </option>
-                  <option value={TaskFrequency.Weekly}>
-                    {frequencyWeekly}
-                  </option>
                 </Select>
               </div>
               <div className="space-y-2">
@@ -622,11 +591,6 @@ export function TaskLibrary() {
                       {t(`templates.taskTypes.${task.type}`, task.type)}
                     </p>
                   </div>
-                  <span className="rounded-full bg-brand-light/60 px-2 py-0.5 text-[11px] uppercase text-brand-text-muted">
-                    {task.frequency === TaskFrequency.Daily
-                      ? frequencyDaily
-                      : frequencyWeekly}
-                  </span>
                 </div>
                 <p className="text-sm text-brand-text-muted line-clamp-3">
                   {task.description ??
