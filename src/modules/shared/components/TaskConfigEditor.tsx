@@ -88,11 +88,13 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
         : (defaultTaskConfig(TaskType.Media) as MediaTaskConfig);
     if (mediaConfig.kind === MediaKind.Video) {
       if (mediaConfig.storagePath) {
-        setVideoSource("upload");
+        if (videoSource !== "upload") {
+          setVideoSource("upload");
+        }
       } else if (mediaConfig.mediaUrl) {
-        setVideoSource("link");
-      } else {
-        setVideoSource("upload");
+        if (videoSource !== "link") {
+          setVideoSource("link");
+        }
       }
     } else if (videoSource !== "upload") {
       setVideoSource("upload");

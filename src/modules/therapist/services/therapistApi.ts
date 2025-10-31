@@ -251,9 +251,34 @@ const parseTaskTemplate = (raw: FirestoreDocument): TaskTemplate => {
   };
 };
 
-const serializeTaskConfig = (config?: TaskConfig) => {
+const sanitizeForFirestore = (input: unknown): unknown => {
+  if (input === undefined) return undefined;
+  if (Array.isArray(input)) {
+    return input
+      .map((item) => sanitizeForFirestore(item))
+      .filter((item) => item !== undefined);
+  }
+  if (input && typeof input === "object") {
+    if (input instanceof Date) {
+      return input;
+    }
+    const sanitized: Record<string, unknown> = {};
+    Object.entries(input as Record<string, unknown>).forEach(([key, value]) => {
+      const cleaned = sanitizeForFirestore(value);
+      if (cleaned !== undefined) {
+        sanitized[key] = cleaned;
+      }
+    });
+    return sanitized;
+  }
+  return input;
+};
+
+const serializeTaskConfig = (
+  config?: TaskConfig
+): Record<string, unknown> | undefined => {
   if (!config) return undefined;
-  return { ...config };
+  return sanitizeForFirestore({ ...config }) as Record<string, unknown>;
 };
 
 const taskTemplateToFirestore = (
