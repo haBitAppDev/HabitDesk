@@ -1,4 +1,3 @@
-import type { LucideIcon } from "lucide-react";
 import {
   ClipboardList,
   Gauge,
@@ -21,11 +20,7 @@ type SidebarProps = React.HTMLAttributes<HTMLElement> & {
   onClose: () => void;
 };
 
-interface NavItem {
-  label: string;
-  path: string;
-  icon: LucideIcon;
-}
+
 
 export function Sidebar({ mobileOpen, onClose, className }: SidebarProps) {
   const { role } = useUserRole();
