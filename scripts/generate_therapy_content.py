@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from fpdf import FPDF
 from gtts import gTTS
-from moviepy.editor import ImageClip
+from moviepy import ImageClip
 from PIL import Image, ImageDraw, ImageFont
 from tqdm import tqdm
 
