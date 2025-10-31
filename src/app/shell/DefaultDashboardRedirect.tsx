@@ -27,5 +27,13 @@ export function DefaultDashboardRedirect() {
     return <Navigate to="/admin" replace />;
   }
 
-  return <Navigate to="/therapist" replace />;
+  if (role === "therapist") {
+    return <Navigate to="/therapist" replace />;
+  }
+
+  if (role === "patient") {
+    return <Navigate to="/patient" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
 }

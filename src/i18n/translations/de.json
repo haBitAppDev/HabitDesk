@@ -258,6 +258,12 @@
         "programBuilder": "Program-Editor",
         "taskLibrary": "Aufgabenbibliothek"
       },
+      "patient": {
+        "root": "Patient",
+        "programs": "Meine Programme",
+        "tipTitle": "Hinweis",
+        "tip": "Halte engen Kontakt zu deinem Therapieteam, um neue Programme und Aufgaben zu erhalten."
+      },
       "tipTitle": "Tipp",
       "tip": "Verwalte Rollen und Vorlagen zentral, damit Therapeut:innen sich auf Patient:innen konzentrieren können."
     }
@@ -284,6 +290,24 @@
         "removed": "Zuweisung entfernt.",
         "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
       }
+    }
+  },
+  "patient": {
+    "dashboard": {
+      "greeting": "Hallo",
+      "greetingNamed": "Hallo {name}",
+      "subtitle": "Hier findest du alle Programme, die dir zugewiesen wurden, und siehst deinen Fortschritt.",
+      "loading": "Programme werden geladen…",
+      "errorTitle": "Programme konnten nicht geladen werden",
+      "errorFallback": "Etwas ist schiefgelaufen. Bitte versuch es erneut.",
+      "emptyTitle": "Noch keine Programme",
+      "emptySubtitle": "Sobald dir dein Therapieteam ein Programm freischaltet, erscheint es hier.",
+      "restrictedTitle": "Programm nicht verfügbar",
+      "restrictedBody": "Mindestens ein Programm konnte nicht geladen werden. Bitte bitte dein Therapieteam, deine Zugriffsrechte zu aktualisieren.",
+      "untitledProgram": "Unbenanntes Programm",
+      "progressLabel": "Fortschritt",
+      "progressValue": "{percent}% abgeschlossen",
+      "stepValue": "Aktuelle Aufgabe: {current} von {total}"
     }
   },
   "admin": {

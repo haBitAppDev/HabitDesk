@@ -258,6 +258,12 @@
         "programBuilder": "Program Builder",
         "taskLibrary": "Task Library"
       },
+      "patient": {
+        "root": "Patient",
+        "programs": "My programs",
+        "tipTitle": "Heads-up",
+        "tip": "Stay in touch with your therapy team to receive new programmes and tasks."
+      },
       "tipTitle": "Tip",
       "tip": "Manage roles and templates centrally so therapists can focus on patient work."
     }
@@ -284,6 +290,24 @@
         "removed": "Assignment removed.",
         "error": "Something went wrong. Please try again."
       }
+    }
+  },
+  "patient": {
+    "dashboard": {
+      "greeting": "Hi there",
+      "greetingNamed": "Hi {name}",
+      "subtitle": "Here you can see all programmes assigned to you and track your progress.",
+      "loading": "Loading programmes…",
+      "errorTitle": "Unable to load programmes",
+      "errorFallback": "Something went wrong. Please try again.",
+      "emptyTitle": "No programmes yet",
+      "emptySubtitle": "Once your therapy team assigns a programme, it will appear here.",
+      "restrictedTitle": "Programme unavailable",
+      "restrictedBody": "At least one programme could not be loaded. Please ask your therapy team to refresh your access.",
+      "untitledProgram": "Untitled programme",
+      "progressLabel": "Progress",
+      "progressValue": "{percent}% completed",
+      "stepValue": "Current task: {current} of {total}"
     }
   },
   "admin": {

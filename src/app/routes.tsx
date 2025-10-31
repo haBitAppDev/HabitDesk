@@ -14,6 +14,7 @@ import { PatientManagement } from "../modules/therapist/pages/PatientManagement"
 import { Login } from "../modules/shared/pages/Login";
 import { NotFound } from "../modules/shared/pages/NotFound";
 import { DefaultDashboardRedirect } from "./shell/DefaultDashboardRedirect";
+import { PatientDashboard } from "../modules/patient/pages/PatientDashboard";
 
 const AdminOutlet = () => (
   <RequireRole allowed={["admin"]}>
@@ -23,6 +24,12 @@ const AdminOutlet = () => (
 
 const TherapistOutlet = () => (
   <RequireRole allowed={["therapist", "admin"]}>
+    <Outlet />
+  </RequireRole>
+);
+
+const PatientOutlet = () => (
+  <RequireRole allowed={["patient"]}>
     <Outlet />
   </RequireRole>
 );
@@ -61,6 +68,11 @@ export function AppRoutes() {
             { path: "program-builder", element: <ProgramBuilder /> },
             { path: "tasks", element: <TaskLibrary /> },
           ],
+        },
+        {
+          path: "patient",
+          element: <PatientOutlet />,
+          children: [{ index: true, element: <PatientDashboard /> }],
         },
       ],
     },

@@ -79,20 +79,54 @@ export function Sidebar({ mobileOpen, onClose, className }: SidebarProps) {
       ];
     }
 
+    if (role === "patient") {
+      return [
+        {
+          label: t("layout.sidebar.patient.programs", "Meine Programme"),
+          path: "/patient",
+          icon: ClipboardList,
+        },
+      ];
+    }
+
     return [];
   }, [role, t]);
 
-  const defaultDashboardPath = role === "admin" ? "/admin" : "/therapist";
+  const defaultDashboardPath =
+    role === "admin"
+      ? "/admin"
+      : role === "therapist"
+      ? "/therapist"
+      : role === "patient"
+      ? "/patient"
+      : "/";
   const navigationLabel = t("layout.sidebar.navigation", "Navigation");
   const dashboardLabel = t("layout.sidebar.dashboard", "Dashboard");
-  const tipTitle = t("layout.sidebar.tipTitle", "Tip");
-  const tipBody = t(
-    "layout.sidebar.tip",
-    "Manage roles and templates centrally so therapists can focus on patient work."
-  );
+  const tipTitle =
+    role === "patient"
+      ? t("layout.sidebar.patient.tipTitle", "Hinweis")
+      : t("layout.sidebar.tipTitle", "Tip");
+  const tipBody =
+    role === "patient"
+      ? t(
+          "layout.sidebar.patient.tip",
+          "Bleib in Kontakt mit deinem Therapieteam, um neue Programme und Aufgaben zu erhalten."
+        )
+      : t(
+          "layout.sidebar.tip",
+          "Manage roles and templates centrally so therapists can focus on patient work."
+        );
   const adminRootLabel = t("layout.sidebar.admin.root", "Admin");
   const therapistRootLabel = t("layout.sidebar.therapist.root", "Therapist");
-  const dashboardTitle = role === "admin" ? adminRootLabel : therapistRootLabel;
+  const patientRootLabel = t("layout.sidebar.patient.root", "Patient");
+  const dashboardTitle =
+    role === "admin"
+      ? adminRootLabel
+      : role === "therapist"
+      ? therapistRootLabel
+      : role === "patient"
+      ? patientRootLabel
+      : dashboardLabel;
 
   const renderNav = () => (
     <div className="flex h-full flex-col">
@@ -171,7 +205,7 @@ export function Sidebar({ mobileOpen, onClose, className }: SidebarProps) {
           "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-brand-divider/60 bg-white px-6 py-8 shadow-soft transition-transform md:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           "md:static md:flex md:h-auto md:w-72 md:shadow-none",
-          className // ⬅ kommt vom Prop
+          className
         )}
       >
         {renderNav()}
