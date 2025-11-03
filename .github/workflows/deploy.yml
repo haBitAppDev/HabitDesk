@@ -41,5 +41,4 @@ jobs:
           port: ${{ secrets.SFTP_PORT }}
           local_path: ./dist/*
           remote_path: ${{ secrets.SFTP_REMOTE_DIR }}
-          delete_remote_files: true
           sftp_only: true
