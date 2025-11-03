@@ -422,30 +422,47 @@
       "title": "Program Builder",
       "subtitle": "Assemble programs by combining tasks or using templates.",
       "fields": {
+        "program": "Existing program",
         "template": "Base template",
         "title": "Program title",
-        "patientId": "Patient ID",
+        "patientId": "Patient",
+        "programType": "Program type",
         "frequency": "Cadence",
         "notes": "Notes (optional)",
-        "none": "None"
+        "none": "None",
+        "noPatients": "No patients available"
       },
       "actions": {
         "save": "Save program",
         "saving": "Saving…",
+        "update": "Update program",
+        "updating": "Updating…",
         "reset": "Reset selection"
       },
       "messages": {
         "loginRequired": "Please sign in first.",
-        "patientRequired": "Patient ID is required.",
+        "patientRequired": "Please select a patient.",
         "tasksRequired": "Select at least one task.",
         "success": "Program saved successfully.",
+        "updated": "Program updated successfully.",
+        "programLoadError": "Unable to load program.",
+        "ownerMissing": "Assign a therapist to this patient before saving.",
         "error": "Saving failed."
       },
       "defaultTitle": "New program",
       "placeholders": {
         "title": "e.g. Phase 1",
-        "patientId": "patient_123",
+        "patientId": "Select patient",
+        "program": "Select program",
         "notes": ""
+      },
+      "labels": {
+        "untitledProgram": "Untitled program"
+      },
+      "programTypes": {
+        "challenge": "Challenge",
+        "sequential": "Sequential",
+        "adaptiveNormal": "Adaptive / Normal"
       },
       "selectedTasks": {
         "title": "Selected tasks",

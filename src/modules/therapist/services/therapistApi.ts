@@ -620,6 +620,11 @@ export async function listProgramTemplates(): Promise<ProgramTemplate[]> {
   return raw.map(parseProgramTemplate);
 }
 
+export async function listAllPatients(): Promise<Patient[]> {
+  const raw = await getCollection<FirestoreDocument>("Patient");
+  return raw.map(parsePatient);
+}
+
 export async function listPatientsByTherapist(
   therapistId: string
 ): Promise<Patient[]> {
@@ -689,6 +694,11 @@ export async function removeTask(id: string): Promise<void> {
   await deleteDoc("tasks", id);
 }
 
+export async function listAllPrograms(): Promise<Program[]> {
+  const raw = await getCollection<FirestoreDocument>("programs");
+  return raw.map(parseProgram);
+}
+
 export async function listProgramsByOwner(ownerId: string): Promise<Program[]> {
   if (!ownerId) return [];
   const raw = await queryBy<FirestoreDocument>("programs", [
@@ -700,6 +710,18 @@ export async function listProgramsByOwner(ownerId: string): Promise<Program[]> {
 export async function getProgram(id: string): Promise<Program | null> {
   const doc = await getDoc<FirestoreDocument>("programs", id);
   return doc ? parseProgram(doc) : null;
+}
+
+export async function getTasksByIds(ids: string[]): Promise<Task[]> {
+  if (!ids.length) return [];
+  const results = await Promise.all(
+    ids.map((taskId) =>
+      getDoc<FirestoreDocument>("tasks", taskId).catch(() => null)
+    )
+  );
+  return results
+    .filter((doc): doc is FirestoreDocument => Boolean(doc))
+    .map(parseTask);
 }
 
 export async function createProgram(

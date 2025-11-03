@@ -422,30 +422,47 @@
       "title": "Program-Editor",
       "subtitle": "Stelle Programme zusammen, indem du Tasks kombinierst oder bestehende Vorlagen nutzt.",
       "fields": {
+        "program": "Bestehendes Programm",
         "template": "Basis-Vorlage",
         "title": "Programmtitel",
-        "patientId": "Patient-ID",
+        "patientId": "Patient",
+        "programType": "Programmtyp",
         "frequency": "Ausführungsrhythmus",
         "notes": "Notizen (optional)",
-        "none": "Keines"
+        "none": "Keines",
+        "noPatients": "Keine Patienten verfügbar"
       },
       "actions": {
         "save": "Programm speichern",
         "saving": "Speichern…",
+        "update": "Programm aktualisieren",
+        "updating": "Aktualisiere…",
         "reset": "Auswahl zurücksetzen"
       },
       "messages": {
         "loginRequired": "Bitte zuerst einloggen.",
-        "patientRequired": "Patient-ID ist erforderlich.",
+        "patientRequired": "Bitte wähle einen Patienten aus.",
         "tasksRequired": "Mindestens ein Task muss ausgewählt sein.",
         "success": "Programm erfolgreich gespeichert.",
+        "updated": "Programm erfolgreich aktualisiert.",
+        "programLoadError": "Programm konnte nicht geladen werden.",
+        "ownerMissing": "Bitte weise dem Patienten zuerst einen Therapeuten zu.",
         "error": "Speichern fehlgeschlagen."
       },
       "defaultTitle": "Neues Programm",
       "placeholders": {
         "title": "z. B. Phase 1",
-        "patientId": "patient_123",
+        "patientId": "Patient auswählen",
+        "program": "Programm auswählen",
         "notes": ""
+      },
+      "labels": {
+        "untitledProgram": "Programm ohne Titel"
+      },
+      "programTypes": {
+        "challenge": "Challenge",
+        "sequential": "Sequenziell",
+        "adaptiveNormal": "Adaptiv / Normal"
       },
       "selectedTasks": {
         "title": "Ausgewählte Tasks",
