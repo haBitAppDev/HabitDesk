@@ -2,119 +2,172 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ========================================
+    // HILFSFUNKTIONEN
+    // ========================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
     function hasRole(role) {
-      return request.auth != null && request.auth.token.role == role;
+      return isAuthenticated() && request.auth.token.role == role;
     }
 
-    function hasAnyRole() {
-      return request.auth != null &&
-        request.auth.token.role in ['admin', 'therapist', 'patient'];
+    function hasAnyRole(roles) {
+      return isAuthenticated() && request.auth.token.role in roles;
     }
 
+    function isOwner(ownerId) {
+      return isAuthenticated() && request.auth.uid == ownerId;
+    }
+
+    function isResourceOwner() {
+      return isOwner(resource.data.ownerId);
+    }
+
+    function willRemainOwner() {
+      return request.resource.data.ownerId == request.auth.uid;
+    }
+
+    // Zugriff auf Assignment prüfen
     function canAccessAssignment(assignmentId) {
       return hasRole('admin') ||
         hasRole('therapist') ||
         (hasRole('patient') &&
           exists(/databases/$(database)/documents/program_assignments/$(assignmentId)) &&
-          get(/databases/$(database)/documents/program_assignments/$(assignmentId)).data.userId ==
-            request.auth.uid);
+          get(/databases/$(database)/documents/program_assignments/$(assignmentId)).data.userId == request.auth.uid);
     }
 
-    match /program_templates/{id} {
-      allow read: if hasRole('admin') || hasRole('therapist');
-      allow write: if hasRole('admin');
+    // Prüft, ob Patient einem Programm zugeordnet ist
+    function isPatientAssignedToProgram(programId) {
+      return hasRole('patient') && (
+        (resource.data.assignedUserIds is list && request.auth.uid in resource.data.assignedUserIds) ||
+        exists(/databases/$(database)/documents/program_assignments/$(request.auth.uid + "_" + programId))
+      );
     }
 
-    match /task_templates/{id} {
-      allow read: if hasRole('admin') || hasRole('therapist');
-      allow write: if hasRole('admin');
-    }
+    // ========================================
+    // COLLECTIONS
+    // ========================================
 
+    // ---------- Admin-only Collections ----------
     match /therapist_invites/{id} {
-      allow read, write: if hasRole('admin');
-    }
-
-    match /therapist_types/{id} {
-      allow read: if hasRole('admin') || hasRole('therapist');
+      allow read: if hasRole('admin') || isAuthenticated();
       allow write: if hasRole('admin');
     }
-
-    function isPatientAssignedToProgram() {
-      return hasRole('patient') &&
-        resource.data.assignedUserIds is list &&
-        request.auth.uid in resource.data.assignedUserIds;
+    // ---------- Admin + Therapeut Read, Admin Write ----------
+    match /{collection}/{id} {
+      allow read: if collection in ['program_templates', 'task_templates', 'therapist_types'] &&
+                     hasAnyRole(['admin', 'therapist']);
+      allow write: if collection in ['program_templates', 'task_templates', 'therapist_types'] &&
+                      hasRole('admin');
     }
 
+    // ---------- programmes ----------
     match /programs/{id} {
-      allow create: if hasRole('admin') || (
-        hasRole('therapist') &&
-        request.resource.data.ownerId == request.auth.uid
-      );
-      allow read: if hasRole('admin') || hasRole('therapist') || isPatientAssignedToProgram();
-      allow update, delete: if hasRole('admin') || (
-        hasRole('therapist') &&
-        resource.data.ownerId == request.auth.uid &&
-        request.resource.data.ownerId == request.auth.uid
-      );
+      // Therapeuten und Admins dürfen Programme anlegen
+      allow create: if hasRole('admin') || 
+        (hasRole('therapist') && willRemainOwner());
+
+      // Patienten dürfen lesen, wenn sie zugewiesen sind
+      allow read: if hasAnyRole(['admin', 'therapist', 'patient']) || 
+        isPatientAssignedToProgram(id);
+
+      // Update und Delete nur für Owner oder Admin
+      allow update, delete: if hasRole('admin') || 
+        (hasRole('therapist') && isResourceOwner() && willRemainOwner());
     }
 
+    // ---------- tasks ----------
     match /tasks/{id} {
-      allow read: if hasAnyRole();
-      allow create: if hasRole('therapist') &&
-        request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if hasRole('therapist') &&
-        resource.data.ownerId == request.auth.uid &&
-        request.resource.data.ownerId == request.auth.uid;
+      // Alle authentifizierten User können Tasks lesen
+      allow read: if hasAnyRole(['admin', 'therapist', 'patient']);
+      
+      // Nur Therapeuten können Tasks erstellen (als Owner)
+      allow create: if hasRole('therapist') && willRemainOwner();
+      
+      // Nur Owner-Therapeuten können ihre Tasks bearbeiten/löschen
+      allow update, delete: if hasRole('therapist') && 
+        isResourceOwner() ;
     }
 
+    // ---------- program_assignments ----------
     match /program_assignments/{id} {
+      // Nur Therapeuten können Assignments erstellen
       allow create: if hasRole('therapist') &&
         request.resource.data.userId is string &&
         request.resource.data.programId is string;
-      allow read: if hasRole('admin') ||
-        hasRole('therapist') ||
-        (hasRole('patient') && resource.data.userId == request.auth.uid);
-      allow update: if hasRole('admin') ||
-        (hasRole('therapist') &&
-          resource.data.userId == request.resource.data.userId &&
-          request.resource.data.userId is string) ||
-        (hasRole('patient') &&
-          resource.data.userId == request.auth.uid &&
-          request.resource.data.userId == request.auth.uid);
-      allow delete: if hasRole('admin') || hasRole('therapist');
 
+      // Lesen: Admin/Therapeut alle, Patient nur eigene
+      allow read: if hasAnyRole(['admin', 'therapist']) ||
+        (hasRole('patient') && resource.data.userId == request.auth.uid);
+
+      // Update: Admin immer, Therapeut ohne userId-Änderung, Patient nur eigene ohne userId-Änderung
+      allow update: if hasRole('admin') ||
+        (hasRole('therapist') && resource.data.userId == request.resource.data.userId) ||
+        (hasRole('patient') && 
+          resource.data.userId == request.auth.uid && 
+          request.resource.data.userId == request.auth.uid);
+
+      // Löschen: Nur Admin und Therapeut
+      allow delete: if hasAnyRole(['admin', 'therapist']);
+
+      // ---------- Unterkollektion: TaskResults ----------
       match /TaskResults/{resultId} {
+        // Lesen: Wer auf Assignment zugreifen kann, kann auch TaskResults sehen
         allow read: if canAccessAssignment(id);
+        
+        // Erstellen/Bearbeiten: Therapeut immer, Patient nur bei eigenen Assignments
         allow create, update: if hasRole('therapist') ||
           (hasRole('patient') && canAccessAssignment(id));
-        allow delete: if hasRole('admin') || hasRole('therapist');
+        
+        // Löschen: Nur Admin und Therapeut
+        allow delete: if hasAnyRole(['admin', 'therapist']);
       }
     }
 
+    // ---------- users ----------
     match /users/{uid} {
-      allow read, update: if request.auth != null &&
-        (request.auth.uid == uid || hasRole('admin'));
-      allow create: if hasAnyRole();
+      // Lesen/Bearbeiten: Eigenes Profil oder Admin
+      allow read, update: if isAuthenticated() && 
+        (isOwner(uid) || hasRole('admin'));
+      
+      // Erstellen: Alle authentifizierten User
+      allow create: if hasAnyRole(['admin', 'therapist', 'patient']);
     }
 
+    // ---------- Patient ----------
     match /Patient/{uid} {
+      // Lesen: Admin alle, Therapeut nur zugewiesene, Patient nur eigenes
       allow read: if hasRole('admin') ||
         (hasRole('therapist') && resource.data.therapistId == request.auth.uid) ||
-        (hasRole('patient') && request.auth.uid == uid);
-      allow create: if hasRole('admin') ||
-        (hasRole('patient') && request.auth.uid == uid);
+        (hasRole('patient') && isOwner(uid));
+
+      // Erstellen: Admin oder Patient (nur eigenes)
+      allow create: if hasRole('admin') || 
+        (hasRole('patient') && isOwner(uid));
+
+      // Bearbeiten: Admin, Patient (eigenes), Therapeut (zugewiesene, keine therapistId-Änderung)
       allow update: if hasRole('admin') ||
-        (hasRole('patient') && request.auth.uid == uid) ||
-        (hasRole('therapist') && resource.data.therapistId == request.auth.uid &&
+        (hasRole('patient') && isOwner(uid)) ||
+        (hasRole('therapist') && 
+          resource.data.therapistId == request.auth.uid &&
           request.resource.data.therapistId == request.auth.uid);
     }
 
+    // ---------- Therapist ----------
     match /Therapist/{uid} {
-      allow read: if hasAnyRole();
-      allow create: if hasRole('admin') ||
-        (hasRole('therapist') && request.auth.uid == uid);
-      allow update, delete: if hasRole('admin') ||
-        (hasRole('therapist') && request.auth.uid == uid);
+      // Lesen: Alle authentifizierten User
+      allow read: if hasAnyRole(['admin', 'therapist', 'patient']);
+      
+      // Erstellen: Admin oder Therapeut (nur eigenes)
+      allow create: if hasRole('admin') || 
+        (hasRole('therapist') && isOwner(uid));
+      
+      // Bearbeiten/Löschen: Admin oder Therapeut (nur eigenes)
+      allow update, delete: if hasRole('admin') || 
+        (hasRole('therapist') && isOwner(uid));
     }
   }
 }

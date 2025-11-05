@@ -47,7 +47,7 @@ export function Field({ label, children, fullWidth = false }: FieldProps) {
 }
 
 const ACCEPT_BY_KIND: Record<MediaKind, string> = {
-  [MediaKind.Audio]: "audio/*",
+  [MediaKind.Audio]: "audio/*, .mp4, .mp3",
   [MediaKind.Video]: "video/*",
   [MediaKind.Image]: "image/*",
   [MediaKind.Document]:
