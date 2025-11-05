@@ -5,16 +5,18 @@ import { create } from "zustand";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
+import { ColorPicker } from "../../../components/ui/color-picker";
+import { IconPicker } from "../../../components/ui/icon-picker";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Select } from "../../../components/ui/select";
 import { Spinner } from "../../../components/ui/spinner";
+import { Textarea } from "../../../components/ui/textarea";
 import { useAuthState } from "../../shared/hooks/useAuthState";
 import { useUserRole } from "../../shared/hooks/useUserRole";
 import type {
-  Patient,
+  UserRole,
   Program,
-  ProgramAssignment,
   Task,
   ProgramTemplate,
   TaskTemplate,
@@ -28,23 +30,25 @@ import {
   programTypeToCadence,
 } from "../../shared/types/domain";
 import {
-  assignProgramToUser,
+  PROGRAM_COLOR_OPTIONS,
+  PROGRAM_ICON_OPTIONS,
+} from "../../shared/constants/iconOptions";
+import {
   createProgram,
+  createProgramTemplate,
   createTask,
+  removeProgramTemplate,
   updateProgram,
+  updateProgramTemplate,
   updateTask,
   removeProgram,
   removeTask as removeTaskFromApi,
-  removeProgramAssignment,
   listProgramTemplates,
   listTaskTemplates,
-  listAllPatients,
-  listPatientsByTherapist,
   listAllPrograms,
   listProgramsByOwner,
   getProgram,
   getTasksByIds,
-  listAssignmentsForProgram,
 } from "../services/therapistApi";
 
 interface BuilderTask {
@@ -102,6 +106,15 @@ interface BuilderState {
   setTasks: (tasks: BuilderTask[]) => void;
 }
 
+interface ProgramTemplateFormState {
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: string;
+  color: string;
+  type: ProgramType;
+}
+
 export const useBuilderStore = create<BuilderState>((set) => ({
   title: "",
   selectedTasks: [],
@@ -137,22 +150,31 @@ export function ProgramBuilder() {
   } = useBuilderStore();
   const [taskTemplates, setTaskTemplates] = useState<TaskTemplate[]>([]);
   const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [programId, setProgramId] = useState<string>("");
   const [templateId, setTemplateId] = useState<string>("");
-  const [patientId, setPatientId] = useState<string>("");
+  const [useTemplateSelection, setUseTemplateSelection] = useState(false);
   const [programType, setProgramType] = useState<ProgramType>(ProgramType.AdaptiveNormal);
   const [originalProgram, setOriginalProgram] = useState<Program | null>(null);
   const [originalTasks, setOriginalTasks] = useState<Task[]>([]);
-  const [originalAssignments, setOriginalAssignments] = useState<ProgramAssignment[]>([]);
-  const [initialPatientId, setInitialPatientId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [programLoading, setProgramLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null
   );
+  const [isTemplateFormOpen, setIsTemplateFormOpen] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [templateForm, setTemplateForm] = useState<ProgramTemplateFormState>({
+    title: "",
+    subtitle: "",
+    description: "",
+    icon: PROGRAM_ICON_OPTIONS[0],
+    color: PROGRAM_COLOR_OPTIONS[0],
+    type: ProgramType.AdaptiveNormal,
+  });
+  const [templateFormError, setTemplateFormError] = useState<string | null>(null);
+  const [templateFormLoading, setTemplateFormLoading] = useState(false);
 
   const activeTemplate = useMemo(() => {
     if (!templateId) return null;
@@ -160,6 +182,7 @@ export function ProgramBuilder() {
   }, [programTemplates, templateId]);
 
   const isEditing = Boolean(programId);
+  const isAdmin = role === "admin";
 
   const heading = t("therapist.programBuilder.title", "Program Builder");
   const subheading = t(
@@ -173,17 +196,16 @@ export function ProgramBuilder() {
   );
   const templateLabel = t("therapist.programBuilder.fields.template", "Base template");
   const noneOptionLabel = t("therapist.programBuilder.fields.none", "None");
+  const templateToggleLabel = t(
+    "therapist.programBuilder.fields.useTemplate",
+    "Use template"
+  );
+  const templateToggleHelp = t(
+    "therapist.programBuilder.fields.useTemplateHelp",
+    "Enable to load a predefined program template."
+  );
   const titleLabel = t("therapist.programBuilder.fields.title", "Program title");
-  const patientLabel = t("therapist.programBuilder.fields.patientId", "Patient");
   const programTypeLabel = t("therapist.programBuilder.fields.programType", "Program type");
-  const patientPlaceholder = t(
-    "therapist.programBuilder.placeholders.patientId",
-    "Select patient"
-  );
-  const noPatientsLabel = t(
-    "therapist.programBuilder.fields.noPatients",
-    "No patients available"
-  );
   const saveLabel = isEditing
     ? t("therapist.programBuilder.actions.update", "Update program")
     : t("therapist.programBuilder.actions.save", "Save program");
@@ -194,10 +216,6 @@ export function ProgramBuilder() {
   const loginRequiredMsg = t(
     "therapist.programBuilder.messages.loginRequired",
     "Please sign in first."
-  );
-  const patientRequiredMsg = t(
-    "therapist.programBuilder.messages.patientRequired",
-    "Please select a patient."
   );
   const tasksRequiredMsg = t(
     "therapist.programBuilder.messages.tasksRequired",
@@ -213,7 +231,11 @@ export function ProgramBuilder() {
   );
   const ownerMissingMsg = t(
     "therapist.programBuilder.messages.ownerMissing",
-    "Assign a therapist to this patient before saving."
+    "Unable to determine a program owner. Please sign in again."
+  );
+  const adminTemplateBlockedMsg = t(
+    "therapist.programBuilder.messages.adminTemplateBlocked",
+    "Only therapists can create new tasks from templates. Ask a therapist to create the program or remove template-based tasks."
   );
   const selectedTasksTitle = t(
     "therapist.programBuilder.selectedTasks.title",
@@ -238,16 +260,112 @@ export function ProgramBuilder() {
   const currentProgramType = programType;
   const cadenceKey = programTypeToCadence(currentProgramType);
   const cadenceLabel = cadenceKey === "daily" ? frequencyDaily : frequencyWeekly;
+  const templateManagerTitle = t(
+    "therapist.programBuilder.templates.title",
+    "Program templates"
+  );
+  const templateManagerSubtitle = t(
+    "therapist.programBuilder.templates.subtitle",
+    "Create reusable blueprints and manage existing ones directly here."
+  );
+  const templateCreateButton = t(
+    "therapist.programBuilder.templates.createButton",
+    "Save current selection as template"
+  );
+  const templateFormCreateTitle = t(
+    "therapist.programBuilder.templates.form.createTitle",
+    "New program template"
+  );
+  const templateFormEditTitle = t(
+    "therapist.programBuilder.templates.form.editTitle",
+    "Edit program template"
+  );
+  const templateFormSubmitCreate = t(
+    "therapist.programBuilder.templates.form.submitCreate",
+    "Save template"
+  );
+  const templateFormSubmitUpdate = t(
+    "therapist.programBuilder.templates.form.submitUpdate",
+    "Update template"
+  );
+  const templateFormCancel = t(
+    "therapist.programBuilder.templates.form.cancel",
+    "Cancel"
+  );
+  const templateFormTitleLabel = t(
+    "therapist.programBuilder.templates.form.titleLabel",
+    "Title"
+  );
+  const templateFormSubtitleLabel = t(
+    "therapist.programBuilder.templates.form.subtitleLabel",
+    "Subtitle"
+  );
+  const templateFormDescriptionLabel = t(
+    "therapist.programBuilder.templates.form.descriptionLabel",
+    "Description"
+  );
+  const templateFormIconLabel = t(
+    "therapist.programBuilder.templates.form.iconLabel",
+    "Icon"
+  );
+  const templateFormColorLabel = t(
+    "therapist.programBuilder.templates.form.colorLabel",
+    "Accent color"
+  );
+  const templateFormTypeLabel = t(
+    "therapist.programBuilder.templates.form.typeLabel",
+    "Program type"
+  );
+  const templateFormTasksMissingMsg = t(
+    "therapist.programBuilder.templates.errors.noTasks",
+    "Select at least one task before saving the template."
+  );
+  const templateFormRequiresTemplatesMsg = t(
+    "therapist.programBuilder.templates.errors.requiresTemplates",
+    "Only tasks based on templates can be saved as a program template."
+  );
+  const templateFormTitleRequired = t(
+    "therapist.programBuilder.templates.errors.titleRequired",
+    "Please provide a template title."
+  );
+  const templateFormOwnerMissing = t(
+    "therapist.programBuilder.templates.errors.ownerMissing",
+    "Unable to determine a template owner."
+  );
+  const templateSavedMsg = t(
+    "therapist.programBuilder.templates.messages.created",
+    "Template saved."
+  );
+  const templateUpdatedMsg = t(
+    "therapist.programBuilder.templates.messages.updated",
+    "Template updated."
+  );
+  const templateDeletedMsg = t(
+    "therapist.programBuilder.templates.messages.deleted",
+    "Template deleted."
+  );
+  const templateDeleteConfirm = (templateTitle: string) =>
+    t(
+      "therapist.programBuilder.templates.confirmDelete",
+      "Delete \"{title}\"? This action cannot be undone.",
+      { title: templateTitle }
+    );
+  const templateListEmpty = t(
+    "therapist.programBuilder.templates.empty",
+    "No templates yet."
+  );
+  const templateTaskCountLabel = (count: number) =>
+    t("therapist.programBuilder.templates.taskCount", "{count} tasks", {
+      count,
+    });
+  const templateEditLabel = t("therapist.programBuilder.templates.edit", "Edit");
+  const templateDeleteLabel = t("therapist.programBuilder.templates.delete", "Delete");
 
   useEffect(() => {
     if (roleLoading) return;
 
     let active = true;
     setLoading(true);
-    const loadPatients =
-      role === "admin"
-        ? listAllPatients()
-        : listPatientsByTherapist(user?.uid ?? "");
     const loadPrograms =
       role === "admin"
         ? listAllPrograms()
@@ -256,14 +374,12 @@ export function ProgramBuilder() {
     Promise.all([
       listTaskTemplates(),
       listProgramTemplates(),
-      loadPatients,
       loadPrograms,
     ])
-      .then(([tasks, programs, loadedPatients, loadedPrograms]) => {
+      .then(([tasks, programs, loadedPrograms]) => {
         if (!active) return;
         setTaskTemplates(tasks);
         setProgramTemplates(programs);
-        setPatients(loadedPatients);
         setPrograms(loadedPrograms);
       })
       .catch((err) => {
@@ -282,33 +398,38 @@ export function ProgramBuilder() {
     };
   }, [genericErrorMsg, role, roleLoading, user?.uid]);
 
-  useEffect(() => {
-    if (!patientId) return;
-    if (!patients.some((patient) => patient.id === patientId)) {
-      setPatientId("");
-    }
-  }, [patients, patientId]);
+  const resetTemplateFormState = useCallback(() => {
+    setTemplateForm({
+      title: "",
+      subtitle: "",
+      description: "",
+      icon: PROGRAM_ICON_OPTIONS[0],
+      color: PROGRAM_COLOR_OPTIONS[0],
+      type: programType,
+    });
+    setTemplateFormError(null);
+    setEditingTemplateId(null);
+    setIsTemplateFormOpen(false);
+  }, [programType]);
 
   const resetBuilder = useCallback(() => {
     clear();
     setTemplateId("");
+    setUseTemplateSelection(false);
     setProgramId("");
     setOriginalProgram(null);
     setOriginalTasks([]);
-    setOriginalAssignments([]);
-    setInitialPatientId("");
-    setPatientId("");
     setTitle("");
     setProgramType(ProgramType.AdaptiveNormal);
+    resetTemplateFormState();
   }, [
     clear,
-    setInitialPatientId,
-    setOriginalAssignments,
     setOriginalProgram,
     setOriginalTasks,
-    setPatientId,
     setProgramId,
     setTemplateId,
+    resetTemplateFormState,
+    setUseTemplateSelection,
     setTitle,
     setProgramType,
   ]);
@@ -333,14 +454,7 @@ export function ProgramBuilder() {
           .filter((task): task is Task => Boolean(task))
           .map(createBuilderTaskFromExisting);
         setTasks(orderedTasks);
-        const assignments = await listAssignmentsForProgram(id);
-        setOriginalAssignments(assignments);
-        const primaryAssignment =
-          assignments.find((assignment) => assignment.isActive !== false)?.userId ??
-          program.assignedUserIds?.[0] ??
-          "";
-        setPatientId(primaryAssignment ?? "");
-        setInitialPatientId(primaryAssignment ?? "");
+        setUseTemplateSelection(false);
         setTemplateId("");
       } catch (err) {
         setMessage({
@@ -355,13 +469,11 @@ export function ProgramBuilder() {
       genericErrorMsg,
       programLoadErrorMsg,
       resetBuilder,
-      setInitialPatientId,
       setMessage,
-      setOriginalAssignments,
       setOriginalProgram,
       setOriginalTasks,
-      setPatientId,
       setProgramType,
+      setUseTemplateSelection,
       setTasks,
       setTemplateId,
       setTitle,
@@ -376,6 +488,11 @@ export function ProgramBuilder() {
       })),
     [programTemplates]
   );
+
+  const refreshProgramTemplates = useCallback(async () => {
+    const templates = await listProgramTemplates();
+    setProgramTemplates(templates);
+  }, []);
 
   const programOptions = useMemo(
     () =>
@@ -411,20 +528,6 @@ export function ProgramBuilder() {
     [t]
   );
 
-  const patientOptions = useMemo(
-    () =>
-      patients
-        .map((patient) => {
-          const fullName = [patient.firstname, patient.lastname].filter(Boolean).join(" ").trim();
-          return {
-            value: patient.id,
-            label: fullName.length > 0 ? fullName : patient.id,
-          };
-        })
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [patients]
-  );
-
   const handleTemplateSelect = (value: string) => {
     setTemplateId(value);
     if (!value) {
@@ -433,12 +536,10 @@ export function ProgramBuilder() {
       setProgramType(ProgramType.AdaptiveNormal);
       return;
     }
+    setUseTemplateSelection(true);
     setProgramId("");
     setOriginalProgram(null);
     setOriginalTasks([]);
-    setOriginalAssignments([]);
-    setInitialPatientId("");
-    setPatientId("");
     const template = programTemplates.find((item) => item.id === value);
     if (!template) return;
     const tasks = template.taskIds
@@ -448,6 +549,143 @@ export function ProgramBuilder() {
     setTasks(tasks);
     setTitle(template.title);
     setProgramType(template.type);
+  };
+
+  const handleTemplateToggle = (enabled: boolean) => {
+    setUseTemplateSelection(enabled);
+    if (!enabled) {
+      setTemplateId("");
+    }
+  };
+
+  const startCreateTemplate = () => {
+    setTemplateForm({
+      title: title.trim() || "",
+      subtitle: "",
+      description: "",
+      icon: selectedTasks[0]?.icon ?? PROGRAM_ICON_OPTIONS[0],
+      color: activeTemplate?.color ?? PROGRAM_COLOR_OPTIONS[0],
+      type: programType,
+    });
+    setEditingTemplateId(null);
+    setTemplateFormError(null);
+    setIsTemplateFormOpen(true);
+  };
+
+  const startEditTemplate = (template: ProgramTemplate) => {
+    setTemplateForm({
+      title: template.title,
+      subtitle: template.subtitle ?? "",
+      description: template.description ?? "",
+      icon: template.icon,
+      color: template.color,
+      type: template.type,
+    });
+    setEditingTemplateId(template.id);
+    setTemplateFormError(null);
+    setIsTemplateFormOpen(true);
+  };
+
+  const cancelTemplateForm = () => {
+    resetTemplateFormState();
+  };
+
+  const handleTemplateFormSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    if (!user && role !== "admin") {
+      setTemplateFormError(loginRequiredMsg);
+      return;
+    }
+
+    const trimmedTitle = templateForm.title.trim();
+    if (!trimmedTitle) {
+      setTemplateFormError(templateFormTitleRequired);
+      return;
+    }
+
+    if (!selectedTasks.length) {
+      setTemplateFormError(templateFormTasksMissingMsg);
+      return;
+    }
+
+    const templateTaskIds = selectedTasks
+      .map((task) => task.templateId)
+      .filter((id): id is string => Boolean(id));
+
+    if (templateTaskIds.length !== selectedTasks.length) {
+      setTemplateFormError(templateFormRequiresTemplatesMsg);
+      return;
+    }
+
+    const existingTemplate = editingTemplateId
+      ? programTemplates.find((template) => template.id === editingTemplateId)
+      : null;
+
+    const ownerId =
+      existingTemplate?.ownerId ?? user?.uid ?? originalProgram?.ownerId ?? "";
+    if (!ownerId) {
+      setTemplateFormError(templateFormOwnerMissing);
+      return;
+    }
+
+    const timestamp = new Date().toISOString();
+    const payload: Omit<ProgramTemplate, "id"> = {
+      title: trimmedTitle,
+      subtitle: templateForm.subtitle.trim(),
+      description: templateForm.description.trim(),
+      icon: templateForm.icon,
+      color: templateForm.color,
+      type: templateForm.type,
+      taskIds: templateTaskIds,
+      therapistTypes: existingTemplate?.therapistTypes ?? [],
+      ownerId,
+      roles: existingTemplate?.roles ?? [],
+      scope: existingTemplate?.scope ?? TemplateScope.Private,
+      isPublished: existingTemplate?.isPublished ?? true,
+      createdAt: existingTemplate?.createdAt ?? timestamp,
+      updatedAt: timestamp,
+    };
+
+    setTemplateFormLoading(true);
+    setTemplateFormError(null);
+
+    try {
+      if (editingTemplateId) {
+        await updateProgramTemplate(editingTemplateId, payload);
+        setMessage({ type: "success", text: templateUpdatedMsg });
+      } else {
+        await createProgramTemplate(payload);
+        setMessage({ type: "success", text: templateSavedMsg });
+      }
+      await refreshProgramTemplates();
+      resetTemplateFormState();
+    } catch (err) {
+      setTemplateFormError(
+        err instanceof Error ? err.message : genericErrorMsg
+      );
+    } finally {
+      setTemplateFormLoading(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (template: ProgramTemplate) => {
+    const confirmed = window.confirm(templateDeleteConfirm(template.title));
+    if (!confirmed) return;
+    try {
+      await removeProgramTemplate(template.id);
+      if (editingTemplateId === template.id) {
+        resetTemplateFormState();
+      }
+      await refreshProgramTemplates();
+      setMessage({ type: "success", text: templateDeletedMsg });
+    } catch (err) {
+      setMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : genericErrorMsg,
+      });
+    }
   };
 
   const handleProgramSelect = (value: string) => {
@@ -468,23 +706,138 @@ export function ProgramBuilder() {
         .filter((task): task is Task => Boolean(task))
         .map(createBuilderTaskFromExisting);
       setTasks(restoredTasks);
-      setPatientId(initialPatientId);
       return;
     }
     resetBuilder();
   };
 
-  const handleSave = async () => {
+// ---- Typisierte Helper-Funktionen ---- //
+
+/**
+ * Erstellt oder aktualisiert Tasks für das Programm.
+ * Gibt ein Array aller finalen Task-IDs zurück.
+ */
+async function createOrUpdateTasks(
+  selectedTasks: BuilderTask[],
+  ownerId: string,
+  createdTaskIds: string[]
+): Promise<string[]> {
+  const newTaskIdMap: Record<string, string> = {};
+
+  for (const task of selectedTasks) {
+    // Neue Tasks aus Template klonen
+    if (task.source === "template") {
+      const created = await createTask({
+        title: task.title,
+        description: task.description,
+        type: task.type,
+        icon: task.icon,
+        visibility: task.visibility,
+        config: task.config,
+        ownerId,
+        roles: task.roles,
+        isPublished: task.isPublished,
+        isTemplate: false,
+      });
+      newTaskIdMap[task.id] = created.id;
+      createdTaskIds.push(created.id);
+    }
+
+    // Bestehende Tasks übernehmen, falls anderer Owner
+    if (task.source === "existing" && task.taskId && task.ownerId !== ownerId) {
+      await updateTask(task.taskId, { ownerId }).catch(() => undefined);
+    }
+  }
+
+  return selectedTasks
+    .map((t) => (t.source === "existing" ? t.taskId : newTaskIdMap[t.id]))
+    .filter((id): id is string => Boolean(id));
+}
+
+/**
+ * Erstellt den Payload für createProgram oder updateProgram
+ */
+function buildProgramPayload({
+  title,
+  ownerId,
+  taskIds,
+  currentProgramType,
+  selectedTasks,
+  activeTemplate,
+  originalProgram,
+}: {
+  title: string;
+  ownerId: string;
+  taskIds: string[];
+  currentProgramType: ProgramType;
+  selectedTasks: BuilderTask[];
+  activeTemplate: ProgramTemplate | null;
+  originalProgram: Program | null;
+}): Omit<Program, "id"> {
+  return {
+    title:
+      title.trim() ||
+      activeTemplate?.title ||
+      originalProgram?.title ||
+      "New program",
+    subtitle: activeTemplate?.subtitle ?? originalProgram?.subtitle ?? "",
+    description: activeTemplate?.description ?? originalProgram?.description ?? "",
+    type: currentProgramType,
+    taskIds,
+    icon:
+      activeTemplate?.icon ??
+      originalProgram?.icon ??
+      selectedTasks[0]?.icon ??
+      "favorite_rounded",
+    color: activeTemplate?.color ?? originalProgram?.color ?? "#1F6FEB",
+    ownerId,
+    roles: activeTemplate?.roles ?? originalProgram?.roles ?? [],
+    scope: TemplateScope.Private,
+    therapistTypes: [],
+    assignedUserIds: [],
+    isPublished: true,
+  };
+}
+
+/**
+ * Rollback bei Fehler: löscht erstellte Programme & Tasks
+ */
+async function rollback(programId: string | null, createdTaskIds: string[]): Promise<void> {
+  if (programId) await removeProgram(programId).catch(() => undefined);
+  await Promise.all(
+    createdTaskIds.map((id) => removeTaskFromApi(id).catch(() => undefined))
+  );
+}
+
+/**
+ * Aktualisiert Programmliste basierend auf Rolle
+ */
+async function refreshPrograms(
+  role: UserRole | null,
+  userId: string | undefined,
+  setPrograms: React.Dispatch<React.SetStateAction<Program[]>>
+): Promise<void> {
+  const refreshedPrograms =
+    role === "admin"
+      ? await listAllPrograms()
+      : await listProgramsByOwner(userId ?? "");
+  setPrograms(refreshedPrograms);
+}
+
+// ---- Optimierte handleSave-Funktion ---- //
+
+const handleSave = async (): Promise<void> => {
     if (!user && role !== "admin") {
       setMessage({ type: "error", text: loginRequiredMsg });
       return;
     }
 
-    const trimmedPatientId = patientId.trim();
-
-    if (!trimmedPatientId) {
-      setMessage({ type: "error", text: patientRequiredMsg });
-      return;
+    if (role === "admin") {
+      const hasTemplateTasks = selectedTasks.some((task) => task.source === "template");
+      if (hasTemplateTasks || !isEditing) {
+        setMessage({ type: "error", text: adminTemplateBlockedMsg });
+        return;
+      }
     }
 
     if (!selectedTasks.length) {
@@ -492,204 +845,62 @@ export function ProgramBuilder() {
       return;
     }
 
-    const therapistForPatient =
-      patients.find((patient) => patient.id === trimmedPatientId)?.therapistId ?? "";
-    const ownerId =
-      role === "admin"
-        ? therapistForPatient || originalProgram?.ownerId || user?.uid || ""
-        : user?.uid ?? originalProgram?.ownerId ?? "";
+  const ownerId =
+    role === "admin"
+      ? originalProgram?.ownerId || user?.uid || ""
+      : user?.uid ?? originalProgram?.ownerId ?? "";
 
-    if (!ownerId) {
-      setMessage({ type: "error", text: ownerMissingMsg });
-      return;
+  if (!ownerId) {
+    setMessage({ type: "error", text: ownerMissingMsg });
+    return;
+  }
+
+  setSaving(true);
+  const createdTaskIds: string[] = [];
+  let createdProgramId: string | null = null;
+
+  try {
+    // Tasks erstellen / übernehmen
+    const finalTaskIds = await createOrUpdateTasks(selectedTasks, ownerId, createdTaskIds);
+
+    // Programm-Daten generieren
+    const programPayload = buildProgramPayload({
+      title,
+      ownerId,
+      taskIds: finalTaskIds,
+      currentProgramType,
+      selectedTasks,
+      activeTemplate,
+      originalProgram,
+    });
+
+    // Programm speichern (Create oder Update)
+    const program = (isEditing && programId
+      ? await updateProgram(programId, programPayload)
+      : await createProgram(programPayload)) as Program | null;
+
+    if (!program) {
+      throw new Error(genericErrorMsg);
     }
 
-    setSaving(true);
-    const createdTaskIds: string[] = [];
-    let createdProgramId: string | null = null;
+    createdProgramId = program.id;
 
-    try {
-      if (isEditing && programId) {
-        const newTaskIdMap: Record<string, string> = {};
+    // UI aktualisieren
+    await refreshPrograms(role, user?.uid, setPrograms);
+    await loadProgramDetails(program.id);
 
-        for (const task of selectedTasks) {
-          if (task.source !== "template") continue;
-          const created = await createTask({
-            title: task.title,
-            description: task.description,
-            type: task.type,
-            icon: task.icon,
-            visibility: task.visibility,
-            config: task.config,
-            ownerId,
-            roles: task.roles,
-            isPublished: task.isPublished,
-            isTemplate: false,
-          });
-          newTaskIdMap[task.id] = created.id;
-          createdTaskIds.push(created.id);
-        }
-
-        await Promise.all(
-          selectedTasks
-            .filter(
-              (task) =>
-                task.source === "existing" &&
-                task.taskId &&
-                task.ownerId !== ownerId
-            )
-            .map((task) =>
-              updateTask(task.taskId as string, { ownerId }).catch(() => undefined)
-            )
-        );
-
-        const finalTaskIds = selectedTasks
-          .map((task) => {
-            if (task.source === "existing" && task.taskId) {
-              return task.taskId;
-            }
-            return newTaskIdMap[task.id];
-          })
-          .filter((id): id is string => Boolean(id));
-
-        const updatedProgram = await updateProgram(programId, {
-          title:
-            title.trim() ||
-            originalProgram?.title ||
-            t("therapist.programBuilder.defaultTitle", "New program"),
-          subtitle: originalProgram?.subtitle ?? "",
-          description: originalProgram?.description ?? "",
-          type: currentProgramType,
-          taskIds: finalTaskIds,
-          icon:
-            originalProgram?.icon ??
-            selectedTasks[0]?.icon ??
-            "favorite_rounded",
-          color: originalProgram?.color ?? "#1F6FEB",
-          ownerId,
-          roles: originalProgram?.roles ?? [],
-          scope: originalProgram?.scope ?? TemplateScope.Private,
-          therapistTypes: originalProgram?.therapistTypes ?? [],
-          assignedUserIds: trimmedPatientId
-            ? [trimmedPatientId]
-            : originalProgram?.assignedUserIds ?? [],
-          isPublished: originalProgram?.isPublished ?? true,
-        });
-
-        if (!updatedProgram) {
-          throw new Error(genericErrorMsg);
-        }
-
-        const assignmentsToRemove = originalAssignments.filter(
-          (assignment) => assignment.userId !== trimmedPatientId
-        );
-        await Promise.all(
-          assignmentsToRemove.map((assignment) =>
-            removeProgramAssignment(assignment.id).catch(() => undefined)
-          )
-        );
-
-        const alreadyAssigned = originalAssignments.some(
-          (assignment) => assignment.userId === trimmedPatientId
-        );
-        if (!alreadyAssigned && trimmedPatientId) {
-          await assignProgramToUser({
-            programId,
-            userId: trimmedPatientId,
-          });
-        }
-
-        const refreshedPrograms =
-          role === "admin"
-            ? await listAllPrograms()
-            : await listProgramsByOwner(user?.uid ?? "");
-        setPrograms(refreshedPrograms);
-        await loadProgramDetails(programId);
-
-        const tasksToRemove = originalTasks.filter(
-          (task) => !finalTaskIds.includes(task.id)
-        );
-        await Promise.all(
-          tasksToRemove.map((task) => removeTaskFromApi(task.id).catch(() => undefined))
-        );
-      } else {
-        const createdTasks: Task[] = [];
-        for (const task of selectedTasks) {
-          const created = await createTask({
-            title: task.title,
-            description: task.description,
-            type: task.type,
-            icon: task.icon,
-            visibility: task.visibility,
-            config: task.config,
-            ownerId,
-            roles: task.roles,
-            isPublished: task.isPublished,
-            isTemplate: false,
-          });
-          createdTasks.push(created);
-          createdTaskIds.push(created.id);
-        }
-
-        const program = await createProgram({
-          title:
-            title.trim() ||
-            activeTemplate?.title ||
-            t("therapist.programBuilder.defaultTitle", "New program"),
-          subtitle: activeTemplate?.subtitle ?? "",
-          description: activeTemplate?.description ?? "",
-          type: currentProgramType,
-          taskIds: createdTasks.map((task) => task.id),
-          icon:
-            activeTemplate?.icon ??
-            selectedTasks[0]?.icon ??
-            "favorite_rounded",
-          color: activeTemplate?.color ?? "#1F6FEB",
-          ownerId,
-          roles: activeTemplate?.roles ?? [],
-          scope: TemplateScope.Private,
-          therapistTypes: [],
-          assignedUserIds: trimmedPatientId ? [trimmedPatientId] : [],
-          isPublished: true,
-        });
-
-        createdProgramId = program.id;
-
-        await assignProgramToUser({
-          programId: program.id,
-          userId: trimmedPatientId,
-        });
-
-        const refreshedPrograms =
-          role === "admin"
-            ? await listAllPrograms()
-            : await listProgramsByOwner(user?.uid ?? "");
-        setPrograms(refreshedPrograms);
-        setProgramId(program.id);
-        await loadProgramDetails(program.id);
-      }
-
-      setMessage({ type: "success", text: successMsg });
-    } catch (err) {
-      if (createdProgramId) {
-        await removeProgram(createdProgramId).catch(() => undefined);
-      }
-      if (createdTaskIds.length) {
-        await Promise.all(
-          createdTaskIds.map((id) =>
-            removeTaskFromApi(id).catch(() => undefined)
-          )
-        );
-      }
-      setMessage({
-        type: "error",
-        text: err instanceof Error ? err.message : genericErrorMsg,
-      });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(null), 5000);
-    }
-  };
+    setMessage({ type: "success", text: successMsg });
+  } catch (err) {
+    await rollback(createdProgramId, createdTaskIds);
+    setMessage({
+      type: "error",
+      text: err instanceof Error ? err.message : genericErrorMsg,
+    });
+  } finally {
+    setSaving(false);
+    setTimeout(() => setMessage(null), 5000);
+  }
+};
 
   const programsEmpty = !selectedTasks.length;
 
@@ -722,90 +933,110 @@ export function ProgramBuilder() {
 
       <div className="space-y-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
         <Card className="flex flex-col gap-6 p-6 lg:col-span-2">
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="program-select">{programLabel}</Label>
-                <Select
-                  id="program-select"
-                  value={programId}
-                  onChange={(event) => handleProgramSelect(event.target.value)}
-                  disabled={programLoading || !programOptions.length}
-                >
-                  <option value="">{programPlaceholder}</option>
-                  {programOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
+          {isAdmin ? (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-brand-text">
+                {t("therapist.programBuilder.admin.title", "Program templates")}
+              </h2>
+              <p className="text-sm text-brand-text-muted">
+                {t(
+                  "therapist.programBuilder.admin.description",
+                  "Admins can combine existing task templates and save them as program templates. To assign programs to patients, ask a therapist to publish the template."
+                )}
+              </p>
+              <p className="text-xs text-brand-text-muted">
+                {t(
+                  "therapist.programBuilder.admin.hint",
+                  "Add tasks from the library on the right, then use the template section below to save your blueprint."
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="program-select">{programLabel}</Label>
+                  <Select
+                    id="program-select"
+                    value={programId}
+                    onChange={(event) => handleProgramSelect(event.target.value)}
+                    disabled={programLoading || !programOptions.length}
+                  >
+                    <option value="">{programPlaceholder}</option>
+                    {programOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="use-template"
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-brand-divider/70 text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                      checked={useTemplateSelection}
+                      onChange={(event) => handleTemplateToggle(event.target.checked)}
+                    />
+                    <Label htmlFor="use-template" className="cursor-pointer text-sm font-medium text-brand-text">
+                      {templateToggleLabel}
+                    </Label>
+                  </div>
+                  {!useTemplateSelection && (
+                    <p className="text-xs text-brand-text-muted">{templateToggleHelp}</p>
+                  )}
+                  <Label htmlFor="template" className="text-sm font-medium text-brand-text">
+                    {templateLabel}
+                  </Label>
+                  <Select
+                    id="template"
+                    value={templateId}
+                    onChange={(event) => handleTemplateSelect(event.target.value)}
+                    disabled={!useTemplateSelection}
+                  >
+                    <option value="">{noneOptionLabel}</option>
+                    {programTemplateOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="program-type">{programTypeLabel}</Label>
+                  <Select
+                    id="program-type"
+                    value={programType}
+                    onChange={(event) => setProgramType(event.target.value as ProgramType)}
+                  >
+                    {programTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="program-title">{titleLabel}</Label>
+                  <Input
+                    id="program-title"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder={t("therapist.programBuilder.placeholders.title", "e.g. Phase 1")}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="template">{templateLabel}</Label>
-                <Select
-                  id="template"
-                  value={templateId}
-                  onChange={(event) => handleTemplateSelect(event.target.value)}
-                >
-                  <option value="">{noneOptionLabel}</option>
-                  {programTemplateOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="program-type">{programTypeLabel}</Label>
-                <Select
-                  id="program-type"
-                  value={programType}
-                  onChange={(event) => setProgramType(event.target.value as ProgramType)}
-                >
-                  {programTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="program-title">{titleLabel}</Label>
-                <Input
-                  id="program-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder={t("therapist.programBuilder.placeholders.title", "e.g. Phase 1")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="patient-id">{patientLabel}</Label>
-                <Select
-                  id="patient-id"
-                  value={patientId}
-                  onChange={(event) => setPatientId(event.target.value)}
-                  disabled={!patientOptions.length}
-                >
-                  <option value="">
-                    {patientOptions.length ? patientPlaceholder : noPatientsLabel}
-                  </option>
-                  {patientOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="button" onClick={handleSave} disabled={saving}>
+                  {saving ? savingLabel : saveLabel}
+                </Button>
+                <Button type="button" variant="outline" onClick={handleReset}>
+                  {resetLabel}
+                </Button>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" onClick={handleSave} disabled={saving}>
-                {saving ? savingLabel : saveLabel}
-              </Button>
-              <Button type="button" variant="outline" onClick={handleReset}>
-                {resetLabel}
-              </Button>
-            </div>
-          </div>
+          )}
 
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-brand-text">{selectedTasksTitle}</h2>
@@ -913,6 +1144,214 @@ export function ProgramBuilder() {
           </div>
         </Card>
       </div>
+
+      <Card className="space-y-5 p-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-text">{templateManagerTitle}</h2>
+            <p className="text-xs text-brand-text-muted">{templateManagerSubtitle}</p>
+          </div>
+          <Button type="button" variant="outline" onClick={startCreateTemplate}>
+            {templateCreateButton}
+          </Button>
+        </div>
+
+        {isTemplateFormOpen && (
+          <form
+            className="space-y-4 rounded-[14px] border border-brand-divider/60 bg-brand-light/40 p-4"
+            onSubmit={handleTemplateFormSubmit}
+          >
+            <div>
+              <h3 className="text-sm font-semibold text-brand-text">
+                {editingTemplateId ? templateFormEditTitle : templateFormCreateTitle}
+              </h3>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="program-template-title">{templateFormTitleLabel}</Label>
+                <Input
+                  id="program-template-title"
+                  value={templateForm.title}
+                  onChange={(event) =>
+                    setTemplateForm((prev) => ({
+                      ...prev,
+                      title: event.target.value,
+                    }))
+                  }
+                  disabled={templateFormLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="program-template-subtitle">{templateFormSubtitleLabel}</Label>
+                <Input
+                  id="program-template-subtitle"
+                  value={templateForm.subtitle}
+                  onChange={(event) =>
+                    setTemplateForm((prev) => ({
+                      ...prev,
+                      subtitle: event.target.value,
+                    }))
+                  }
+                  disabled={templateFormLoading}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="program-template-description">{templateFormDescriptionLabel}</Label>
+              <Textarea
+                id="program-template-description"
+                value={templateForm.description}
+                onChange={(event) =>
+                  setTemplateForm((prev) => ({
+                    ...prev,
+                    description: event.target.value,
+                  }))
+                }
+                rows={3}
+                disabled={templateFormLoading}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>{templateFormIconLabel}</Label>
+                <IconPicker
+                  icons={PROGRAM_ICON_OPTIONS}
+                  value={templateForm.icon}
+                  onChange={(icon) =>
+                    setTemplateForm((prev) => ({
+                      ...prev,
+                      icon,
+                    }))
+                  }
+                  preview={
+                    <p className="text-xs uppercase tracking-wide text-brand-text-muted">
+                      {templateForm.icon}
+                    </p>
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{templateFormColorLabel}</Label>
+                <ColorPicker
+                  colors={PROGRAM_COLOR_OPTIONS}
+                  value={templateForm.color}
+                  onChange={(color) =>
+                    setTemplateForm((prev) => ({
+                      ...prev,
+                      color,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="program-template-type">{templateFormTypeLabel}</Label>
+              <Select
+                id="program-template-type"
+                value={templateForm.type}
+                onChange={(event) =>
+                  setTemplateForm((prev) => ({
+                    ...prev,
+                    type: event.target.value as ProgramType,
+                  }))
+                }
+                disabled={templateFormLoading}
+              >
+                {programTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            {templateFormError && (
+              <div className="rounded-card border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {templateFormError}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button type="submit" disabled={templateFormLoading}>
+                {templateFormLoading
+                  ? "..."
+                  : editingTemplateId
+                  ? templateFormSubmitUpdate
+                  : templateFormSubmitCreate}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={cancelTemplateForm}
+                disabled={templateFormLoading}
+              >
+                {templateFormCancel}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        <div className="space-y-3">
+          {programTemplates.map((template) => {
+            const typeLabel =
+              programTypeOptions.find((option) => option.value === template.type)?.label ??
+              template.type;
+            return (
+              <div
+                key={template.id}
+                className="flex flex-col gap-3 rounded-[12px] border border-brand-divider/60 bg-white p-4 md:flex-row md:items-center md:justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-xl"
+                    style={{ backgroundColor: `${template.color}1A` }}
+                  >
+                    <span
+                      className="material-symbols-rounded text-2xl"
+                      style={{ color: template.color }}
+                    >
+                      {template.icon}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-brand-text">{template.title}</p>
+                    <p className="text-xs text-brand-text-muted">
+                      {templateTaskCountLabel(template.taskIds.length)} • {typeLabel}
+                    </p>
+                    {template.description && (
+                      <p className="mt-1 text-xs text-brand-text-muted line-clamp-2">
+                        {template.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => startEditTemplate(template)}
+                  >
+                    {templateEditLabel}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => handleDeleteTemplate(template)}
+                  >
+                    {templateDeleteLabel}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          {programTemplates.length === 0 && (
+            <p className="rounded-[12px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
+              {templateListEmpty}
+            </p>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

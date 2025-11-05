@@ -4,38 +4,27 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
-import { ColorPicker } from "../../../components/ui/color-picker";
 import { IconPicker } from "../../../components/ui/icon-picker";
+import { TASK_ICON_OPTIONS } from "../../shared/constants/iconOptions";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Select } from "../../../components/ui/select";
 import { Spinner } from "../../../components/ui/spinner";
 import { Textarea } from "../../../components/ui/textarea";
 import {
-  createProgramTemplate,
   createTaskTemplate,
-  listProgramTemplates,
   listTaskTemplates,
   listTherapistTypes,
-  removeProgramTemplate,
   removeTaskTemplate,
-  updateProgramTemplate,
   updateTaskTemplate,
 } from "../../therapist/services/therapistApi";
 import type {
-  ProgramTemplate,
   TaskConfig,
   TaskTemplate,
   TemplateScope as TemplateScopeType,
   TherapistType,
 } from "../../shared/types/domain";
-import {
-  ProgramType,
-  TaskType,
-  TaskVisibility,
-  TemplateScope,
-  programTypeToCadence,
-} from "../../shared/types/domain";
+import { TaskType, TaskVisibility, TemplateScope } from "../../shared/types/domain";
 import {
   Field,
   TaskConfigEditor,
@@ -47,86 +36,7 @@ import {
 } from "../../shared/utils/taskConfig";
 import { useI18n } from "../../../i18n/I18nProvider";
 
-type TemplateTab = "tasks" | "programs";
-
-const TASK_ICON_OPTIONS = [
-  "assignment",
-  "favorite_rounded",
-  "task_alt_rounded",
-  "self_improvement",
-  "self_improvement_outlined",
-  "menu_book_rounded",
-  "directions_walk_rounded",
-  "spa_rounded",
-  "edit_note_rounded",
-  "insights_rounded",
-  "air_rounded",
-  "hotel_rounded",
-  "health_and_safety_rounded",
-  "psychology_rounded",
-  "groups_rounded",
-  "auto_awesome_motion",
-  "emoji_events_rounded",
-  "run_circle_rounded",
-  "accessibility_new_rounded",
-  "nature_people_rounded",
-  "sentiment_satisfied_alt_rounded",
-  "volunteer_activism_rounded",
-  "nightlight_rounded",
-  "fitness_center_rounded",
-  "waves_rounded",
-  "mood_rounded",
-  "mediation_rounded",
-  "emoji_nature_rounded",
-  "timer_rounded",
-  "short_text_rounded",
-  "quiz_rounded",
-  "trending_up_rounded",
-  "flag_circle_rounded",
-  "straighten_rounded",
-  "emoji_emotions_rounded",
-  "visibility_rounded",
-  "visibility_off_rounded",
-  "repeat_rounded",
-  "category_rounded",
-];
-
-const PROGRAM_ICON_OPTIONS = [
-  "favorite_rounded",
-  "self_improvement",
-  "health_and_safety_rounded",
-  "spa_rounded",
-  "psychology_rounded",
-  "groups_rounded",
-  "flag_circle_rounded",
-  "auto_awesome_motion",
-  "emoji_events_rounded",
-  "run_circle_rounded",
-  "accessibility_new_rounded",
-  "nature_people_rounded",
-  "sentiment_satisfied_alt_rounded",
-  "volunteer_activism_rounded",
-  "nightlight_rounded",
-  "fitness_center_rounded",
-  "waves_rounded",
-  "mood_rounded",
-  "mediation_rounded",
-  "emoji_nature_rounded",
-];
-
-const PROGRAM_COLOR_OPTIONS = [
-  "#1F6FEB",
-  "#2563EB",
-  "#10B981",
-  "#AD8501",
-  "#8BC34A",
-  "#FF7043",
-  "#9C27B0",
-  "#FFC107",
-  "#26C6DA",
-  "#EF4444",
-  "#6366F1",
-];
+ 
 
 const roleStringToArray = (value: string) =>
   value
@@ -152,23 +62,6 @@ interface TaskTemplateFormState {
   updatedAt?: string;
 }
 
-interface ProgramTemplateFormState {
-  title: string;
-  subtitle: string;
-  description: string;
-  icon: string;
-  color: string;
-  type: ProgramType;
-  taskIds: string[];
-  therapistTypes: string[];
-  ownerId: string;
-  rolesText: string;
-  scope: TemplateScopeType;
-  isPublished: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 const createEmptyTaskForm = (): TaskTemplateFormState => ({
   title: "",
   description: "",
@@ -181,23 +74,6 @@ const createEmptyTaskForm = (): TaskTemplateFormState => ({
   isPublished: true,
   config: defaultTaskConfig(TaskType.Timer),
   ownerId: "",
-  createdAt: undefined,
-  updatedAt: undefined,
-});
-
-const createEmptyProgramForm = (): ProgramTemplateFormState => ({
-  title: "",
-  subtitle: "",
-  description: "",
-  icon: PROGRAM_ICON_OPTIONS[0],
-  color: PROGRAM_COLOR_OPTIONS[0],
-  type: ProgramType.AdaptiveNormal,
-  taskIds: [],
-  therapistTypes: [],
-  ownerId: "",
-  rolesText: "",
-  scope: TemplateScope.Global,
-  isPublished: true,
   createdAt: undefined,
   updatedAt: undefined,
 });
@@ -215,65 +91,23 @@ interface TaskTemplatePaneProps {
   t: TranslateFn;
 }
 
-interface ProgramTemplatePaneProps {
-  form: ProgramTemplateFormState;
-  setForm: Dispatch<SetStateAction<ProgramTemplateFormState>>;
-  editingId: string | null;
-  templates: ProgramTemplate[];
-  onSubmit: () => void;
-  onReset: () => void;
-  onEdit: (template: ProgramTemplate) => void;
-  onDelete: (id: string) => void;
-  therapistTypeOptions: Array<{ value: string; label: string }>;
-  taskOptions: Array<{ value: string; label: string }>;
-  t: TranslateFn;
-}
-
 export function TemplateManager() {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<TemplateTab>("tasks");
   const [taskTemplates, setTaskTemplates] = useState<TaskTemplate[]>([]);
-  const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
   const [therapistTypes, setTherapistTypes] = useState<TherapistType[]>([]);
   const [taskForm, setTaskForm] = useState<TaskTemplateFormState>(createEmptyTaskForm());
-  const [programForm, setProgramForm] = useState<ProgramTemplateFormState>(createEmptyProgramForm());
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
-  const tabs = useMemo(
-    () => [
-      {
-        id: "tasks" as const,
-        title: t("templates.tabs.tasks.title", "Task Templates"),
-        description: t(
-          "templates.tabs.tasks.description",
-          "Konfiguriere wiederverwendbare Aufgaben inklusive Typ-spezifischer Einstellungen."
-        ),
-      },
-      {
-        id: "programs" as const,
-        title: t("templates.tabs.programs.title", "Program Templates"),
-        description: t(
-          "templates.tabs.programs.description",
-          "Kombiniere Tasks zu kompletten Programmen und steuere Rollenzugriff sowie Sichtbarkeit."
-        ),
-      },
-    ],
-    [t]
-  );
-
   const refreshData = async () => {
     try {
-      const [tasks, programs, therapists] = await Promise.all([
+      const [tasks, therapists] = await Promise.all([
         listTaskTemplates(),
-        listProgramTemplates(),
         listTherapistTypes(),
       ]);
       setTaskTemplates(tasks);
-      setProgramTemplates(programs);
       setTherapistTypes(therapists);
       setError(null);
     } catch (err) {
@@ -290,11 +124,6 @@ export function TemplateManager() {
   const resetTaskForm = () => {
     setTaskForm(createEmptyTaskForm());
     setEditingTaskId(null);
-  };
-
-  const resetProgramForm = () => {
-    setProgramForm(createEmptyProgramForm());
-    setEditingProgramId(null);
   };
 
   const handleTaskSubmit = async () => {
@@ -354,73 +183,6 @@ export function TemplateManager() {
     }
   };
 
-  const handleProgramSubmit = async () => {
-    if (!programForm.title.trim()) {
-      setError(
-        t(
-          "templates.errors.programTitleRequired",
-          "Bitte gib einen Titel für das Programm an."
-        )
-      );
-      return;
-    }
-    if (!programForm.taskIds.length) {
-      setError(
-        t(
-          "templates.errors.programTasksRequired",
-          "Bitte wähle mindestens einen Task für das Programm aus."
-        )
-      );
-      return;
-    }
-
-    const therapistTypes =
-      programForm.scope === TemplateScope.TherapistType
-        ? Array.from(
-            new Set(
-              programForm.therapistTypes
-                .map((type) => type.trim())
-                .filter((type) => type.length > 0)
-            )
-          )
-        : [];
-    const scope: TemplateScopeType =
-      programForm.scope === TemplateScope.TherapistType && therapistTypes.length === 0
-        ? TemplateScope.Global
-        : programForm.scope;
-
-    const payload: Omit<ProgramTemplate, "id"> = {
-      title: programForm.title.trim(),
-      subtitle: programForm.subtitle.trim(),
-      description: programForm.description.trim(),
-      icon: programForm.icon,
-      color: programForm.color,
-      type: programForm.type,
-      taskIds: programForm.taskIds,
-      therapistTypes,
-      ownerId: programForm.ownerId.trim(),
-      roles: roleStringToArray(programForm.rolesText),
-      scope,
-      isPublished: programForm.isPublished,
-      createdAt: programForm.createdAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    try {
-      if (editingProgramId) {
-        await updateProgramTemplate(editingProgramId, payload);
-        setInfo(t("templates.messages.programUpdated", "Program Template aktualisiert."));
-      } else {
-        await createProgramTemplate(payload);
-        setInfo(t("templates.messages.programCreated", "Program Template erstellt."));
-      }
-      await refreshData();
-      resetProgramForm();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  };
-
   const startEditTask = (template: TaskTemplate) => {
     setTaskForm({
       title: template.title,
@@ -440,32 +202,6 @@ export function TemplateManager() {
       updatedAt: template.updatedAt,
     });
     setEditingTaskId(template.id);
-    setActiveTab("tasks");
-  };
-
-  const startEditProgram = (template: ProgramTemplate) => {
-    setProgramForm({
-      title: template.title,
-      subtitle: template.subtitle,
-      description: template.description,
-      icon: template.icon,
-      color: template.color,
-      type: template.type,
-      taskIds: template.taskIds,
-      therapistTypes: template.therapistTypes ?? [],
-      ownerId: template.ownerId,
-      rolesText: roleArrayToString(template.roles),
-      scope:
-        template.scope ??
-        (template.therapistTypes && template.therapistTypes.length
-          ? TemplateScope.TherapistType
-          : TemplateScope.Global),
-      isPublished: template.isPublished,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt,
-    });
-    setEditingProgramId(template.id);
-    setActiveTab("programs");
   };
 
   const handleDeleteTask = async (id: string) => {
@@ -481,37 +217,10 @@ export function TemplateManager() {
     }
   };
 
-  const handleDeleteProgram = async (id: string) => {
-    try {
-      await removeProgramTemplate(id);
-      if (editingProgramId === id) {
-        resetProgramForm();
-      }
-      await refreshData();
-      setInfo(t("templates.messages.programDeleted", "Program Template gelöscht."));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  };
-
   const therapistTypeOptions = useMemo(
     () => therapistTypes.map((type) => ({ value: type.id, label: type.name })),
     [therapistTypes]
   );
-
-  const taskOptions = useMemo(
-    () =>
-      taskTemplates.map((template) => ({
-        value: template.id,
-        label: template.title,
-      })),
-    [taskTemplates]
-  );
-
-  const stats = {
-    tasks: taskTemplates.length,
-    programs: programTemplates.length,
-  };
 
   if (loading) {
     return (
@@ -530,17 +239,10 @@ export function TemplateManager() {
         <p className="mt-2 text-sm text-brand-text-muted">
           {t(
             "templates.header.subtitle",
-            "Steuere Aufgaben- und Programmvorlagen zentral und gib sie für dein Team frei."
+            "Verwalte deine Aufgaben-Vorlagen zentral und teile sie mit deinem Team."
           )}
         </p>
       </div>
-
-      <TabHeader
-        tabs={tabs}
-        activeTab={activeTab}
-        stats={stats}
-        onChange={setActiveTab}
-      />
 
       {error && (
         <div className="rounded-card border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-soft">
@@ -554,85 +256,18 @@ export function TemplateManager() {
         </div>
       )}
 
-      {activeTab === "tasks" ? (
-        <TaskTemplatePane
-          form={taskForm}
-          setForm={setTaskForm}
-          editingId={editingTaskId}
-          templates={taskTemplates}
-          onSubmit={handleTaskSubmit}
-          onReset={resetTaskForm}
-          onEdit={startEditTask}
-          onDelete={handleDeleteTask}
-          therapistTypeOptions={therapistTypeOptions}
-          t={t}
-        />
-      ) : (
-        <ProgramTemplatePane
-          form={programForm}
-          setForm={setProgramForm}
-          editingId={editingProgramId}
-          templates={programTemplates}
-          onSubmit={handleProgramSubmit}
-          onReset={resetProgramForm}
-          onEdit={startEditProgram}
-          onDelete={handleDeleteProgram}
-          therapistTypeOptions={therapistTypeOptions}
-          taskOptions={taskOptions}
-          t={t}
-        />
-      )}
-    </div>
-  );
-}
-
-function TabHeader({
-  tabs,
-  activeTab,
-  stats,
-  onChange,
-}: {
-  tabs: Array<{ id: TemplateTab; title: string; description: string }>;
-  activeTab: TemplateTab;
-  stats: { tasks: number; programs: number };
-  onChange: (tab: TemplateTab) => void;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-3 rounded-card border border-brand-divider/60 bg-white p-1 shadow-soft">
-      {tabs.map((tab) => {
-        const selected = tab.id === activeTab;
-        const count = tab.id === "tasks" ? stats.tasks : stats.programs;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => onChange(tab.id)}
-            className={`flex flex-1 min-w-[180px] flex-col rounded-[12px] px-4 py-3 text-left transition ${
-              selected
-                ? "bg-brand-primary text-white shadow-soft"
-                : "bg-transparent text-brand-text hover:bg-brand-light/60"
-            }`}
-          >
-            <span className="flex items-center justify-between text-sm font-semibold">
-              {tab.title}
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs ${
-                  selected ? "bg-white/20" : "bg-brand-light/70 text-brand-text-muted"
-                }`}
-              >
-                {count}
-              </span>
-            </span>
-            <span
-              className={`mt-1 text-xs ${
-                selected ? "text-white/80" : "text-brand-text-muted"
-              }`}
-            >
-              {tab.description}
-            </span>
-          </button>
-        );
-      })}
+      <TaskTemplatePane
+        form={taskForm}
+        setForm={setTaskForm}
+        editingId={editingTaskId}
+        templates={taskTemplates}
+        onSubmit={handleTaskSubmit}
+        onReset={resetTaskForm}
+        onEdit={startEditTask}
+        onDelete={handleDeleteTask}
+        therapistTypeOptions={therapistTypeOptions}
+        t={t}
+      />
     </div>
   );
 }
@@ -985,412 +620,6 @@ function TaskTemplatePane({
                   </span>
                   <span>{template.roles.length ? template.roles.join(", ") : rolesEmptyText}</span>
                   <span>{template.isPublished ? publishedBadge : draftBadge}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function ProgramTemplatePane({
-  form,
-  setForm,
-  editingId,
-  templates,
-  onSubmit,
-  onReset,
-  onEdit,
-  onDelete,
-  therapistTypeOptions,
-  taskOptions,
-  t,
-}: ProgramTemplatePaneProps) {
-  const formTitle = editingId
-    ? t("templates.programs.form.editTitle", "Program Template bearbeiten")
-    : t("templates.programs.form.newTitle", "Neues Program Template");
-  const formSubtitle = t(
-    "templates.programs.form.subtitle",
-    "Kombiniere Tasks zu strukturierten Programmen und definiere den Zugriff."
-  );
-  const tasksSelectedLabel = t(
-    "templates.programs.form.tasksSelected",
-    "Tasks ausgewählt"
-  );
-  const therapistTypesLabel = t(
-    "templates.programs.form.therapistTypes",
-    "Therapeuten-Typen"
-  );
-  const tasksLabel = t("templates.programs.form.tasks", "Task Templates");
-  const resetLabel = t("templates.actions.resetForm", "Formular zurücksetzen");
-  const saveLabel = editingId
-    ? t("templates.actions.updateProgram", "Program Template aktualisieren")
-    : t("templates.actions.saveProgram", "Program Template speichern");
-  const publishedLabel = t("templates.actions.published", "Veröffentlicht");
-  const listTitle = t("templates.programs.list.title", "Program Templates");
-  const programListEmptyText = t(
-    "templates.programs.list.empty",
-    "Noch keine Program Templates vorhanden."
-  );
-  const availableTasksEmptyText = t(
-    "templates.tasks.list.empty",
-    "Noch keine Task Templates vorhanden."
-  );
-  const rolesEmptyText = t(
-    "templates.programs.list.rolesEmpty",
-    "Keine Rollenbindung"
-  );
-  const therapistsEmptyText = t(
-    "templates.programs.list.therapistsEmpty",
-    "Alle Therapeuten"
-  );
-  const publishedBadge = t(
-    "templates.programs.list.published",
-    "Veröffentlicht"
-  );
-  const draftBadge = t("templates.programs.list.draft", "Entwurf");
-  const scopeLabel = t("templates.programs.form.scope.label", "Availability");
-  const scopeAllLabel = t("templates.programs.form.scope.global", "All therapists");
-  const scopeTypesLabel = t(
-    "templates.programs.form.scope.types",
-    "Specific therapist types"
-  );
-  const scopePrivateLabel = t(
-    "templates.programs.form.scope.private",
-    "Private (owner only)"
-  );
-  const customColorLabel = t(
-    "templates.programs.form.customColor",
-    "Eigene Farbe"
-  );
-  const customColorHint = t(
-    "templates.programs.form.colorHint",
-    "Wähle eine Akzentfarbe oder definiere eine eigene."
-  );
-  const frequencyDaily = t("templates.frequency.daily", "Täglich");
-  const frequencyWeekly = t("templates.frequency.weekly", "Wöchentlich");
-  return (
-    <div className="space-y-6 xl:grid xl:grid-cols-3 xl:gap-6 xl:space-y-0">
-      <Card className="space-y-6 p-6 xl:col-span-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-brand-text">
-              {formTitle}
-            </h2>
-            <p className="text-sm text-brand-text-muted">
-              {formSubtitle}
-            </p>
-          </div>
-          {editingId && (
-            <Button type="button" variant="outline" size="sm" onClick={onReset}>
-              {resetLabel}
-            </Button>
-          )}
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label={t("templates.fields.title", "Titel")}>
-            <Input
-              value={form.title}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, title: event.target.value }))
-              }
-            />
-          </Field>
-          <Field label={t("templates.programs.form.subtitleLabel", "Untertitel")}>
-            <Input
-              value={form.subtitle}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, subtitle: event.target.value }))
-              }
-            />
-          </Field>
-          <Field
-            label={t("templates.fields.description", "Beschreibung")}
-            fullWidth
-          >
-            <Textarea
-              rows={3}
-              value={form.description}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, description: event.target.value }))
-              }
-            />
-          </Field>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label={t("templates.programs.form.typeLabel", "Programmart")}>
-            <div className="space-y-2">
-              <Select
-                value={form.type}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    type: event.target.value as ProgramType,
-                  }))
-                }
-              >
-                <option value={ProgramType.Challenge}>Challenge</option>
-                <option value={ProgramType.Sequential}>Sequenziell</option>
-                <option value={ProgramType.AdaptiveNormal}>Adaptiv / Normal</option>
-              </Select>
-              <p className="text-xs text-brand-text-muted">
-                {t("templates.programs.form.cadenceInfo", "Cadence")}: {programTypeToCadence(form.type) === "daily" ? frequencyDaily : frequencyWeekly}
-              </p>
-            </div>
-          </Field>
-          <Field label={t("templates.fields.icon", "Icon")}>
-            <IconPicker
-              icons={PROGRAM_ICON_OPTIONS}
-              value={form.icon}
-              onChange={(icon) => setForm((prev) => ({ ...prev, icon }))}
-              preview={
-                <p className="text-xs uppercase tracking-wide text-brand-text-muted">
-                  {form.icon}
-                </p>
-              }
-            />
-          </Field>
-          <Field label={t("templates.programs.form.owner", "Owner-ID (optional)")}>
-            <Input
-              value={form.ownerId}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, ownerId: event.target.value }))
-              }
-            />
-          </Field>
-          <Field label={t("templates.fields.roles", "Rollen (kommagetrennt, optional)")}>
-            <Input
-              value={form.rolesText}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, rolesText: event.target.value }))
-              }
-            />
-          </Field>
-          <Field label={scopeLabel} fullWidth>
-            <Select
-              value={form.scope}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  scope: event.target.value as TemplateScopeType,
-                  therapistTypes:
-                    event.target.value === TemplateScope.TherapistType
-                      ? prev.therapistTypes
-                      : [],
-                }))
-              }
-            >
-              <option value={TemplateScope.Global}>{scopeAllLabel}</option>
-              <option value={TemplateScope.TherapistType}>{scopeTypesLabel}</option>
-              <option value={TemplateScope.Private}>{scopePrivateLabel}</option>
-            </Select>
-          </Field>
-        </div>
-
-        <div className="space-y-3">
-          <Label className="text-sm font-semibold text-brand-text">
-            {t("templates.programs.form.color", "Farbe")}
-          </Label>
-          <ColorPicker
-            colors={PROGRAM_COLOR_OPTIONS}
-            value={form.color}
-            onChange={(color) =>
-              setForm((prev) => ({
-                ...prev,
-                color,
-              }))
-            }
-            allowCustom
-            customLabel={customColorLabel}
-            customHint={customColorHint}
-          />
-        </div>
-
-        {form.scope === TemplateScope.TherapistType && (
-          <div className="space-y-4 rounded-card border border-brand-divider/60 bg-brand-light/40 p-4">
-            <Label className="text-sm font-semibold text-brand-text">
-              {therapistTypesLabel}
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {therapistTypeOptions.length === 0 && (
-                <span className="text-xs text-brand-text-muted">
-                  {t("templates.programs.form.noTherapistTypes", "Keine Typen hinterlegt.")}
-                </span>
-              )}
-              {therapistTypeOptions.map((option) => {
-                const isSelected = form.therapistTypes.includes(option.value);
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        therapistTypes: isSelected
-                          ? prev.therapistTypes.filter((item) => item !== option.value)
-                          : [...prev.therapistTypes, option.value],
-                      }))
-                    }
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      isSelected
-                        ? "bg-brand-primary text-white"
-                        : "bg-white text-brand-text hover:bg-brand-light/60"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-3 rounded-card border border-brand-divider/60 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-semibold text-brand-text">
-              {tasksLabel}
-            </Label>
-            <span className="text-xs text-brand-text-muted">
-              {form.taskIds.length} {tasksSelectedLabel}
-            </span>
-          </div>
-          <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
-            {taskOptions.length === 0 && (
-              <p className="rounded-[12px] border border-dashed border-brand-divider/70 px-4 py-4 text-sm text-brand-text-muted">
-                {availableTasksEmptyText}
-              </p>
-            )}
-            {taskOptions.map((option) => {
-              const checked = form.taskIds.includes(option.value);
-              return (
-                <label
-                  key={option.value}
-                  className="flex items-center justify-between rounded-[12px] border border-brand-divider/60 bg-brand-light/30 px-3 py-2 text-sm text-brand-text"
-                >
-                  <span>{option.label}</span>
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(event) => {
-                      const nextChecked = event.target.checked;
-                      setForm((prev) => ({
-                        ...prev,
-                        taskIds: nextChecked
-                          ? [...prev.taskIds, option.value]
-                          : prev.taskIds.filter((id) => id !== option.value),
-                      }));
-                    }}
-                    className="h-4 w-4 rounded border-brand-divider text-brand-primary focus:ring-brand-primary"
-                  />
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" onClick={onSubmit}>
-            {saveLabel}
-          </Button>
-          <Button type="button" variant="outline" onClick={onReset}>
-            {resetLabel}
-          </Button>
-          <label className="flex items-center gap-2 text-sm text-brand-text-muted">
-            <input
-              type="checkbox"
-              checked={form.isPublished}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, isPublished: event.target.checked }))
-              }
-              className="h-4 w-4 rounded border-brand-divider text-brand-primary focus:ring-brand-primary"
-            />
-            {publishedLabel}
-          </label>
-        </div>
-      </Card>
-
-      <Card className="flex h-full flex-col p-6 xl:col-span-1">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-brand-text-muted">
-            {listTitle} ({templates.length})
-          </h3>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={onReset}
-          >
-            <PlusCircle className="h-4 w-4" />
-            {t("templates.actions.startNew", "Neu beginnen")}
-          </Button>
-        </div>
-        <div className="mt-4 space-y-4 overflow-y-auto pr-1">
-          {templates.length === 0 && (
-            <p className="rounded-[12px] border border-dashed border-brand-divider/70 px-4 py-6 text-sm text-brand-text-muted">
-              {programListEmptyText}
-            </p>
-          )}
-          {templates.map((template) => {
-            const isEditing = editingId === template.id;
-            return (
-              <div
-                key={template.id}
-                className={`rounded-[14px] border px-4 py-3 shadow-sm transition ${
-                  isEditing
-                    ? "border-brand-primary/70 bg-brand-primary/5"
-                    : "border-brand-divider/60 bg-white hover:border-brand-primary/40"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-brand-text">
-                      {template.title}
-                    </p>
-                    <p className="text-xs text-brand-text-muted">{template.subtitle}</p>
-                    <p className="text-xs text-brand-text-muted">
-                      {template.taskIds.length} {tasksLabel} • {t(
-                        `templates.taskTypes.${template.type}`,
-                        template.type
-                      )} • {programTypeToCadence(template.type) === "daily" ? frequencyDaily : frequencyWeekly}
-                    </p>
-                  </div>
-                  <span
-                    className="h-6 w-6 rounded-full ring-2 ring-brand-divider/40"
-                    style={{ backgroundColor: template.color }}
-                  />
-                </div>
-                <p className="mt-2 text-xs text-brand-text-muted line-clamp-3">
-                  {template.description}
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] uppercase text-brand-text-muted">
-                  <span>{template.roles.length ? template.roles.join(", ") : rolesEmptyText}</span>
-                  <span>
-                    {template.therapistTypes?.length
-                      ? template.therapistTypes.join(", ")
-                      : therapistsEmptyText}
-                  </span>
-                  <span>{template.isPublished ? publishedBadge : draftBadge}</span>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onEdit(template)}
-                    className="rounded-full border border-brand-divider/60 p-2 text-brand-text-muted transition hover:border-brand-primary hover:text-brand-primary"
-                  >
-                    <PenLine className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(template.id)}
-                    className="rounded-full border border-red-200 p-2 text-red-500 transition hover:bg-red-50"
-                  >
-                    <Trash className="h-4 w-4" />
-                  </button>
                 </div>
               </div>
             );

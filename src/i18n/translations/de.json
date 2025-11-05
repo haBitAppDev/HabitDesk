@@ -163,21 +163,21 @@
       }
     },
     "programs": {
-    "form": {
-      "editTitle": "Programmvorlage bearbeiten",
-      "newTitle": "Neue Programmvorlage",
-      "subtitle": "Kombiniere Tasks zu strukturierten Programmen und definiere den Zugriff.",
-      "subtitleLabel": "Untertitel",
-      "typeLabel": "Programmart",
-      "owner": "Owner-ID (optional)",
-      "tasksSelected": "Tasks ausgewählt",
-      "therapistTypes": "Therapeuten-Typen",
-      "tasks": "Augabenvorlage",
-      "cadenceInfo": "Ausführungsrhythmus",
-      "color": "Farbe",
-      "customColor": "Eigene Farbe",
-      "colorHint": "Wähle eine Akzentfarbe oder lege einen eigenen Farbwert fest.",
-      "noTherapistTypes": "Keine Typen hinterlegt."
+      "form": {
+        "editTitle": "Programmvorlage bearbeiten",
+        "newTitle": "Neue Programmvorlage",
+        "subtitle": "Kombiniere Tasks zu strukturierten Programmen und definiere den Zugriff.",
+        "subtitleLabel": "Untertitel",
+        "typeLabel": "Programmart",
+        "owner": "Owner-ID (optional)",
+        "tasksSelected": "Tasks ausgewählt",
+        "therapistTypes": "Therapeuten-Typen",
+        "tasks": "Augabenvorlage",
+        "cadenceInfo": "Ausführungsrhythmus",
+        "color": "Farbe",
+        "customColor": "Eigene Farbe",
+        "colorHint": "Wähle eine Akzentfarbe oder lege einen eigenen Farbwert fest.",
+        "noTherapistTypes": "Keine Typen hinterlegt."
       },
       "scope": {
         "label": "Verfügbarkeit",
@@ -433,7 +433,7 @@
         "noPatients": "Keine Patienten verfügbar"
       },
       "actions": {
-        "save": "Programm speichern",
+        "save": "Program speichern",
         "saving": "Speichern…",
         "update": "Programm aktualisieren",
         "updating": "Aktualisiere…",
@@ -489,6 +489,9 @@
         "visible": "Sichtbar",
         "hidden": "Versteckt"
       },
+      "actions": {
+        "addToApp": "Zur App hinzufügen"
+      },
       "rolesEmpty": "Keine Rollenbindung",
       "noDescription": "Keine Beschreibung hinterlegt.",
       "create": {
@@ -511,10 +514,10 @@
         "submit": "Vorlage speichern",
         "loginRequired": "Zum Erstellen einer Vorlage musst du angemeldet sein.",
         "titleRequired": "Bitte gib vor dem Speichern einen Titel an.",
-      "unsupportedType": "Dieser Task Typ wird noch nicht unterstützt.",
-      "mediaRequired": "Bitte lade eine Datei hoch oder hinterlege einen Link für Media-Tasks.",
-      "success": "\"{title}\" erstellt.",
-      "error": "Das Speichern der Task Vorlage ist fehlgeschlagen."
+        "unsupportedType": "Dieser Task Typ wird noch nicht unterstützt.",
+        "mediaRequired": "Bitte lade eine Datei hoch oder hinterlege einen Link für Media-Tasks.",
+        "success": "\"{title}\" erstellt.",
+        "error": "Das Speichern der Task Vorlage ist fehlgeschlagen."
       }
     }
   },

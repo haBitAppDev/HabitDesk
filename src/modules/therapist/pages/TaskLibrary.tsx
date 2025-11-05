@@ -1,4 +1,20 @@
-import { Search } from "lucide-react";
+import type { ComponentType } from "react";
+import {
+  BarChart,
+  Eye,
+  EyeOff,
+  FileText,
+  HeartPulse,
+  HelpCircle,
+  PlayCircle,
+  Rocket,
+  Search,
+  Target,
+  Timer,
+  TrendingUp,
+  Type,
+  UserCircle,
+} from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -9,6 +25,7 @@ import {
 
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
+import { IconPicker } from "../../../components/ui/icon-picker";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Select } from "../../../components/ui/select";
@@ -24,10 +41,13 @@ import {
   ensureConfigMatchesType,
 } from "../../shared/utils/taskConfig";
 import {
+  createTask,
   createTaskTemplate,
   listTaskTemplates,
 } from "../services/therapistApi";
 import { useBuilderStore } from "./ProgramBuilder";
+import { TASK_ICON_OPTIONS } from "../../shared/constants/iconOptions";
+import { useUserRole } from "../../shared/hooks/useUserRole";
 
 type Notification = { type: "success" | "error"; text: string };
 
@@ -65,6 +85,7 @@ const createEmptyDraft = (): TaskTemplateDraft => ({
 export function TaskLibrary() {
   const { t } = useI18n();
   const { user } = useAuthState();
+  const { role } = useUserRole();
   const addTask = useBuilderStore((state) => state.addTask);
   const [tasks, setTasks] = useState<TaskTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +97,7 @@ export function TaskLibrary() {
   );
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
   const timeoutRef = useRef<number | null>(null);
 
   const titleText = t("therapist.taskLibrary.title", "Task Library");
@@ -175,6 +197,49 @@ export function TaskLibrary() {
     "therapist.taskLibrary.create.mediaRequired",
     "Please upload a file or provide a link for media tasks."
   );
+  const addToAppLabel = t("therapist.taskLibrary.actions.addToApp", "Add to app");
+  const addToAppPending = t("therapist.taskLibrary.actions.adding", "Adding...");
+  const addToAppSuccess = (title: string) =>
+    t("therapist.taskLibrary.actions.addToAppSuccess", "\"{title}\" added to the app.", {
+      title,
+    });
+  const addToAppOwnerMissing = t(
+    "therapist.taskLibrary.actions.addToAppOwnerMissing",
+    "Unable to determine a task owner. Please sign in and try again."
+  );
+  const addToAppError = t(
+    "therapist.taskLibrary.actions.addToAppError",
+    "Failed to add the task to the app."
+  );
+  const addToAppTherapistOnly = t(
+    "therapist.taskLibrary.actions.addToAppTherapistOnly",
+    "Only therapists can add tasks to the app."
+  );
+  const taskTypeLabels: Record<
+    TaskType,
+    { label: string; color: string; icon: ComponentType<{ className?: string }> }
+  > = {
+    [TaskType.Timer]: { label: t("templates.taskTypes.timerTask", "Timer"), color: "text-[#2563EB]", icon: Timer },
+    [TaskType.TextInput]: { label: t("templates.taskTypes.textInput", "Freitext"), color: "text-[#10B981]", icon: Type },
+    [TaskType.Quiz]: { label: t("templates.taskTypes.quizTask", "Quiz"), color: "text-[#F59E0B]", icon: HelpCircle },
+    [TaskType.Progress]: {
+      label: t("templates.taskTypes.progressTask", "Fortschritt"),
+      color: "text-[#8B5CF6]",
+      icon: TrendingUp,
+    },
+    [TaskType.Media]: { label: t("templates.taskTypes.mediaTask", "Media"), color: "text-[#EC4899]", icon: PlayCircle },
+    [TaskType.Goal]: {
+      label: t("templates.taskTypes.goalTask", "Zielsetzung"),
+      color: "text-[#6366F1]",
+      icon: Target,
+    },
+    [TaskType.Scale]: { label: t("templates.taskTypes.scaleTask", "Skala"), color: "text-[#F43F5E]", icon: BarChart },
+    [TaskType.StateLog]: {
+      label: t("templates.taskTypes.stateLog", "Stimmungstagebuch"),
+      color: "text-[#14B8A6]",
+      icon: HeartPulse,
+    },
+  };
 
   const showNotification = useCallback(
     (payload: Notification, duration = 3000) => {
@@ -247,6 +312,45 @@ export function TaskLibrary() {
       { title: task.title }
     );
     showNotification({ type: "success", text: message });
+  };
+
+  const handlePublishToApp = async (template: TaskTemplate) => {
+    if (role !== "therapist") {
+      showNotification({ type: "error", text: addToAppTherapistOnly }, 5000);
+      return;
+    }
+
+    const ownerId = user?.uid ?? template.ownerId ?? "";
+    if (!ownerId) {
+      showNotification({ type: "error", text: addToAppOwnerMissing }, 5000);
+      return;
+    }
+
+    setPublishingId(template.id);
+    try {
+      await createTask({
+        title: template.title,
+        description: template.description,
+        type: template.type,
+        icon: template.icon,
+        visibility: template.visibility,
+        config: template.config,
+        ownerId,
+        roles: template.roles,
+        isPublished: template.isPublished,
+        isTemplate: false,
+      });
+      showNotification({
+        type: "success",
+        text: addToAppSuccess(template.title),
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : addToAppError;
+      showNotification({ type: "error", text: message }, 5000);
+    } finally {
+      setPublishingId(null);
+    }
   };
 
   const resetCreateForm = () => {
@@ -419,18 +523,23 @@ export function TaskLibrary() {
                   disabled={createLoading}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="task-icon">{createIconLabel}</Label>
-                <Input
-                  id="task-icon"
+              <div className="space-y-2 md:col-span-2">
+                <Label>{createIconLabel}</Label>
+                <IconPicker
+                  icons={TASK_ICON_OPTIONS}
                   value={createForm.icon}
-                  onChange={(event) =>
+                  onChange={(icon) =>
                     setCreateForm((prev) => ({
                       ...prev,
-                      icon: event.target.value,
+                      icon,
                     }))
                   }
-                  disabled={createLoading}
+                  preview={
+                    <p className="text-xs uppercase tracking-wide text-brand-text-muted">
+                      {createForm.icon}
+                    </p>
+                  }
+                  className="mt-1"
                 />
               </div>
               <div className="space-y-2">
@@ -557,11 +666,10 @@ export function TaskLibrary() {
 
       {notification && (
         <div
-          className={`rounded-card border px-4 py-3 text-sm shadow-soft ${
-            notification.type === "success"
+          className={`rounded-card border px-4 py-3 text-sm shadow-soft ${notification.type === "success"
               ? "border-brand-primary/30 bg-brand-primary/10 text-brand-primary"
               : "border-red-200 bg-red-50 text-red-700"
-          }`}
+            }`}
         >
           {notification.text}
         </div>
@@ -572,44 +680,85 @@ export function TaskLibrary() {
           {emptyText}
         </p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {filteredTasks.map((task) => {
             const isHidden =
               task.visibility === TaskVisibility.HiddenFromPatients;
+            const fallback = {
+              label: task.type,
+              color: "text-brand-text-muted",
+              icon: Rocket,
+            };
+            const labelInfo = taskTypeLabels[task.type] ?? fallback;
+            const Icon = labelInfo.icon ?? Rocket;
+            const rolesLabel = task.roles.length ? task.roles.join(", ") : rolesEmpty;
             return (
               <Card
                 key={task.id}
-                className="flex cursor-pointer flex-col gap-3 p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+                className="relative flex h-full cursor-pointer flex-col justify-between border border-brand-divider p-6 transition hover:-translate-y-1 hover:shadow-lg"
                 onClick={() => handleAdd(task)}
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-brand-text">
-                      {task.title}
-                    </p>
-                    <p className="text-xs uppercase tracking-wide text-brand-text-muted">
-                      {t(`templates.taskTypes.${task.type}`, task.type)}
-                    </p>
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-brand-primary" />
+                        <h2 className="text-lg font-semibold text-brand-text">
+                          {task.title}
+                        </h2>
+                      </div>
+                      <div
+                        className={`flex items-center gap-1 text-xs uppercase tracking-wide ${labelInfo.color}`}
+                      >
+                        <Icon className="h-3 w-3" />
+                        <span>{labelInfo.label}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-brand-text-muted line-clamp-3">
+                    {task.description ??
+                      t(
+                        "therapist.taskLibrary.noDescription",
+                        "No description available."
+                      )}
+                  </p>
+                </div>
+                <div className="mt-auto flex flex-col gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-brand-primary text-brand-primary transition-all duration-200 hover:bg-brand-primary hover:text-white"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void handlePublishToApp(task);
+                    }}
+                    disabled={publishingId === task.id}
+                  >
+                    {publishingId === task.id ? addToAppPending : addToAppLabel}
+                  </Button>
+                  <div className="flex items-center justify-between text-[11px] uppercase text-brand-text-muted">
+                    <div className="flex items-center gap-1">
+                      <UserCircle className="h-3 w-3" />
+                      <span>{rolesLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {isHidden ? (
+                        <>
+                          <EyeOff className="h-3 w-3 text-brand-primary" />
+                          <span>{visibilityHidden}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-3 w-3 text-brand-accent" />
+                          <span>{visibilityVisible}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <p className="text-sm text-brand-text-muted line-clamp-3">
-                  {task.description ??
-                    t(
-                      "therapist.taskLibrary.noDescription",
-                      "No description available."
-                    )}
-                </p>
-                <div className="mt-auto flex items-center justify-between text-[11px] uppercase text-brand-text-muted">
-                  <span>
-                    {task.roles.length ? task.roles.join(", ") : rolesEmpty}
-                  </span>
-                  {isHidden ? (
-                    <span>{visibilityHidden}</span>
-                  ) : (
-                    <span>{visibilityVisible}</span>
-                  )}
-                </div>
               </Card>
+
             );
           })}
         </div>
