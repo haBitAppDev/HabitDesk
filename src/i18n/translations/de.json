@@ -278,7 +278,7 @@
         "root": "Therapeut",
         "patients": "Patienten",
         "programBuilder": "Program-Editor",
-        "taskLibrary": "Aufgabenbibliothek"
+        "taskLibrary": "Meine Aufgaben"
       },
       "patient": {
         "root": "Patient",
@@ -504,6 +504,36 @@
       "title": "Task Library",
       "subtitle": "Durchsuche die vorhandenen Task Vorlagen und füge sie deinem Programm hinzu.",
       "cadenceInfo": "Die Ausführungsrhythmik wird vom Programmtyp festgelegt.",
+      "tabs": {
+        "library": "Aufgabenbibliothek",
+        "myTasks": "Meine Aufgaben"
+      },
+      "myTasks": {
+        "header": "Meine Aufgaben",
+        "subtitle": "Erstelle persönliche Aufgaben, die du später einzelnen Patient:innen zuweisen kannst.",
+        "loginRequired": "Zum Verwalten deiner Aufgaben musst du angemeldet sein.",
+        "form": {
+          "title": "Eigene Aufgabe erstellen",
+          "editTitle": "Eigene Aufgabe bearbeiten",
+          "subtitle": "Passe Inhalte und Konfiguration ganz nach deinen Bedürfnissen an.",
+          "save": "Aufgabe speichern",
+          "update": "Aufgabe aktualisieren",
+          "reset": "Zurücksetzen",
+          "titleRequired": "Bitte gib vor dem Speichern einen Titel an.",
+          "error": "Das Speichern der Aufgabe ist fehlgeschlagen.",
+          "createSuccess": "\"{title}\" gespeichert.",
+          "updateSuccess": "\"{title}\" aktualisiert."
+        },
+        "list": {
+          "title": "Gespeicherte Aufgaben",
+          "empty": "Noch keine eigenen Aufgaben vorhanden.",
+          "edit": "Bearbeiten",
+          "delete": "Löschen",
+          "deleting": "Löschen…",
+          "deleteSuccess": "\"{title}\" gelöscht.",
+          "deleteError": "Aufgabe konnte nicht gelöscht werden."
+        }
+      },
       "search": "Nach Titel, Beschreibung oder Rolle suchen…",
       "feedback": "\"{title}\" zum Builder hinzugefügt.",
       "empty": "Keine Tasks gefunden. Passe deine Suche an oder lege ein neues Vorlagen an.",
@@ -512,7 +542,12 @@
         "hidden": "Versteckt"
       },
       "actions": {
-        "addToApp": "Zur App hinzufügen"
+        "addToApp": "Zu meinen Aufgaben hinzufügen",
+        "adding": "Wird hinzugefügt…",
+        "addToAppSuccess": "\"{title}\" wurde zu \"Meine Aufgaben\" übernommen.",
+        "addToAppOwnerMissing": "Es konnte kein Besitzer ermittelt werden. Bitte melde dich erneut an.",
+        "addToAppError": "Die Aufgabe konnte nicht übernommen werden.",
+        "addToAppTherapistOnly": "Nur Therapeut:innen können Aufgaben übernehmen."
       },
       "rolesEmpty": "Keine Rollenbindung",
       "noDescription": "Keine Beschreibung hinterlegt.",

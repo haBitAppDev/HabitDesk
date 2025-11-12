@@ -278,7 +278,7 @@
         "root": "Therapist",
         "patients": "Patients",
         "programBuilder": "Program Builder",
-        "taskLibrary": "Task Library"
+        "taskLibrary": "My tasks"
       },
       "patient": {
         "root": "Patient",
@@ -504,6 +504,36 @@
       "title": "Task Library",
       "subtitle": "Browse existing task templates and add them to your program.",
       "cadenceInfo": "Cadence is determined by the program type.",
+      "tabs": {
+        "library": "Task library",
+        "myTasks": "My tasks"
+      },
+      "myTasks": {
+        "header": "My tasks",
+        "subtitle": "Create personal tasks that you can later assign to patients.",
+        "loginRequired": "You need to be signed in to manage your personal tasks.",
+        "form": {
+          "title": "Create personal task",
+          "editTitle": "Edit personal task",
+          "subtitle": "Customize content and configuration to your needs.",
+          "save": "Save task",
+          "update": "Update task",
+          "reset": "Reset",
+          "titleRequired": "Please add a title before saving.",
+          "error": "Saving the task failed.",
+          "createSuccess": "\"{title}\" saved.",
+          "updateSuccess": "\"{title}\" updated."
+        },
+        "list": {
+          "title": "Saved personal tasks",
+          "empty": "No personal tasks yet.",
+          "edit": "Edit",
+          "delete": "Delete",
+          "deleting": "Deleting...",
+          "deleteSuccess": "\"{title}\" deleted.",
+          "deleteError": "Failed to delete the task."
+        }
+      },
       "search": "Search by title, description or role…",
       "feedback": "\"{title}\" added to builder.",
       "empty": "No tasks found. Adjust your search or create a new template.",
@@ -513,6 +543,14 @@
       },
       "rolesEmpty": "No role restriction",
       "noDescription": "No description available.",
+      "actions": {
+        "addToApp": "Add to my tasks",
+        "adding": "Adding...",
+        "addToAppSuccess": "\"{title}\" added to \"My tasks\".",
+        "addToAppOwnerMissing": "Unable to determine a task owner. Please sign in and try again.",
+        "addToAppError": "Failed to add the task to \"My tasks\".",
+        "addToAppTherapistOnly": "Only therapists can add tasks to \"My tasks\"."
+      },
       "create": {
         "title": "Create task template",
         "button": "Create task template",
@@ -533,10 +571,10 @@
         "submit": "Save template",
         "loginRequired": "You need to be signed in to create task templates.",
         "titleRequired": "Please add a title before saving.",
-      "unsupportedType": "This task type is not supported yet.",
-      "mediaRequired": "Please upload a file or provide a link for media tasks.",
-      "success": "\"{title}\" created.",
-      "error": "Saving the task template failed."
+        "unsupportedType": "This task type is not supported yet.",
+        "mediaRequired": "Please upload a file or provide a link for media tasks.",
+        "success": "\"{title}\" created.",
+        "error": "Saving the task template failed."
       }
     }
   },
