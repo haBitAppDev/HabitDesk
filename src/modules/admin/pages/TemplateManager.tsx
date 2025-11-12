@@ -19,21 +19,31 @@ import {
   updateTaskTemplate,
 } from "../../therapist/services/therapistApi";
 import type {
+  EvidenceTaskConfig,
   TaskConfig,
   TaskTemplate,
   TemplateScope as TemplateScopeType,
   TherapistType,
 } from "../../shared/types/domain";
-import { TaskType, TaskVisibility, TemplateScope } from "../../shared/types/domain";
+import {
+  TaskType,
+  TaskVisibility,
+  TemplateScope,
+} from "../../shared/types/domain";
 import {
   Field,
   TaskConfigEditor,
   type TranslateFn,
 } from "../../shared/components/TaskConfigEditor";
+import { EvidenceConfigEditor } from "../../shared/components/EvidenceConfigEditor";
 import {
   defaultTaskConfig,
   ensureConfigMatchesType,
 } from "../../shared/utils/taskConfig";
+import {
+  createDefaultEvidenceConfig,
+  normalizeEvidenceConfig,
+} from "../../shared/utils/evidenceConfig";
 import { useI18n } from "../../../i18n/I18nProvider";
 
  
@@ -57,6 +67,8 @@ interface TaskTemplateFormState {
   therapistTypes: string[];
   isPublished: boolean;
   config: TaskConfig;
+  evidenceEnabled: boolean;
+  evidenceConfig: EvidenceTaskConfig;
   ownerId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -73,6 +85,8 @@ const createEmptyTaskForm = (): TaskTemplateFormState => ({
   therapistTypes: [],
   isPublished: true,
   config: defaultTaskConfig(TaskType.Timer),
+  evidenceEnabled: false,
+  evidenceConfig: createDefaultEvidenceConfig(),
   ownerId: "",
   createdAt: undefined,
   updatedAt: undefined,
@@ -138,6 +152,36 @@ export function TemplateManager() {
     }
 
     const config = ensureConfigMatchesType(taskForm.type, taskForm.config);
+    let evidenceConfig: EvidenceTaskConfig | undefined;
+    if (taskForm.evidenceEnabled) {
+      if (!taskForm.evidenceConfig.requirements.length) {
+        setError(
+          t(
+            "templates.tasks.evidence.validation.type",
+            "Select at least one evidence type."
+          )
+        );
+        return;
+      }
+      const invalidRequirement = taskForm.evidenceConfig.requirements.find(
+        (req) => req.minAttachments > req.maxAttachments
+      );
+      if (invalidRequirement) {
+        const label = t(
+          `templates.tasks.evidence.types.${invalidRequirement.type}`,
+          invalidRequirement.type
+        );
+        setError(
+          t(
+            "templates.tasks.evidence.validation.range",
+            "Check minimum and maximum for {type}.",
+            { type: label }
+          )
+        );
+        return;
+      }
+      evidenceConfig = normalizeEvidenceConfig(taskForm.evidenceConfig);
+    }
     const therapistTypes =
       taskForm.scope === TemplateScope.TherapistType
         ? Array.from(
@@ -164,6 +208,7 @@ export function TemplateManager() {
       ownerId: taskForm.ownerId?.trim() || undefined,
       isPublished: taskForm.isPublished,
       config,
+      evidenceConfig,
       createdAt: taskForm.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -197,6 +242,9 @@ export function TemplateManager() {
       therapistTypes: template.therapistTypes ?? [],
       isPublished: template.isPublished,
       config: ensureConfigMatchesType(template.type, template.config),
+      evidenceEnabled: Boolean(template.evidenceConfig),
+      evidenceConfig:
+        template.evidenceConfig ?? createDefaultEvidenceConfig(),
       ownerId: template.ownerId ?? "",
       createdAt: template.createdAt,
       updatedAt: template.updatedAt,
@@ -523,6 +571,23 @@ function TaskTemplatePane({
             type={form.type}
             value={ensureConfigMatchesType(form.type, form.config)}
             onChange={(config) => setForm((prev) => ({ ...prev, config }))}
+            t={t}
+          />
+          <EvidenceConfigEditor
+            enabled={form.evidenceEnabled}
+            config={form.evidenceConfig}
+            onToggle={(enabled) =>
+              setForm((prev) => ({
+                ...prev,
+                evidenceEnabled: enabled,
+                evidenceConfig: enabled
+                  ? prev.evidenceConfig?.requirements.length
+                    ? prev.evidenceConfig
+                    : createDefaultEvidenceConfig()
+                  : prev.evidenceConfig,
+              }))
+            }
+            onChange={(next) => setForm((prev) => ({ ...prev, evidenceConfig: next }))}
             t={t}
           />
         </div>

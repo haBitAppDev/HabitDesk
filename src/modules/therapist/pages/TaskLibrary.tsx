@@ -34,12 +34,27 @@ import { Textarea } from "../../../components/ui/textarea";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useAuthState } from "../../shared/hooks/useAuthState";
 import { TaskConfigEditor } from "../../shared/components/TaskConfigEditor";
-import type { MediaTaskConfig, TaskConfig, TaskTemplate } from "../../shared/types/domain";
-import { MediaKind, TaskType, TaskVisibility, TemplateScope } from "../../shared/types/domain";
+import { EvidenceConfigEditor } from "../../shared/components/EvidenceConfigEditor";
+import type {
+  EvidenceTaskConfig,
+  MediaTaskConfig,
+  TaskConfig,
+  TaskTemplate,
+} from "../../shared/types/domain";
+import {
+  MediaKind,
+  TaskType,
+  TaskVisibility,
+  TemplateScope,
+} from "../../shared/types/domain";
 import {
   defaultTaskConfig,
   ensureConfigMatchesType,
 } from "../../shared/utils/taskConfig";
+import {
+  createDefaultEvidenceConfig,
+  normalizeEvidenceConfig,
+} from "../../shared/utils/evidenceConfig";
 import {
   createTask,
   createTaskTemplate,
@@ -59,6 +74,8 @@ interface TaskTemplateDraft {
   visibility: TaskVisibility;
   rolesText: string;
   config: TaskConfig;
+  evidenceEnabled: boolean;
+  evidenceConfig: EvidenceTaskConfig;
 }
 
 const SUPPORTED_TASK_TYPES: TaskType[] = [
@@ -80,6 +97,8 @@ const createEmptyDraft = (): TaskTemplateDraft => ({
   visibility: TaskVisibility.VisibleToPatients,
   rolesText: "",
   config: defaultTaskConfig(TaskType.Timer),
+  evidenceEnabled: false,
+  evidenceConfig: createDefaultEvidenceConfig(),
 });
 
 export function TaskLibrary() {
@@ -197,6 +216,16 @@ export function TaskLibrary() {
     "therapist.taskLibrary.create.mediaRequired",
     "Please upload a file or provide a link for media tasks."
   );
+  const evidenceTypeValidation = t(
+    "templates.tasks.evidence.validation.type",
+    "Select at least one evidence type."
+  );
+  const evidenceRangeValidation = (typeLabel: string) =>
+    t(
+      "templates.tasks.evidence.validation.range",
+      "Check minimum and maximum for {type}.",
+      { type: typeLabel }
+    );
   const addToAppLabel = t("therapist.taskLibrary.actions.addToApp", "Add to app");
   const addToAppPending = t("therapist.taskLibrary.actions.adding", "Adding...");
   const addToAppSuccess = (title: string) =>
@@ -391,6 +420,7 @@ export function TaskLibrary() {
       ownerId: user.uid,
       isPublished: true,
       config: ensureConfigMatchesType(createForm.type, createForm.config),
+      evidenceConfig: undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -435,6 +465,31 @@ export function TaskLibrary() {
           mediaUrl: trimmedUrl,
         };
       }
+    }
+
+    if (createForm.evidenceEnabled) {
+      if (!createForm.evidenceConfig.requirements.length) {
+        setCreateError(evidenceTypeValidation);
+        setCreateLoading(false);
+        return;
+      }
+      const invalidRequirement = createForm.evidenceConfig.requirements.find(
+        (req) => req.minAttachments > req.maxAttachments
+      );
+      if (invalidRequirement) {
+        const label = t(
+          `templates.tasks.evidence.types.${invalidRequirement.type}`,
+          invalidRequirement.type
+        );
+        setCreateError(evidenceRangeValidation(label));
+        setCreateLoading(false);
+        return;
+      }
+      payload.evidenceConfig = normalizeEvidenceConfig(
+        createForm.evidenceConfig
+      );
+    } else {
+      payload.evidenceConfig = undefined;
     }
 
     try {
@@ -626,6 +681,28 @@ export function TaskLibrary() {
                 setCreateForm((prev) => ({
                   ...prev,
                   config,
+                }))
+              }
+              t={t}
+            />
+            <EvidenceConfigEditor
+              enabled={createForm.evidenceEnabled}
+              config={createForm.evidenceConfig}
+              onToggle={(enabled) =>
+                setCreateForm((prev) => ({
+                  ...prev,
+                  evidenceEnabled: enabled,
+                  evidenceConfig: enabled
+                    ? prev.evidenceConfig?.requirements.length
+                      ? prev.evidenceConfig
+                      : createDefaultEvidenceConfig()
+                    : prev.evidenceConfig,
+                }))
+              }
+              onChange={(nextConfig) =>
+                setCreateForm((prev) => ({
+                  ...prev,
+                  evidenceConfig: nextConfig,
                 }))
               }
               t={t}

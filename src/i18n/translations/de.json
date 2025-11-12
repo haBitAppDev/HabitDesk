@@ -145,12 +145,34 @@
           "leftLabel": "Linke Beschriftung",
           "rightLabel": "Rechte Beschriftung"
         },
-        "stateLog": {
-          "emojis": "Emojis (durch Komma trennen)",
-          "showChart": "Verlaufsgrafik anzeigen"
-        }
+      "stateLog": {
+        "emojis": "Emojis (durch Komma trennen)",
+        "showChart": "Verlaufsgrafik anzeigen"
+      }
+    },
+    "evidence": {
+      "title": "Evidenzanforderungen",
+      "subtitle": "Fordere Uploads an, bevor Patient:innen die Aufgabe abschließen.",
+      "enable": "Evidenz verpflichtend",
+      "disabledHint": "Patient:innen können ohne Upload abschließen.",
+      "types": {
+        "photo": "Foto",
+        "audio": "Audio",
+        "video": "Video",
+        "geolocation": "Standort",
+        "checklist": "Checkliste",
+        "qrCode": "QR-Code"
       },
-      "list": {
+      "min": "Minimum",
+      "max": "Maximum",
+      "notesEnabled": "Freitext-Notizen erlauben",
+      "commentRequired": "Notiz ist verpflichtend",
+      "validation": {
+        "type": "Bitte mindestens einen Evidenz-Typ aktivieren.",
+        "range": "Prüfe Minimum und Maximum für {type}."
+      }
+    },
+    "list": {
         "title": "Aufgabenvorlage",
         "empty": "Noch keine Aufgabenvorlagen vorhanden.",
         "visibility": {

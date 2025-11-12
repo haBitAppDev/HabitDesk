@@ -9,6 +9,8 @@ import {
   updateDoc,
 } from "../../shared/services/firestore";
 import type {
+  EvidenceRequirement,
+  EvidenceTaskConfig,
   Program,
   ProgramAssignment,
   ProgramTemplate,
@@ -19,6 +21,7 @@ import type {
 } from "../../shared/types/domain";
 import { Patient } from "../../shared/types/domain";
 import {
+  EvidenceType,
   MediaKind,
   ProgramType,
   TaskType,
@@ -204,6 +207,60 @@ const parseTaskConfig = (
   }
 };
 
+const parseEvidenceType = (value: FirestoreValue): EvidenceType => {
+  if (
+    typeof value === "string" &&
+    (Object.values(EvidenceType) as string[]).includes(value as string)
+  ) {
+    return value as EvidenceType;
+  }
+  return EvidenceType.Photo;
+};
+
+const parseEvidenceRequirement = (
+  raw: FirestoreValue
+): EvidenceRequirement | null => {
+  if (!raw || typeof raw !== "object") return null;
+  const requirement = raw as Record<string, FirestoreValue>;
+  const type = parseEvidenceType(requirement.type);
+  const min = parseNumber(requirement.minAttachments, 0);
+  const max = Math.max(min, parseNumber(requirement.maxAttachments, min));
+  return {
+    type,
+    minAttachments: min,
+    maxAttachments: max,
+    isMandatory:
+      typeof requirement.isMandatory === "boolean"
+        ? requirement.isMandatory
+        : true,
+  };
+};
+
+const parseEvidenceConfig = (
+  raw: FirestoreValue
+): EvidenceTaskConfig | undefined => {
+  if (!raw || typeof raw !== "object") return undefined;
+  const source = raw as Record<string, FirestoreValue>;
+  const requirementsRaw = Array.isArray(source.requirements)
+    ? (source.requirements as FirestoreValue[])
+    : [];
+  const requirements = requirementsRaw
+    .map((entry) => parseEvidenceRequirement(entry))
+    .filter((entry): entry is EvidenceRequirement => Boolean(entry));
+  if (requirements.length === 0) {
+    return undefined;
+  }
+  return {
+    requirements,
+    notesEnabled: Boolean(source.notesEnabled ?? true),
+    commentRequired: Boolean(source.commentRequired),
+    commentLabelKey:
+      typeof source.commentLabelKey === "string"
+        ? source.commentLabelKey
+        : undefined,
+  };
+};
+
 const parseTaskTemplate = (raw: FirestoreDocument): TaskTemplate => {
   const type = (raw.type ?? raw.taskType ?? TaskType.Timer) as TaskType;
   const therapistTypes = coerceStringArray(raw.therapistTypes);
@@ -235,6 +292,7 @@ const parseTaskTemplate = (raw: FirestoreDocument): TaskTemplate => {
       (raw.visibility as TaskVisibility) ??
       TaskVisibility.VisibleToPatients,
     config: parseTaskConfig(type, raw.config),
+    evidenceConfig: parseEvidenceConfig(raw.evidenceConfig),
     roles: coerceStringArray(raw.roles),
     therapistTypes,
     scope: scopeValue,
@@ -281,6 +339,27 @@ const serializeTaskConfig = (
   return sanitizeForFirestore({ ...config }) as Record<string, unknown>;
 };
 
+const serializeEvidenceConfig = (
+  config?: EvidenceTaskConfig
+): Record<string, unknown> | undefined => {
+  if (!config) return undefined;
+  if (!config.requirements || config.requirements.length === 0) {
+    return undefined;
+  }
+  const requirements = config.requirements.map((req) => ({
+    type: req.type,
+    minAttachments: req.minAttachments,
+    maxAttachments: req.maxAttachments,
+    isMandatory: req.isMandatory ?? true,
+  }));
+  return sanitizeForFirestore({
+    requirements,
+    notesEnabled: config.notesEnabled,
+    commentRequired: config.commentRequired,
+    commentLabelKey: config.commentLabelKey ?? undefined,
+  }) as Record<string, unknown>;
+};
+
 const taskTemplateToFirestore = (
   template: Omit<TaskTemplate, "id">
 ): Record<string, unknown> => {
@@ -292,6 +371,7 @@ const taskTemplateToFirestore = (
     icon: template.icon ?? DEFAULT_TASK_ICON,
     visibility: template.visibility,
     config: serializeTaskConfig(template.config),
+    evidenceConfig: serializeEvidenceConfig(template.evidenceConfig),
     roles: template.roles,
     therapistTypes: template.therapistTypes,
     scope: template.scope,
@@ -417,6 +497,7 @@ const taskToFirestore = (
     icon: task.icon ?? DEFAULT_TASK_ICON,
     visibility: task.visibility,
     config: serializeTaskConfig(task.config),
+    evidenceConfig: serializeEvidenceConfig(task.evidenceConfig),
     ownerId: task.ownerId ?? null,
     isTemplate: task.isTemplate,
     roles: task.roles,
@@ -894,6 +975,7 @@ export async function updateTaskTemplate(
     ...existing,
     ...data,
     config: data.config ?? existing.config,
+    evidenceConfig: data.evidenceConfig ?? existing.evidenceConfig,
     updatedAt: new Date().toISOString(),
   };
 

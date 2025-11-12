@@ -61,6 +61,30 @@ export const MediaKind = {
 } as const;
 export type MediaKind = (typeof MediaKind)[keyof typeof MediaKind];
 
+export const EvidenceType = {
+  Photo: "photo",
+  Audio: "audio",
+  Video: "video",
+  Geolocation: "geolocation",
+  Checklist: "checklist",
+  QrCode: "qrCode",
+} as const;
+export type EvidenceType = (typeof EvidenceType)[keyof typeof EvidenceType];
+
+export interface EvidenceRequirement {
+  type: EvidenceType;
+  minAttachments: number;
+  maxAttachments: number;
+  isMandatory?: boolean;
+}
+
+export interface EvidenceTaskConfig {
+  requirements: EvidenceRequirement[];
+  notesEnabled: boolean;
+  commentRequired: boolean;
+  commentLabelKey?: string;
+}
+
 export interface TimerTaskConfig {
   taskType: typeof TaskType.Timer;
   seconds: number;
@@ -142,6 +166,7 @@ export interface TaskTemplate {
   description?: string;
   visibility: TaskVisibility;
   config?: TaskConfig;
+  evidenceConfig?: EvidenceTaskConfig;
   roles: string[];
   therapistTypes: string[];
   scope: TemplateScope;
@@ -159,6 +184,7 @@ export interface Task {
   description?: string;
   visibility: TaskVisibility;
   config?: TaskConfig;
+  evidenceConfig?: EvidenceTaskConfig;
   ownerId?: string;
   createdAt?: string;
   updatedAt?: string;

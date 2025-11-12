@@ -125,12 +125,34 @@
           "leftLabel": "Left label",
           "rightLabel": "Right label"
         },
-        "stateLog": {
-          "emojis": "Emojis (comma separated)",
-          "showChart": "Show history chart"
-        }
+      "stateLog": {
+        "emojis": "Emojis (comma separated)",
+        "showChart": "Show history chart"
+      }
+    },
+    "evidence": {
+      "title": "Evidence requirements",
+      "subtitle": "Enable uploads to request proof before patients can finish the task.",
+      "enable": "Require evidence uploads",
+      "disabledHint": "Patients can finish without uploading files.",
+      "types": {
+        "photo": "Photo",
+        "audio": "Audio",
+        "video": "Video",
+        "geolocation": "Location",
+        "checklist": "Checklist",
+        "qrCode": "QR code"
       },
-      "form": {
+      "min": "Minimum",
+      "max": "Maximum",
+      "notesEnabled": "Allow optional notes",
+      "commentRequired": "Note is mandatory",
+      "validation": {
+        "type": "Select at least one evidence type.",
+        "range": "Check minimum and maximum for {type}."
+      }
+    },
+    "form": {
         "editTitle": "Edit task template",
         "newTitle": "New task template",
         "subtitle": "Choose the appropriate task type and adjust the configuration.",
