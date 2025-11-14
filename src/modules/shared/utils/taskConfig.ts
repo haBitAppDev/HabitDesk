@@ -3,6 +3,7 @@ import {
   TaskType,
 } from "../types/domain";
 import type {
+  EvidenceTaskConfig,
   GoalTaskConfig,
   ProgressTaskConfig,
   QuizTaskConfig,
@@ -12,6 +13,7 @@ import type {
   TextInputConfig,
   TimerTaskConfig,
 } from "../types/domain";
+import { createDefaultEvidenceConfig } from "./evidenceConfig";
 
 export const defaultTaskConfig = (type: TaskType): TaskConfig => {
   switch (type) {
@@ -51,6 +53,8 @@ export const defaultTaskConfig = (type: TaskType): TaskConfig => {
         mediaUrl: "",
         kind: MediaKind.Audio,
       } as Extract<TaskConfig, { taskType: typeof TaskType.Media }>;
+    case TaskType.Evidence:
+      return createDefaultEvidenceConfig() as EvidenceTaskConfig;
     case TaskType.Goal:
       return {
         taskType: TaskType.Goal,
@@ -84,8 +88,11 @@ export const ensureConfigMatchesType = (
   type: TaskType,
   config?: TaskConfig
 ): TaskConfig => {
-  if (!config || config.taskType !== type) {
+  if (!config) {
     return defaultTaskConfig(type);
   }
-  return config;
+  if ("taskType" in config) {
+    return config.taskType === type ? config : defaultTaskConfig(type);
+  }
+  return type === TaskType.Evidence ? config : defaultTaskConfig(type);
 };

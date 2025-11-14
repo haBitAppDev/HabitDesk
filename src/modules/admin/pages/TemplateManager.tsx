@@ -151,9 +151,8 @@ export function TemplateManager() {
       return;
     }
 
-    const config = ensureConfigMatchesType(taskForm.type, taskForm.config);
-    let evidenceConfig: EvidenceTaskConfig | undefined;
-    if (taskForm.evidenceEnabled) {
+    const isEvidenceTask = taskForm.type === TaskType.Evidence;
+    const validateEvidence = (): EvidenceTaskConfig | undefined => {
       if (!taskForm.evidenceConfig.requirements.length) {
         setError(
           t(
@@ -161,7 +160,7 @@ export function TemplateManager() {
             "Select at least one evidence type."
           )
         );
-        return;
+        return undefined;
       }
       const invalidRequirement = taskForm.evidenceConfig.requirements.find(
         (req) => req.minAttachments > req.maxAttachments
@@ -178,9 +177,27 @@ export function TemplateManager() {
             { type: label }
           )
         );
+        return undefined;
+      }
+      return normalizeEvidenceConfig(taskForm.evidenceConfig);
+    };
+    let config: TaskConfig | EvidenceTaskConfig;
+    let evidenceConfig: EvidenceTaskConfig | undefined;
+    if (isEvidenceTask) {
+      const validated = validateEvidence();
+      if (!validated) {
         return;
       }
-      evidenceConfig = normalizeEvidenceConfig(taskForm.evidenceConfig);
+      config = validated;
+    } else {
+      config = ensureConfigMatchesType(taskForm.type, taskForm.config);
+      if (taskForm.evidenceEnabled) {
+        const validated = validateEvidence();
+        if (!validated) {
+          return;
+        }
+        evidenceConfig = validated;
+      }
     }
     const therapistTypes =
       taskForm.scope === TemplateScope.TherapistType
@@ -229,6 +246,11 @@ export function TemplateManager() {
   };
 
   const startEditTask = (template: TaskTemplate) => {
+    const initialEvidenceConfig =
+      template.type === TaskType.Evidence
+        ? ((template.config as EvidenceTaskConfig) ??
+            createDefaultEvidenceConfig())
+        : template.evidenceConfig ?? createDefaultEvidenceConfig();
     setTaskForm({
       title: template.title,
       description: template.description ?? "",
@@ -242,9 +264,9 @@ export function TemplateManager() {
       therapistTypes: template.therapistTypes ?? [],
       isPublished: template.isPublished,
       config: ensureConfigMatchesType(template.type, template.config),
-      evidenceEnabled: Boolean(template.evidenceConfig),
-      evidenceConfig:
-        template.evidenceConfig ?? createDefaultEvidenceConfig(),
+      evidenceEnabled:
+        template.type === TaskType.Evidence || Boolean(template.evidenceConfig),
+      evidenceConfig: initialEvidenceConfig,
       ownerId: template.ownerId ?? "",
       createdAt: template.createdAt,
       updatedAt: template.updatedAt,
@@ -404,6 +426,7 @@ function TaskTemplatePane({
     { value: TaskType.Quiz, label: t("templates.taskTypes.quizTask", "Quiz") },
     { value: TaskType.Progress, label: t("templates.taskTypes.progressTask", "Fortschritt") },
     { value: TaskType.Media, label: t("templates.taskTypes.mediaTask", "Media") },
+    { value: TaskType.Evidence, label: t("templates.taskTypes.evidenceTask", "Evidence only") },
     { value: TaskType.Goal, label: t("templates.taskTypes.goalTask", "Zielsetzung") },
     { value: TaskType.Scale, label: t("templates.taskTypes.scaleTask", "Skala") },
     { value: TaskType.StateLog, label: t("templates.taskTypes.stateLog", "Stimmungstagebuch") }
@@ -441,11 +464,6 @@ function TaskTemplatePane({
               icons={TASK_ICON_OPTIONS}
               value={form.icon}
               onChange={(icon) => setForm((prev) => ({ ...prev, icon }))}
-              preview={
-                <p className="text-xs uppercase tracking-wide text-brand-text-muted">
-                  {form.icon}
-                </p>
-              }
             />
           </Field>
         </div>
@@ -466,11 +484,25 @@ function TaskTemplatePane({
               value={form.type}
               onChange={(event) => {
                 const nextType = event.target.value as TaskType;
-                setForm((prev) => ({
-                  ...prev,
-                  type: nextType,
-                  config: ensureConfigMatchesType(nextType, prev.config),
-                }));
+                setForm((prev) => {
+                  const nextEvidenceConfig =
+                    prev.evidenceConfig?.requirements.length
+                      ? prev.evidenceConfig
+                      : createDefaultEvidenceConfig();
+                  return {
+                    ...prev,
+                    type: nextType,
+                    config:
+                      nextType === TaskType.Evidence
+                        ? normalizeEvidenceConfig(nextEvidenceConfig)
+                        : ensureConfigMatchesType(nextType, prev.config),
+                    evidenceEnabled:
+                      nextType === TaskType.Evidence
+                        ? true
+                        : prev.evidenceEnabled,
+                    evidenceConfig: nextEvidenceConfig,
+                  };
+                });
               }}
             >
               {taskTypeOptions.map((option) => (
@@ -574,20 +606,37 @@ function TaskTemplatePane({
             t={t}
           />
           <EvidenceConfigEditor
-            enabled={form.evidenceEnabled}
+            enabled={
+              form.type === TaskType.Evidence ? true : form.evidenceEnabled
+            }
+            disableToggle={form.type === TaskType.Evidence}
             config={form.evidenceConfig}
             onToggle={(enabled) =>
+              setForm((prev) => {
+                if (prev.type === TaskType.Evidence) {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  evidenceEnabled: enabled,
+                  evidenceConfig: enabled
+                    ? prev.evidenceConfig?.requirements.length
+                      ? prev.evidenceConfig
+                      : createDefaultEvidenceConfig()
+                    : prev.evidenceConfig,
+                };
+              })
+            }
+            onChange={(next) =>
               setForm((prev) => ({
                 ...prev,
-                evidenceEnabled: enabled,
-                evidenceConfig: enabled
-                  ? prev.evidenceConfig?.requirements.length
-                    ? prev.evidenceConfig
-                    : createDefaultEvidenceConfig()
-                  : prev.evidenceConfig,
+                evidenceConfig: next,
+                config:
+                  prev.type === TaskType.Evidence
+                    ? normalizeEvidenceConfig(next)
+                    : prev.config,
               }))
             }
-            onChange={(next) => setForm((prev) => ({ ...prev, evidenceConfig: next }))}
             t={t}
           />
         </div>

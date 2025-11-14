@@ -23,7 +23,7 @@ import type {
   TimerTaskConfig,
 } from "../types/domain";
 import { deleteMediaFile, uploadMediaFile } from "../services/storage";
-import { defaultTaskConfig } from "../utils/taskConfig";
+import { ensureConfigMatchesType } from "../utils/taskConfig";
 
 export type TranslateFn = (
   key: string,
@@ -45,6 +45,11 @@ export function Field({ label, children, fullWidth = false }: FieldProps) {
     </div>
   );
 }
+
+const getConfigForType = <T extends TaskConfig>(
+  configType: TaskType,
+  config: TaskConfig
+): T => ensureConfigMatchesType(configType, config) as T;
 
 const ACCEPT_BY_KIND: Record<MediaKind, string> = {
   [MediaKind.Audio]: "audio/*, .mp4, .mp3",
@@ -75,17 +80,13 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [videoSource, setVideoSource] = useState<VideoSource>("upload");
-
   useEffect(() => {
     if (type !== TaskType.Media) {
       if (mediaError) setMediaError(null);
       if (videoSource !== "upload") setVideoSource("upload");
       return;
     }
-    const mediaConfig =
-      value.taskType === TaskType.Media
-        ? (value as MediaTaskConfig)
-        : (defaultTaskConfig(TaskType.Media) as MediaTaskConfig);
+    const mediaConfig = getConfigForType<MediaTaskConfig>(TaskType.Media, value);
     if (mediaConfig.kind === MediaKind.Video) {
       if (mediaConfig.storagePath) {
         if (videoSource !== "upload") {
@@ -106,10 +107,7 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
 
   switch (type) {
     case TaskType.Timer: {
-      const current =
-        value.taskType === TaskType.Timer
-          ? (value as TimerTaskConfig)
-          : (defaultTaskConfig(TaskType.Timer) as TimerTaskConfig);
+      const current = getConfigForType<TimerTaskConfig>(TaskType.Timer, value);
       return (
         <div className="space-y-4">
           <Field label={t("templates.tasks.config.timer.duration", "Dauer (Sekunden)")}>
@@ -145,10 +143,7 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
       );
     }
     case TaskType.TextInput: {
-      const current =
-        value.taskType === TaskType.TextInput
-          ? (value as TextInputConfig)
-          : (defaultTaskConfig(TaskType.TextInput) as TextInputConfig);
+      const current = getConfigForType<TextInputConfig>(TaskType.TextInput, value);
       return (
         <div className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
@@ -201,10 +196,7 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
       );
     }
     case TaskType.Quiz: {
-      const current =
-        value.taskType === TaskType.Quiz
-          ? (value as QuizTaskConfig)
-          : (defaultTaskConfig(TaskType.Quiz) as QuizTaskConfig);
+      const current = getConfigForType<QuizTaskConfig>(TaskType.Quiz, value);
 
       const handleOptionChange = <Key extends keyof QuizTaskConfig["options"][number]>(
         index: number,
@@ -329,10 +321,7 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
       );
     }
     case TaskType.Progress: {
-      const current =
-        value.taskType === TaskType.Progress
-          ? (value as ProgressTaskConfig)
-          : (defaultTaskConfig(TaskType.Progress) as ProgressTaskConfig);
+      const current = getConfigForType<ProgressTaskConfig>(TaskType.Progress, value);
       return (
         <div className="space-y-4">
           <Field label={t("templates.tasks.config.progress.target", "Zielwert")}>
@@ -381,16 +370,9 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
       );
     }
     case TaskType.Media: {
-      const current =
-        value.taskType === TaskType.Media
-          ? (value as MediaTaskConfig)
-          : (defaultTaskConfig(TaskType.Media) as MediaTaskConfig);
-
+      const current = getConfigForType<MediaTaskConfig>(TaskType.Media, value);
       const applyMediaChanges = (changes: Partial<MediaTaskConfig>) => {
-        const base =
-          value.taskType === TaskType.Media
-            ? (value as MediaTaskConfig)
-            : (defaultTaskConfig(TaskType.Media) as MediaTaskConfig);
+        const base = getConfigForType<MediaTaskConfig>(TaskType.Media, value);
         onChange({
           ...base,
           ...changes,
@@ -693,11 +675,17 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
         </div>
       );
     }
+    case TaskType.Evidence:
+      return (
+        <p className="text-sm text-brand-text-muted">
+          {t(
+            "templates.tasks.config.evidence.onlyEvidence",
+            "Evidence-only tasks rely on the evidence requirements below."
+          )}
+        </p>
+      );
     case TaskType.Goal: {
-      const current =
-        value.taskType === TaskType.Goal
-          ? (value as GoalTaskConfig)
-          : (defaultTaskConfig(TaskType.Goal) as GoalTaskConfig);
+      const current = getConfigForType<GoalTaskConfig>(TaskType.Goal, value);
       return (
         <div className="space-y-4">
           <Field label={t("templates.tasks.config.goal.description", "Zielbeschreibung")}>
@@ -732,10 +720,7 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
       );
     }
     case TaskType.Scale: {
-      const current =
-        value.taskType === TaskType.Scale
-          ? (value as ScaleTaskConfig)
-          : (defaultTaskConfig(TaskType.Scale) as ScaleTaskConfig);
+      const current = getConfigForType<ScaleTaskConfig>(TaskType.Scale, value);
       return (
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -810,10 +795,7 @@ export function TaskConfigEditor({ type, value, onChange, t }: TaskConfigEditorP
       );
     }
     case TaskType.StateLog: {
-      const current =
-        value.taskType === TaskType.StateLog
-          ? (value as StateLogTaskConfig)
-          : (defaultTaskConfig(TaskType.StateLog) as StateLogTaskConfig);
+      const current = getConfigForType<StateLogTaskConfig>(TaskType.StateLog, value);
 
       const handleEmojiChange = (value: string) => {
         const parts = value

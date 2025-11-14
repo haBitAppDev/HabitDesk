@@ -64,7 +64,9 @@ import {
   listTaskTemplates,
   listTasksByOwner,
   removeTask,
+  removeTaskTemplate,
   updateTask,
+  updateTaskTemplate,
 } from "../services/therapistApi";
 import { useBuilderStore } from "./ProgramBuilder";
 import { TASK_ICON_OPTIONS } from "../../shared/constants/iconOptions";
@@ -103,6 +105,7 @@ const SUPPORTED_TASK_TYPES: TaskType[] = [
   TaskType.Quiz,
   TaskType.Progress,
   TaskType.Media,
+  TaskType.Evidence,
   TaskType.Goal,
   TaskType.Scale,
   TaskType.StateLog,
@@ -157,6 +160,8 @@ export function TaskLibrary() {
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TaskLibraryTab>("library");
   const [myTasks, setMyTasks] = useState<Task[]>([]);
   const [myTasksLoading, setMyTasksLoading] = useState(false);
@@ -284,6 +289,24 @@ export function TaskLibrary() {
     "therapist.taskLibrary.create.reset",
     "Reset"
   );
+  const editTemplateTitle = t(
+    "therapist.taskLibrary.create.editTitle",
+    "Edit task template"
+  );
+  const editTemplateSubmitLabel = t(
+    "therapist.taskLibrary.create.update",
+    "Update task template"
+  );
+  const editTemplateSuccess = (title: string) =>
+    t(
+      "therapist.taskLibrary.create.updateSuccess",
+      "\"{title}\" updated.",
+      { title }
+    );
+  const templateFormHeading = editingTemplateId ? editTemplateTitle : createTitle;
+  const templateFormSubmitLabel = editingTemplateId
+    ? editTemplateSubmitLabel
+    : createSubmitLabel;
   const createLoginRequired = t(
     "therapist.taskLibrary.create.loginRequired",
     "You need to be signed in to create task templates."
@@ -418,6 +441,28 @@ export function TaskLibrary() {
     "therapist.taskLibrary.actions.addToAppTherapistOnly",
     "Only therapists can add tasks to the app."
   );
+  const editTemplateActionLabel = t(
+    "therapist.taskLibrary.actions.editTemplate",
+    "Edit template"
+  );
+  const deleteTemplateLabel = t(
+    "therapist.taskLibrary.actions.deleteTemplate",
+    "Delete template"
+  );
+  const deletingTemplateLabel = t(
+    "therapist.taskLibrary.actions.deletingTemplate",
+    "Deleting..."
+  );
+  const deleteTemplateSuccess = (title: string) =>
+    t(
+      "therapist.taskLibrary.actions.deleteTemplateSuccess",
+      "\"{title}\" deleted.",
+      { title }
+    );
+  const deleteTemplateError = t(
+    "therapist.taskLibrary.actions.deleteTemplateError",
+    "Failed to delete the template."
+  );
   const taskTypeLabels: Record<
     TaskType,
     { label: string; color: string; icon: ComponentType<{ className?: string }> }
@@ -431,6 +476,11 @@ export function TaskLibrary() {
       icon: TrendingUp,
     },
     [TaskType.Media]: { label: t("templates.taskTypes.mediaTask", "Media"), color: "text-[#EC4899]", icon: PlayCircle },
+    [TaskType.Evidence]: {
+      label: t("templates.taskTypes.evidenceTask", "Evidence only"),
+      color: "text-[#A855F7]",
+      icon: FileText,
+    },
     [TaskType.Goal]: {
       label: t("templates.taskTypes.goalTask", "Zielsetzung"),
       color: "text-[#6366F1]",
@@ -635,13 +685,11 @@ export function TaskLibrary() {
       return;
     }
 
-    const ensuredConfig = ensureConfigMatchesType(myTaskForm.type, myTaskForm.config);
-    let evidenceConfig: EvidenceTaskConfig | undefined;
-
-    if (myTaskForm.evidenceEnabled) {
+    const isEvidenceTask = myTaskForm.type === TaskType.Evidence;
+    const validatePersonalEvidence = (): EvidenceTaskConfig | undefined => {
       if (!myTaskForm.evidenceConfig.requirements.length) {
         setMyTaskFormError(evidenceTypeValidation);
-        return;
+        return undefined;
       }
       const invalidRequirement = myTaskForm.evidenceConfig.requirements.find(
         (req) => req.minAttachments > req.maxAttachments
@@ -652,9 +700,29 @@ export function TaskLibrary() {
           invalidRequirement.type
         );
         setMyTaskFormError(evidenceRangeValidation(label));
+        return undefined;
+      }
+      return normalizeEvidenceConfig(myTaskForm.evidenceConfig);
+    };
+
+    let config: TaskConfig | EvidenceTaskConfig;
+    let evidenceConfig: EvidenceTaskConfig | undefined;
+
+    if (isEvidenceTask) {
+      const validated = validatePersonalEvidence();
+      if (!validated) {
         return;
       }
-      evidenceConfig = normalizeEvidenceConfig(myTaskForm.evidenceConfig);
+      config = validated;
+    } else {
+      config = ensureConfigMatchesType(myTaskForm.type, myTaskForm.config);
+      if (myTaskForm.evidenceEnabled) {
+        const validated = validatePersonalEvidence();
+        if (!validated) {
+          return;
+        }
+        evidenceConfig = validated;
+      }
     }
 
     setMyTaskSaving(true);
@@ -666,7 +734,7 @@ export function TaskLibrary() {
       icon: myTaskForm.icon || "assignment",
       type: myTaskForm.type,
       visibility: myTaskForm.visibility,
-      config: ensuredConfig,
+      config,
       evidenceConfig,
       ownerId: user.uid,
       roles: [] as string[],
@@ -700,6 +768,11 @@ export function TaskLibrary() {
   };
 
   const handleEditMyTask = (task: Task) => {
+    const initialEvidenceConfig =
+      task.type === TaskType.Evidence
+        ? ((task.config as EvidenceTaskConfig) ??
+            createDefaultEvidenceConfig())
+        : task.evidenceConfig ?? createDefaultEvidenceConfig();
     setMyTaskForm({
       title: task.title,
       description: task.description ?? "",
@@ -707,9 +780,8 @@ export function TaskLibrary() {
       type: task.type,
       visibility: task.visibility,
       config: ensureConfigMatchesType(task.type, task.config),
-      evidenceEnabled: Boolean(task.evidenceConfig),
-      evidenceConfig:
-        task.evidenceConfig ?? createDefaultEvidenceConfig(),
+      evidenceEnabled: task.type === TaskType.Evidence || Boolean(task.evidenceConfig),
+      evidenceConfig: initialEvidenceConfig,
     });
     setEditingMyTaskId(task.id);
     setMyTaskFormError(null);
@@ -739,6 +811,59 @@ export function TaskLibrary() {
   const resetCreateForm = () => {
     setCreateForm(createEmptyDraft());
     setCreateError(null);
+    setEditingTemplateId(null);
+  };
+
+  const handleEditTemplate = (template: TaskTemplate) => {
+    setCreateError(null);
+    const rawEvidenceConfig =
+      template.evidenceConfig ??
+      (template.type === TaskType.Evidence && template.config
+        ? (template.config as EvidenceTaskConfig)
+        : undefined);
+    const normalizedEvidenceConfig = normalizeEvidenceConfig(
+      rawEvidenceConfig ?? createDefaultEvidenceConfig()
+    );
+    setCreateForm({
+      title: template.title,
+      description: template.description ?? "",
+      icon: template.icon ?? "assignment",
+      type: template.type,
+      visibility: template.visibility,
+      rolesText: template.roles.join(", "),
+      config:
+        template.type === TaskType.Evidence
+          ? normalizedEvidenceConfig
+          : ensureConfigMatchesType(template.type, template.config),
+      evidenceEnabled:
+        template.type === TaskType.Evidence ||
+        Boolean(template.evidenceConfig),
+      evidenceConfig: normalizedEvidenceConfig,
+    });
+    setEditingTemplateId(template.id);
+    setIsCreating(true);
+  };
+
+  const handleDeleteTemplate = async (template: TaskTemplate) => {
+    setDeletingTemplateId(template.id);
+    try {
+      await removeTaskTemplate(template.id);
+      if (editingTemplateId === template.id) {
+        setIsCreating(false);
+        resetCreateForm();
+      }
+      await refreshTemplates();
+      showNotification({
+        type: "success",
+        text: deleteTemplateSuccess(template.title),
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : deleteTemplateError;
+      showNotification({ type: "error", text: message }, 5000);
+    } finally {
+      setDeletingTemplateId(null);
+    }
   };
 
   const handleCreateSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -759,6 +884,48 @@ export function TaskLibrary() {
     setCreateLoading(true);
     setCreateError(null);
     const now = new Date().toISOString();
+    const isEvidenceTask = createForm.type === TaskType.Evidence;
+    const normalizeEvidenceRequirements = (): EvidenceTaskConfig | undefined => {
+      if (!createForm.evidenceConfig.requirements.length) {
+        setCreateError(evidenceTypeValidation);
+        return undefined;
+      }
+      const invalidRequirement = createForm.evidenceConfig.requirements.find(
+        (req) => req.minAttachments > req.maxAttachments
+      );
+      if (invalidRequirement) {
+        const label = t(
+          `templates.tasks.evidence.types.${invalidRequirement.type}`,
+          invalidRequirement.type
+        );
+        setCreateError(evidenceRangeValidation(label));
+        return undefined;
+      }
+      return normalizeEvidenceConfig(createForm.evidenceConfig);
+    };
+    let config: TaskConfig | EvidenceTaskConfig;
+    let evidenceConfig: EvidenceTaskConfig | undefined;
+
+    if (isEvidenceTask) {
+      const validated = normalizeEvidenceRequirements();
+      if (!validated) {
+        setCreateLoading(false);
+        return;
+      }
+      config = validated;
+      evidenceConfig = validated;
+    } else {
+      config = ensureConfigMatchesType(createForm.type, createForm.config);
+      if (createForm.evidenceEnabled) {
+        const validated = normalizeEvidenceRequirements();
+        if (!validated) {
+          setCreateLoading(false);
+          return;
+        }
+        evidenceConfig = validated;
+      }
+    }
+
     const payload: Omit<TaskTemplate, "id"> = {
       title: createForm.title.trim(),
       description: createForm.description.trim() || undefined,
@@ -773,8 +940,8 @@ export function TaskLibrary() {
       therapistTypes: [],
       ownerId: user.uid,
       isPublished: true,
-      config: ensureConfigMatchesType(createForm.type, createForm.config),
-      evidenceConfig: undefined,
+      config,
+      evidenceConfig,
       createdAt: now,
       updatedAt: now,
     };
@@ -821,40 +988,33 @@ export function TaskLibrary() {
       }
     }
 
-    if (createForm.evidenceEnabled) {
-      if (!createForm.evidenceConfig.requirements.length) {
-        setCreateError(evidenceTypeValidation);
-        setCreateLoading(false);
-        return;
-      }
-      const invalidRequirement = createForm.evidenceConfig.requirements.find(
-        (req) => req.minAttachments > req.maxAttachments
-      );
-      if (invalidRequirement) {
-        const label = t(
-          `templates.tasks.evidence.types.${invalidRequirement.type}`,
-          invalidRequirement.type
-        );
-        setCreateError(evidenceRangeValidation(label));
-        setCreateLoading(false);
-        return;
-      }
-      payload.evidenceConfig = normalizeEvidenceConfig(
-        createForm.evidenceConfig
-      );
-    } else {
-      payload.evidenceConfig = undefined;
-    }
-
     try {
-      await createTaskTemplate(payload);
+      if (editingTemplateId) {
+        const updatePayload: Partial<TaskTemplate> = {
+          title: payload.title,
+          description: payload.description,
+          icon: payload.icon,
+          type: payload.type,
+          visibility: payload.visibility,
+          roles: payload.roles,
+          config: payload.config,
+          evidenceConfig: payload.evidenceConfig,
+        };
+        await updateTaskTemplate(editingTemplateId, updatePayload);
+        showNotification({
+          type: "success",
+          text: editTemplateSuccess(payload.title),
+        });
+      } else {
+        await createTaskTemplate(payload);
+        const successMessage = t(
+          "therapist.taskLibrary.create.success",
+          "\"{title}\" created.",
+          { title: payload.title }
+        );
+        showNotification({ type: "success", text: successMessage });
+      }
       await refreshTemplates();
-      const successMessage = t(
-        "therapist.taskLibrary.create.success",
-        "\"{title}\" created.",
-        { title: payload.title }
-      );
-      showNotification({ type: "success", text: successMessage });
       setIsCreating(false);
       resetCreateForm();
     } catch (err) {
@@ -950,7 +1110,7 @@ export function TaskLibrary() {
         <Card className="space-y-5 p-6">
           <div>
             <h2 className="text-lg font-semibold text-brand-text">
-              {createTitle}
+              {templateFormHeading}
             </h2>
             <p className="mt-1 text-sm text-brand-text-muted">
               {createTypeHelp}
@@ -983,11 +1143,6 @@ export function TaskLibrary() {
                       icon,
                     }))
                   }
-                  preview={
-                    <p className="text-xs uppercase tracking-wide text-brand-text-muted">
-                      {createForm.icon}
-                    </p>
-                  }
                   className="mt-1"
                 />
               </div>
@@ -998,11 +1153,31 @@ export function TaskLibrary() {
                   value={createForm.type}
                   onChange={(event) => {
                     const nextType = event.target.value as TaskType;
-                    setCreateForm((prev) => ({
-                      ...prev,
-                      type: nextType,
-                      config: defaultTaskConfig(nextType),
-                    }));
+                    setCreateForm((prev) => {
+                      const baseEvidenceConfig =
+                        prev.evidenceConfig.requirements.length
+                          ? prev.evidenceConfig
+                          : createDefaultEvidenceConfig();
+                      const normalizedEvidenceConfig = nextType === TaskType.Evidence
+                        ? normalizeEvidenceConfig(baseEvidenceConfig)
+                        : baseEvidenceConfig;
+                      return {
+                        ...prev,
+                        type: nextType,
+                        config:
+                          nextType === TaskType.Evidence
+                            ? normalizedEvidenceConfig
+                            : defaultTaskConfig(nextType),
+                        evidenceEnabled:
+                          nextType === TaskType.Evidence
+                            ? true
+                            : prev.evidenceEnabled,
+                        evidenceConfig:
+                          nextType === TaskType.Evidence
+                            ? normalizedEvidenceConfig
+                            : prev.evidenceConfig,
+                      };
+                    });
                   }}
                   disabled={createLoading}
                 >
@@ -1080,23 +1255,37 @@ export function TaskLibrary() {
               t={t}
             />
             <EvidenceConfigEditor
-              enabled={createForm.evidenceEnabled}
+              enabled={
+                createForm.type === TaskType.Evidence
+                  ? true
+                  : createForm.evidenceEnabled
+              }
+              disableToggle={createForm.type === TaskType.Evidence}
               config={createForm.evidenceConfig}
               onToggle={(enabled) =>
-                setCreateForm((prev) => ({
-                  ...prev,
-                  evidenceEnabled: enabled,
-                  evidenceConfig: enabled
-                    ? prev.evidenceConfig?.requirements.length
-                      ? prev.evidenceConfig
-                      : createDefaultEvidenceConfig()
-                    : prev.evidenceConfig,
-                }))
+                setCreateForm((prev) => {
+                  if (prev.type === TaskType.Evidence) {
+                    return prev;
+                  }
+                  return {
+                    ...prev,
+                    evidenceEnabled: enabled,
+                    evidenceConfig: enabled
+                      ? prev.evidenceConfig?.requirements.length
+                        ? prev.evidenceConfig
+                        : createDefaultEvidenceConfig()
+                      : prev.evidenceConfig,
+                  };
+                })
               }
               onChange={(nextConfig) =>
                 setCreateForm((prev) => ({
                   ...prev,
                   evidenceConfig: nextConfig,
+                  config:
+                    prev.type === TaskType.Evidence
+                      ? normalizeEvidenceConfig(nextConfig)
+                      : prev.config,
                 }))
               }
               t={t}
@@ -1110,7 +1299,7 @@ export function TaskLibrary() {
 
             <div className="flex gap-3">
               <Button type="submit" disabled={createLoading}>
-                {createLoading ? "..." : createSubmitLabel}
+                {createLoading ? "..." : templateFormSubmitLabel}
               </Button>
               <Button
                 type="button"
@@ -1207,6 +1396,36 @@ export function TaskLibrary() {
                             : addToMyTasksLabel}
                         </Button>
                       )}
+                      {canCreateTemplates && (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleEditTemplate(task);
+                            }}
+                          >
+                            {editTemplateActionLabel}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={deletingTemplateId === task.id}
+                            className="text-red-600 hover:text-red-700"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleDeleteTemplate(task);
+                            }}
+                          >
+                            {deletingTemplateId === task.id
+                              ? deletingTemplateLabel
+                              : deleteTemplateLabel}
+                          </Button>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between text-[11px] uppercase text-brand-text-muted">
                         <div className="flex items-center gap-1">
                           <UserCircle className="h-3 w-3" />
@@ -1274,11 +1493,6 @@ export function TaskLibrary() {
                         icon,
                       }))
                     }
-                    preview={
-                      <p className="text-xs uppercase tracking-wide text-brand-text-muted">
-                        {myTaskForm.icon}
-                      </p>
-                    }
                     className="mt-1"
                   />
                 </div>
@@ -1287,16 +1501,30 @@ export function TaskLibrary() {
                   <Select
                     id="my-task-type"
                     value={myTaskForm.type}
-                    onChange={(event) => {
-                      const nextType = event.target.value as TaskType;
-                      setMyTaskForm((prev) => ({
+                  onChange={(event) => {
+                    const nextType = event.target.value as TaskType;
+                    setMyTaskForm((prev) => {
+                      const nextEvidenceConfig =
+                        prev.evidenceConfig.requirements.length
+                          ? prev.evidenceConfig
+                          : createDefaultEvidenceConfig();
+                      return {
                         ...prev,
                         type: nextType,
-                        config: defaultTaskConfig(nextType),
-                      }));
-                    }}
-                    disabled={myTaskSaving}
-                  >
+                        config:
+                          nextType === TaskType.Evidence
+                            ? normalizeEvidenceConfig(nextEvidenceConfig)
+                            : defaultTaskConfig(nextType),
+                        evidenceEnabled:
+                          nextType === TaskType.Evidence
+                            ? true
+                            : prev.evidenceEnabled,
+                        evidenceConfig: nextEvidenceConfig,
+                      };
+                    });
+                  }}
+                  disabled={myTaskSaving}
+                >
                     {SUPPORTED_TASK_TYPES.map((type) => (
                       <option key={type} value={type}>
                         {t(`templates.taskTypes.${type}`, type)}
@@ -1358,23 +1586,37 @@ export function TaskLibrary() {
               />
 
               <EvidenceConfigEditor
-                enabled={myTaskForm.evidenceEnabled}
+                enabled={
+                  myTaskForm.type === TaskType.Evidence
+                    ? true
+                    : myTaskForm.evidenceEnabled
+                }
+                disableToggle={myTaskForm.type === TaskType.Evidence}
                 config={myTaskForm.evidenceConfig}
                 onToggle={(enabled) =>
-                  setMyTaskForm((prev) => ({
-                    ...prev,
-                    evidenceEnabled: enabled,
-                    evidenceConfig: enabled
-                      ? prev.evidenceConfig?.requirements.length
-                        ? prev.evidenceConfig
-                        : createDefaultEvidenceConfig()
-                      : prev.evidenceConfig,
-                  }))
+                  setMyTaskForm((prev) => {
+                    if (prev.type === TaskType.Evidence) {
+                      return prev;
+                    }
+                    return {
+                      ...prev,
+                      evidenceEnabled: enabled,
+                      evidenceConfig: enabled
+                        ? prev.evidenceConfig?.requirements.length
+                          ? prev.evidenceConfig
+                          : createDefaultEvidenceConfig()
+                        : prev.evidenceConfig,
+                    };
+                  })
                 }
                 onChange={(nextConfig) =>
                   setMyTaskForm((prev) => ({
                     ...prev,
                     evidenceConfig: nextConfig,
+                    config:
+                      prev.type === TaskType.Evidence
+                        ? normalizeEvidenceConfig(nextConfig)
+                        : prev.config,
                   }))
                 }
                 t={t}

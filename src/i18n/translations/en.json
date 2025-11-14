@@ -46,16 +46,17 @@
       "roles": "Roles (comma separated, optional)",
       "rolesPlaceholder": "therapist, supervisor"
     },
-    "taskTypes": {
-      "timerTask": "Timer",
-      "textInput": "Free text",
-      "quizTask": "Quiz",
-      "progressTask": "Progress",
-      "mediaTask": "Media",
-      "goalTask": "Goal",
-      "scaleTask": "Scale",
-      "stateLog": "Mood log"
-    },
+      "taskTypes": {
+        "timerTask": "Timer",
+        "textInput": "Free text",
+        "quizTask": "Quiz",
+        "progressTask": "Progress",
+        "mediaTask": "Media",
+        "evidenceTask": "Evidence only",
+        "goalTask": "Goal",
+        "scaleTask": "Scale",
+        "stateLog": "Mood log"
+      },
     "media": {
       "audio": "Audio",
       "video": "Video",
@@ -125,11 +126,14 @@
           "leftLabel": "Left label",
           "rightLabel": "Right label"
         },
-      "stateLog": {
-        "emojis": "Emojis (comma separated)",
-        "showChart": "Show history chart"
-      }
-    },
+        "stateLog": {
+          "emojis": "Emojis (comma separated)",
+          "showChart": "Show history chart"
+        },
+        "evidence": {
+          "onlyEvidence": "Evidence-only tasks rely on the evidence requirements below."
+        }
+      },
     "evidence": {
       "title": "Evidence requirements",
       "subtitle": "Enable uploads to request proof before patients can finish the task.",
@@ -549,7 +553,12 @@
         "addToAppSuccess": "\"{title}\" added to \"My tasks\".",
         "addToAppOwnerMissing": "Unable to determine a task owner. Please sign in and try again.",
         "addToAppError": "Failed to add the task to \"My tasks\".",
-        "addToAppTherapistOnly": "Only therapists can add tasks to \"My tasks\"."
+        "addToAppTherapistOnly": "Only therapists can add tasks to \"My tasks\".",
+        "editTemplate": "Edit template",
+        "deleteTemplate": "Delete template",
+        "deletingTemplate": "Deleting...",
+        "deleteTemplateSuccess": "\"{title}\" deleted.",
+        "deleteTemplateError": "Failed to delete the template."
       },
       "create": {
         "title": "Create task template",
@@ -563,17 +572,20 @@
         "typeLabel": "Task type",
         "typeHelp": "Select a task type to configure task-specific settings.",
         "visibilityLabel": "Visibility",
+        "editTitle": "Edit task template",
         "secondsLabel": "Duration (seconds)",
         "allowPauseLabel": "Allow pause",
         "minLengthLabel": "Minimum length",
         "maxLengthLabel": "Maximum length",
         "showHistoryLabel": "Show history to patients",
         "submit": "Save template",
+        "update": "Update template",
         "loginRequired": "You need to be signed in to create task templates.",
         "titleRequired": "Please add a title before saving.",
         "unsupportedType": "This task type is not supported yet.",
         "mediaRequired": "Please upload a file or provide a link for media tasks.",
         "success": "\"{title}\" created.",
+        "updateSuccess": "\"{title}\" updated.",
         "error": "Saving the task template failed."
       }
     }

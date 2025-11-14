@@ -29,6 +29,7 @@ import {
   TemplateScope,
   programTypeToCadence,
 } from "../../shared/types/domain";
+import { createDefaultEvidenceConfig } from "../../shared/utils/evidenceConfig";
 
 type FirestoreValue = unknown;
 type FirestoreDocument = Record<string, FirestoreValue> & { id: string };
@@ -174,6 +175,8 @@ const parseTaskConfig = (
             : undefined,
       };
     }
+    case TaskType.Evidence:
+      return parseEvidenceConfig(config) ?? createDefaultEvidenceConfig();
     case TaskType.Goal:
       return {
         taskType: TaskType.Goal,
@@ -497,12 +500,14 @@ const taskToFirestore = (
     icon: task.icon ?? DEFAULT_TASK_ICON,
     visibility: task.visibility,
     config: serializeTaskConfig(task.config),
-    evidenceConfig: serializeEvidenceConfig(task.evidenceConfig),
     ownerId: task.ownerId ?? null,
     isTemplate: task.isTemplate,
     roles: task.roles,
     isPublished: task.isPublished,
   };
+
+  const serializedEvidence = serializeEvidenceConfig(task.evidenceConfig);
+  payload.evidenceConfig = serializedEvidence ?? null;
 
   if (setCreatedAt) {
     payload.createdAt = isoToDate(task.createdAt) ?? now;

@@ -46,16 +46,17 @@
       "roles": "Rollen (kommagetrennt, optional)",
       "rolesPlaceholder": "therapist, supervisor"
     },
-    "taskTypes": {
-      "timerTask": "Timer",
-      "textInput": "Freitext",
-      "quizTask": "Quiz",
-      "progressTask": "Fortschritt",
-      "mediaTask": "Media",
-      "goalTask": "Zielsetzung",
-      "scaleTask": "Skala",
-      "stateLog": "Stimmungstagebuch"
-    },
+      "taskTypes": {
+        "timerTask": "Timer",
+        "textInput": "Freitext",
+        "quizTask": "Quiz",
+        "progressTask": "Fortschritt",
+        "mediaTask": "Media",
+        "evidenceTask": "Evidenz-Aufgabe",
+        "goalTask": "Zielsetzung",
+        "scaleTask": "Skala",
+        "stateLog": "Stimmungstagebuch"
+      },
     "media": {
       "audio": "Audio",
       "video": "Video",
@@ -145,11 +146,14 @@
           "leftLabel": "Linke Beschriftung",
           "rightLabel": "Rechte Beschriftung"
         },
-      "stateLog": {
-        "emojis": "Emojis (durch Komma trennen)",
-        "showChart": "Verlaufsgrafik anzeigen"
-      }
-    },
+        "stateLog": {
+          "emojis": "Emojis (durch Komma trennen)",
+          "showChart": "Verlaufsgrafik anzeigen"
+        },
+        "evidence": {
+          "onlyEvidence": "Evidenz-Aufgaben verwenden ausschließlich die untenstehenden Anforderungen."
+        }
+      },
     "evidence": {
       "title": "Evidenzanforderungen",
       "subtitle": "Fordere Uploads an, bevor Patient:innen die Aufgabe abschließen.",
@@ -278,7 +282,7 @@
         "root": "Therapeut",
         "patients": "Patienten",
         "programBuilder": "Program-Editor",
-        "taskLibrary": "Meine Aufgaben"
+        "taskLibrary": "Aufgabenbibliothek"
       },
       "patient": {
         "root": "Patient",
@@ -547,7 +551,12 @@
         "addToAppSuccess": "\"{title}\" wurde zu \"Meine Aufgaben\" übernommen.",
         "addToAppOwnerMissing": "Es konnte kein Besitzer ermittelt werden. Bitte melde dich erneut an.",
         "addToAppError": "Die Aufgabe konnte nicht übernommen werden.",
-        "addToAppTherapistOnly": "Nur Therapeut:innen können Aufgaben übernehmen."
+        "addToAppTherapistOnly": "Nur Therapeut:innen können Aufgaben übernehmen.",
+        "editTemplate": "Vorlage bearbeiten",
+        "deleteTemplate": "Vorlage löschen",
+        "deletingTemplate": "Löschen…",
+        "deleteTemplateSuccess": "\"{title}\" gelöscht.",
+        "deleteTemplateError": "Vorlage konnte nicht gelöscht werden."
       },
       "rolesEmpty": "Keine Rollenbindung",
       "noDescription": "Keine Beschreibung hinterlegt.",
@@ -563,17 +572,20 @@
         "typeLabel": "Task Typ",
         "typeHelp": "Wähle einen Task Typ aus, um die passenden Einstellungen zu konfigurieren.",
         "visibilityLabel": "Sichtbarkeit",
+        "editTitle": "Task Vorlage bearbeiten",
         "secondsLabel": "Dauer (Sekunden)",
         "allowPauseLabel": "Pause erlauben",
         "minLengthLabel": "Mindestlänge",
         "maxLengthLabel": "Maximallänge",
         "showHistoryLabel": "Verlauf für Patienten anzeigen",
         "submit": "Vorlage speichern",
+        "update": "Vorlage aktualisieren",
         "loginRequired": "Zum Erstellen einer Vorlage musst du angemeldet sein.",
         "titleRequired": "Bitte gib vor dem Speichern einen Titel an.",
         "unsupportedType": "Dieser Task Typ wird noch nicht unterstützt.",
         "mediaRequired": "Bitte lade eine Datei hoch oder hinterlege einen Link für Media-Tasks.",
         "success": "\"{title}\" erstellt.",
+        "updateSuccess": "\"{title}\" aktualisiert.",
         "error": "Das Speichern der Task Vorlage ist fehlgeschlagen."
       }
     }

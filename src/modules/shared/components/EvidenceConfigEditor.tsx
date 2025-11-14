@@ -33,6 +33,7 @@ interface EvidenceConfigEditorProps {
   onToggle: (enabled: boolean) => void;
   onChange: (config: EvidenceTaskConfig) => void;
   t: TranslateFn;
+  disableToggle?: boolean;
 }
 
 const ensureRequirement = (
@@ -47,6 +48,7 @@ export function EvidenceConfigEditor({
   onToggle,
   onChange,
   t,
+  disableToggle,
 }: EvidenceConfigEditorProps) {
   const toggleRequirement = (type: EvidenceType, checked: boolean) => {
     if (checked) {
@@ -107,13 +109,14 @@ export function EvidenceConfigEditor({
             )}
           </p>
         </div>
-        <label className="flex items-center gap-2 text-sm text-brand-text">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={handleToggle}
-            className="h-4 w-4 rounded border-brand-divider text-brand-primary focus:ring-brand-primary"
-          />
+          <label className="flex items-center gap-2 text-sm text-brand-text">
+            <input
+              type="checkbox"
+              checked={enabled}
+              disabled={disableToggle}
+              onChange={handleToggle}
+              className="h-4 w-4 rounded border-brand-divider text-brand-primary focus:ring-brand-primary"
+            />
           {t("templates.tasks.evidence.enable", "Require evidence")}
         </label>
       </div>

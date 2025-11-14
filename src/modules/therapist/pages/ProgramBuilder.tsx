@@ -563,7 +563,7 @@ export function ProgramBuilder() {
       title: title.trim() || "",
       subtitle: "",
       description: "",
-      icon: selectedTasks[0]?.icon ?? PROGRAM_ICON_OPTIONS[0],
+      icon: selectedTasks[0]?.icon ?? PROGRAM_ICON_OPTIONS[3],
       color: activeTemplate?.color ?? PROGRAM_COLOR_OPTIONS[0],
       type: programType,
     });
@@ -1222,11 +1222,6 @@ const handleSave = async (): Promise<void> => {
                       ...prev,
                       icon,
                     }))
-                  }
-                  preview={
-                    <p className="text-xs uppercase tracking-wide text-brand-text-muted">
-                      {templateForm.icon}
-                    </p>
                   }
                 />
               </div>

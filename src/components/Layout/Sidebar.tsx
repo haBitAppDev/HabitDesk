@@ -1,7 +1,6 @@
 import {
   ClipboardList,
   Gauge,
-  Library,
   ListPlus,
   ShieldCheck,
   UserCog,
@@ -40,11 +39,6 @@ export function Sidebar({ mobileOpen, onClose, className }: SidebarProps) {
           label: t("layout.sidebar.admin.users", "User"),
           path: "/admin/users",
           icon: ShieldCheck,
-        },
-        {
-          label: t("layout.sidebar.admin.templates", "Templates"),
-          path: "/admin/templates",
-          icon: Library,
         },
         {
           label: t("layout.sidebar.therapist.programBuilder", "Program Builder"),

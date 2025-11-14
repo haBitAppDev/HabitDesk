@@ -47,6 +47,7 @@ export const TaskType = {
   Quiz: "quizTask",
   Progress: "progressTask",
   Media: "mediaTask",
+  Evidence: "evidenceTask",
   Goal: "goalTask",
   Scale: "scaleTask",
   StateLog: "stateLog",
@@ -154,6 +155,7 @@ export type TaskConfig =
   | QuizTaskConfig
   | ProgressTaskConfig
   | MediaTaskConfig
+  | EvidenceTaskConfig
   | GoalTaskConfig
   | ScaleTaskConfig
   | StateLogTaskConfig;
