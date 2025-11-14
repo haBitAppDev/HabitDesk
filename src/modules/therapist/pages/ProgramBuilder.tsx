@@ -18,6 +18,7 @@ import type {
   UserRole,
   Program,
   Task,
+  EvidenceTaskConfig,
   ProgramTemplate,
   TaskTemplate,
   TaskConfig,
@@ -65,6 +66,7 @@ interface BuilderTask {
   templateId?: string;
   taskId?: string;
   ownerId?: string;
+  evidenceConfig?: EvidenceTaskConfig;
 }
 
 const createBuilderTaskFromTemplate = (template: TaskTemplate): BuilderTask => ({
@@ -79,6 +81,7 @@ const createBuilderTaskFromTemplate = (template: TaskTemplate): BuilderTask => (
   isPublished: template.isPublished,
   source: "template",
   templateId: template.id,
+  evidenceConfig: template.evidenceConfig,
 });
 
 const createBuilderTaskFromExisting = (task: Task): BuilderTask => ({
@@ -94,6 +97,7 @@ const createBuilderTaskFromExisting = (task: Task): BuilderTask => ({
   source: "existing",
   taskId: task.id,
   ownerId: task.ownerId,
+  evidenceConfig: task.evidenceConfig,
 });
 
 interface BuilderState {
@@ -726,19 +730,20 @@ async function createOrUpdateTasks(
 
   for (const task of selectedTasks) {
     // Neue Tasks aus Template klonen
-    if (task.source === "template") {
-      const created = await createTask({
-        title: task.title,
-        description: task.description,
-        type: task.type,
-        icon: task.icon,
-        visibility: task.visibility,
-        config: task.config,
-        ownerId,
-        roles: task.roles,
-        isPublished: task.isPublished,
-        isTemplate: false,
-      });
+      if (task.source === "template") {
+        const created = await createTask({
+          title: task.title,
+          description: task.description,
+          type: task.type,
+          icon: task.icon,
+          visibility: task.visibility,
+          config: task.config,
+          evidenceConfig: task.evidenceConfig,
+          ownerId,
+          roles: task.roles,
+          isPublished: task.isPublished,
+          isTemplate: false,
+        });
       newTaskIdMap[task.id] = created.id;
       createdTaskIds.push(created.id);
     }
