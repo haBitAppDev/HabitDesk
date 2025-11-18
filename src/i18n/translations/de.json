@@ -387,7 +387,30 @@
         "actions": "Aktionen"
       },
       "linked": "Verknüpft mit {name}",
-      "typesAll": "Alle Typen"
+      "typesAll": "Alle Typen",
+      "deepLink": {
+        "title": "Deep Link & Einladungsvorlage",
+        "subtitle": "Kopiere den Habit-Deep-Link und eine vorausgefüllte E-Mail-Vorlage für die Therapeut:innen-Einladung.",
+        "selectLabel": "Einladung zum Teilen wählen",
+        "noInvites": "Erstelle eine Einladung, um die Links freizuschalten.",
+        "customLabel": "App-Schema-Link",
+        "webLabel": "Web-Link",
+        "copyButton": "Kopieren",
+        "openButton": "Öffnen",
+        "linkCopied": "Link in die Zwischenablage kopiert.",
+        "empty": "Erstelle eine Einladung, um Deep Link und Vorlage zu sehen."
+      },
+      "email": {
+        "title": "Einladung per E-Mail",
+        "subtitle": "Versende eine Mail, die Habit per Deep Link öffnet oder auf den App-Store-Platzhalter ausweicht.",
+        "subject": "Du bist für Habit eingeladen",
+        "body": "Hallo,\\n\\nwir haben Zugriff für dich reserviert. Öffne Habit mit folgendem Link: {link}\\nDein Einladungscode: {code}\\nWenn sich die App nicht automatisch öffnet, besuche {appStore}\\n\\nWir freuen uns auf die Zusammenarbeit.",
+        "noEmail": "E-Mail nicht angegeben",
+        "missingEmailHint": "Gib zuerst eine E-Mail-Adresse in der Einladung an.",
+        "sendCta": "Mail-Client öffnen",
+        "copyCta": "Vorlage kopieren",
+        "copied": "Vorlage kopiert."
+      }
     },
     "profiles": {
       "title": "Aktive Therapeut:innen",

@@ -1,10 +1,11 @@
-import { ClipboardCopy, RefreshCw, ShieldMinus, Trash2 } from "lucide-react";
+import { ClipboardCopy, ExternalLink, Mail, RefreshCw, ShieldMinus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
+import { Select } from "../../../components/ui/select";
 import { Label } from "../../../components/ui/label";
 import { Spinner } from "../../../components/ui/spinner";
 import { Textarea } from "../../../components/ui/textarea";
@@ -24,6 +25,11 @@ import type {
   TherapistProfile,
   TherapistType,
 } from "../../shared/types/domain";
+import {
+  buildHabitSchemeLink,
+  buildHabitWebLink,
+  resolveAppStorePlaceholderUrl,
+} from "../../shared/utils/inviteLinks";
 
 interface InviteFormState {
   email: string;
@@ -69,6 +75,32 @@ const toDateInputValue = (value: string) => {
   return value.slice(0, 10);
 };
 
+const copyTextToClipboard = async (value: string) => {
+  if (!value) {
+    return;
+  }
+
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  if (typeof document !== "undefined") {
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand?.("copy");
+    document.body.removeChild(textarea);
+    return;
+  }
+
+  throw new Error("Clipboard API not available");
+};
+
 export function TherapistManager() {
   const { t } = useI18n();
   const [invites, setInvites] = useState<TherapistInvite[]>([]);
@@ -79,6 +111,7 @@ export function TherapistManager() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [selectedInviteId, setSelectedInviteId] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     const [inviteList, therapistProfiles, therapistTypes] = await Promise.all([
@@ -119,10 +152,96 @@ export function TherapistManager() {
     return () => clearTimeout(timeout);
   }, [feedback]);
 
+  useEffect(() => {
+    if (!invites.length) {
+      if (selectedInviteId !== null) {
+        setSelectedInviteId(null);
+      }
+      return;
+    }
+
+    if (selectedInviteId && invites.some((invite) => invite.id === selectedInviteId)) {
+      return;
+    }
+
+    setSelectedInviteId(invites[0].id);
+  }, [invites, selectedInviteId]);
+
   const typeOptions = useMemo(
     () => types.map((type) => ({ value: type.id, label: type.name })),
     [types]
   );
+
+  const appStoreUrl = useMemo(() => resolveAppStorePlaceholderUrl(), []);
+  const selectedInvite = useMemo(() => {
+    return (
+      invites.find((invite) => invite.id === selectedInviteId) ??
+      invites[0] ??
+      null
+    );
+  }, [invites, selectedInviteId]);
+  const schemeLink = selectedInvite ? buildHabitSchemeLink(selectedInvite.code) : "";
+  const webLink = selectedInvite ? buildHabitWebLink(selectedInvite.code) : "";
+  const emailSubject = t(
+    "therapists.invites.email.subject",
+    "You’re invited to Habit"
+  );
+  const emailBody = selectedInvite
+    ? t(
+        "therapists.invites.email.body",
+        "Open Habit with this link: {link}\nYour invite code: {code}\nIf the app does not open, visit {appStore}",
+        {
+          link: webLink,
+          code: selectedInvite.code,
+          appStore: appStoreUrl,
+        }
+      )
+    : "";
+  const templatePreview = selectedInvite ? `${emailSubject}\n\n${emailBody}` : "";
+  const linkCopiedMessage = t(
+    "therapists.invites.deepLink.linkCopied",
+    "Link copied to clipboard."
+  );
+  const templateCopiedMessage = t(
+    "therapists.invites.email.copied",
+    "Template copied to clipboard."
+  );
+  const hasEmailAddress = Boolean(selectedInvite?.email?.trim());
+
+  const handleCopyText = async (value: string, message: string) => {
+    if (!value) return;
+    try {
+      await copyTextToClipboard(value);
+      setFeedback(message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleOpenLink = (link: string) => {
+    if (!link || typeof window === "undefined") return;
+    window.open(link, "_blank");
+  };
+
+  const handleSendEmail = (invite: TherapistInvite) => {
+    const body = t(
+      "therapists.invites.email.body",
+      "Open Habit with this link: {link}\nYour invite code: {code}\nIf the app does not open, visit {appStore}",
+      {
+        link: buildHabitWebLink(invite.code),
+        code: invite.code,
+        appStore: appStoreUrl,
+      }
+    );
+    const params = new URLSearchParams();
+    params.set("subject", emailSubject);
+    params.set("body", body);
+
+    const mailtoLink = `mailto:${invite.email ?? ""}?${params.toString()}`;
+    if (typeof window !== "undefined") {
+      window.location.href = mailtoLink;
+    }
+  };
 
   const handleFormChange = <Key extends keyof InviteFormState>(key: Key, value: InviteFormState[Key]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -144,6 +263,7 @@ export function TherapistManager() {
       };
       const created = await createTherapistInvite(payload);
       setInvites((prev) => [created, ...prev]);
+      setSelectedInviteId(created.id);
       resetForm();
       setFeedback(
         t("therapists.invites.created", "Invite created. Share the code securely with the therapist.")
@@ -358,6 +478,173 @@ export function TherapistManager() {
             </Button>
           </div>
         </div>
+      </Card>
+
+      <Card className="p-6 space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold text-brand-text">
+            {t(
+              "therapists.invites.deepLink.title",
+              "Deep link & invitation template"
+            )}
+          </h2>
+          <p className="text-sm text-brand-text-muted">
+            {t(
+              "therapists.invites.deepLink.subtitle",
+              "Copy the Habit deep link and a prefilled email template for the therapist invite."
+            )}
+          </p>
+        </div>
+        <div className="space-y-4">
+          <Label htmlFor="invite-deep-link-select" className="text-sm font-semibold text-brand-text">
+            {t("therapists.invites.deepLink.selectLabel", "Select invite for sharing")}
+          </Label>
+          <Select
+            id="invite-deep-link-select"
+            value={selectedInviteId ?? ""}
+            onChange={(event) => setSelectedInviteId(event.target.value || null)}
+            disabled={invites.length === 0}
+          >
+            {invites.length === 0 ? (
+              <option value="">
+                {t(
+                  "therapists.invites.deepLink.noInvites",
+                  "Generate an invite to unlock the share links."
+                )}
+              </option>
+            ) : (
+              invites.map((invite) => (
+                <option key={invite.id} value={invite.id}>
+                  {invite.code} — {invite.status}
+                </option>
+              ))
+            )}
+          </Select>
+        </div>
+        {selectedInvite ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="invite-custom-link">
+                  {t("therapists.invites.deepLink.customLabel", "App scheme link")}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="invite-custom-link"
+                    value={schemeLink}
+                    readOnly
+                    className="flex-1 min-w-0"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyText(schemeLink, linkCopiedMessage)}
+                  >
+                    <ClipboardCopy className="mr-2 h-4 w-4" />
+                    {t("therapists.invites.deepLink.copyButton", "Copy")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenLink(schemeLink)}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {t("therapists.invites.deepLink.openButton", "Open")}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invite-web-link">
+                  {t("therapists.invites.deepLink.webLabel", "Web link")}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="invite-web-link"
+                    value={webLink}
+                    readOnly
+                    className="flex-1 min-w-0"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyText(webLink, linkCopiedMessage)}
+                  >
+                    <ClipboardCopy className="mr-2 h-4 w-4" />
+                    {t("therapists.invites.deepLink.copyButton", "Copy")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenLink(webLink)}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {t("therapists.invites.deepLink.openButton", "Open")}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <div>
+                  <h3 className="text-base font-semibold text-brand-text">
+                    {t("therapists.invites.email.title", "Invitation email")}
+                  </h3>
+                  <p className="text-xs text-brand-text-muted">
+                    {t(
+                      "therapists.invites.email.subtitle",
+                      "Send a template that opens Habit via the deep link or falls back to the App Store placeholder."
+                    )}
+                  </p>
+                </div>
+                <p className="text-sm text-brand-text-muted">
+                  {selectedInvite.email ||
+                    t("therapists.invites.email.noEmail", "Email not specified")}
+                </p>
+              </div>
+              <Textarea value={templatePreview} readOnly className="min-h-[150px]" />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  disabled={!hasEmailAddress}
+                  onClick={() => selectedInvite && handleSendEmail(selectedInvite)}
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  {t("therapists.invites.email.sendCta", "Open mail client")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopyText(templatePreview, templateCopiedMessage)}
+                  disabled={!templatePreview}
+                >
+                  {t("therapists.invites.email.copyCta", "Copy template")}
+                </Button>
+              </div>
+              {!hasEmailAddress && (
+                <p className="text-xs text-brand-text-muted">
+                  {t(
+                    "therapists.invites.email.missingEmailHint",
+                    "Add an email address to the invite to send the mail."
+                  )}
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-brand-text-muted">
+            {t(
+              "therapists.invites.deepLink.empty",
+              "Create an invite to access the deep link and template."
+            )}
+          </p>
+        )}
       </Card>
 
       <Card className="overflow-hidden">

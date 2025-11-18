@@ -387,7 +387,30 @@
         "actions": "Actions"
       },
       "linked": "Linked to {name}",
-      "typesAll": "All types"
+      "typesAll": "All types",
+      "deepLink": {
+        "title": "Deep link & invitation template",
+        "subtitle": "Copy the Habit deep link and a prefilled email template for the therapist invite.",
+        "selectLabel": "Select invite for sharing",
+        "noInvites": "Generate an invite to unlock the share links.",
+        "customLabel": "App scheme link",
+        "webLabel": "Universal web link",
+        "copyButton": "Copy",
+        "openButton": "Open",
+        "linkCopied": "Link copied to clipboard.",
+        "empty": "Create an invite to access the deep link and template."
+      },
+      "email": {
+        "title": "Invitation email",
+        "subtitle": "Send a template that opens Habit via the deep link or falls back to the App Store placeholder.",
+        "subject": "You’re invited to Habit",
+        "body": "Hi there,\\n\\nWe’ve reserved access for you. Open Habit with this link: {link}\\nYour invite code: {code}\\nIf the app does not open automatically, visit {appStore}\\n\\nLooking forward to working with you.",
+        "noEmail": "Email not specified",
+        "missingEmailHint": "Add an email address to the invite to send the mail.",
+        "sendCta": "Open mail client",
+        "copyCta": "Copy template",
+        "copied": "Template copied to clipboard."
+      }
     },
     "profiles": {
       "title": "Active therapists",
