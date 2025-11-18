@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { ExternalLink, Smartphone } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button";
-import { de } from "zod/v4/locales";
 
 const APP_STORE_PLACEHOLDER = "/app-store-placeholder.html";
 
