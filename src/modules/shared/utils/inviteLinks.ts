@@ -1,16 +1,24 @@
-const HABIT_APP_SCHEME = "habitapp";
-const HABIT_APP_REGISTER_HOST = "register";
-const HABIT_APP_WEB_BASE = "https://habit-app.de/register";
+const DEFAULT_WEB_BASE = "https://habit-app.de/register";
 const APP_STORE_PLACEHOLDER_PATH = "/app-store-placeholder.html";
 
 const buildQuery = (code: string) =>
   code ? `?therapistCode=${encodeURIComponent(code)}` : "";
 
-export const buildHabitSchemeLink = (inviteCode: string) =>
-  `${HABIT_APP_SCHEME}://${HABIT_APP_REGISTER_HOST}${buildQuery(inviteCode)}`;
+const resolveWebBase = () => {
+  const envBase = import.meta.env.VITE_HABIT_WEB_BASE?.trim();
+  if (envBase && envBase.length > 0) {
+    return envBase.endsWith("/register") ? envBase : `${envBase.replace(/\/+$/, "")}/register`;
+  }
+
+  if (typeof window !== "undefined") {
+    return new URL("/register", window.location.origin).toString();
+  }
+
+  return DEFAULT_WEB_BASE;
+};
 
 export const buildHabitWebLink = (inviteCode: string) =>
-  `${HABIT_APP_WEB_BASE}${buildQuery(inviteCode)}`;
+  `${resolveWebBase()}${buildQuery(inviteCode)}`;
 
 export const resolveAppStorePlaceholderUrl = () => {
   if (typeof window === "undefined") {

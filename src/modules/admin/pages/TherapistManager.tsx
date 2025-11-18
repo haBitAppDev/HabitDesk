@@ -26,7 +26,6 @@ import type {
   TherapistType,
 } from "../../shared/types/domain";
 import {
-  buildHabitSchemeLink,
   buildHabitWebLink,
   resolveAppStorePlaceholderUrl,
 } from "../../shared/utils/inviteLinks";
@@ -180,7 +179,6 @@ export function TherapistManager() {
       null
     );
   }, [invites, selectedInviteId]);
-  const schemeLink = selectedInvite ? buildHabitSchemeLink(selectedInvite.code) : "";
   const webLink = selectedInvite ? buildHabitWebLink(selectedInvite.code) : "";
   const emailSubject = t(
     "therapists.invites.email.subject",
@@ -523,68 +521,35 @@ export function TherapistManager() {
         </div>
         {selectedInvite ? (
           <>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="invite-custom-link">
-                  {t("therapists.invites.deepLink.customLabel", "App scheme link")}
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="invite-custom-link"
-                    value={schemeLink}
-                    readOnly
-                    className="flex-1 min-w-0"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleCopyText(schemeLink, linkCopiedMessage)}
-                  >
-                    <ClipboardCopy className="mr-2 h-4 w-4" />
-                    {t("therapists.invites.deepLink.copyButton", "Copy")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenLink(schemeLink)}
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    {t("therapists.invites.deepLink.openButton", "Open")}
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="invite-web-link">
-                  {t("therapists.invites.deepLink.webLabel", "Web link")}
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="invite-web-link"
-                    value={webLink}
-                    readOnly
-                    className="flex-1 min-w-0"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleCopyText(webLink, linkCopiedMessage)}
-                  >
-                    <ClipboardCopy className="mr-2 h-4 w-4" />
-                    {t("therapists.invites.deepLink.copyButton", "Copy")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenLink(webLink)}
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    {t("therapists.invites.deepLink.openButton", "Open")}
-                  </Button>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-web-link">
+                {t("therapists.invites.deepLink.webLabel", "Habit web link")}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="invite-web-link"
+                  value={webLink}
+                  readOnly
+                  className="flex-1 min-w-0"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopyText(webLink, linkCopiedMessage)}
+                >
+                  <ClipboardCopy className="mr-2 h-4 w-4" />
+                  {t("therapists.invites.deepLink.copyButton", "Copy")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleOpenLink(webLink)}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  {t("therapists.invites.deepLink.openButton", "Open")}
+                </Button>
               </div>
             </div>
             <div className="space-y-3">
