@@ -13,6 +13,7 @@ import { TaskLibrary } from "../modules/therapist/pages/TaskLibrary";
 import { PatientManagement } from "../modules/therapist/pages/PatientManagement";
 import { Login } from "../modules/shared/pages/Login";
 import { NotFound } from "../modules/shared/pages/NotFound";
+import { RegisterPage } from "../modules/shared/pages/RegisterPage";
 import { DefaultDashboardRedirect } from "./shell/DefaultDashboardRedirect";
 import { PatientDashboard } from "../modules/patient/pages/PatientDashboard";
 
@@ -39,6 +40,10 @@ export function AppRoutes() {
     {
       path: "/login",
       element: <Login />,
+    },
+    {
+      path: "/register",
+      element: <RegisterPage />,
     },
     {
       path: "/",
