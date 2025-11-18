@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ExternalLink, Smartphone } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button";
 
@@ -24,7 +24,6 @@ export function RegisterPage() {
     [searchParams]
   );
   const deepLink = useMemo(() => buildHabitDeepLink(code), [code]);
-  console.log(deepLink)
   return (
     <div className="min-h-screen bg-brand-surface px-4 py-16">
       <div className="mx-auto flex max-w-xl flex-col items-center rounded-2xl border border-brand-divider bg-white/80 px-6 py-10 text-center shadow-lg backdrop-blur">
@@ -40,28 +39,31 @@ export function RegisterPage() {
           Otherwise, download the app below and try again.
         </p>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+        <div className="mt-6 w-full sm:w-auto">
           <Button
             type="button"
             variant="primary"
+            className="w-full flex items-center justify-center gap-2"
             onClick={() => {
-              if (typeof window !== "undefined") {
-  window.location.href = deepLink;
-}
-
+              if (typeof window === "undefined") return;
+              const start = Date.now();
+              window.location.href = deepLink;
+              window.setTimeout(() => {
+                if (
+                  typeof document !== "undefined" &&
+                  document.visibilityState === "hidden"
+                ) {
+                  return;
+                }
+                if (Date.now() - start >= 1200) {
+                  window.location.href = APP_STORE_PLACEHOLDER;
+                }
+              }, 1200);
             }}
-            className="w-full sm:w-auto"
-            aria-label="Open Habit deep link"
+            aria-label="Open Habit or fallback to App Store"
           >
             <ExternalLink className="h-5 w-5" />
           </Button>
-          <a
-            className="inline-flex w-full items-center justify-center rounded-[14px] border border-brand-divider px-4 py-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary sm:w-auto"
-            href={APP_STORE_PLACEHOLDER}
-            aria-label="Visit placeholder app store page"
-          >
-            <Smartphone className="h-5 w-5" />
-          </a>
         </div>
         <p className="mt-4 text-xs uppercase tracking-wide text-brand-text-muted">
           This page works best on mobile devices where Habit is installed.
