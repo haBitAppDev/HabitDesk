@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { ExternalLink, Smartphone } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button";
+import { de } from "zod/v4/locales";
 
 const APP_STORE_PLACEHOLDER = "/app-store-placeholder.html";
 
@@ -24,7 +25,7 @@ export function RegisterPage() {
     [searchParams]
   );
   const deepLink = useMemo(() => buildHabitDeepLink(code), [code]);
-
+  console.log(deepLink)
   return (
     <div className="min-h-screen bg-brand-surface px-4 py-16">
       <div className="mx-auto flex max-w-xl flex-col items-center rounded-2xl border border-brand-divider bg-white/80 px-6 py-10 text-center shadow-lg backdrop-blur">
@@ -46,8 +47,9 @@ export function RegisterPage() {
             variant="primary"
             onClick={() => {
               if (typeof window !== "undefined") {
-                window.open(deepLink, "_blank");
-              }
+  window.location.href = deepLink;
+}
+
             }}
             className="w-full sm:w-auto"
             aria-label="Open Habit deep link"
