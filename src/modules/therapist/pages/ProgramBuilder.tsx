@@ -50,6 +50,7 @@ import {
   listProgramsByOwner,
   getProgram,
   getTasksByIds,
+  listTasksByOwner,
 } from "../services/therapistApi";
 
 interface BuilderTask {
@@ -68,6 +69,8 @@ interface BuilderTask {
   ownerId?: string;
   evidenceConfig?: EvidenceTaskConfig;
 }
+
+type LibraryTask = TaskTemplate | Task;
 
 const createBuilderTaskFromTemplate = (template: TaskTemplate): BuilderTask => ({
   id: template.id,
@@ -100,10 +103,16 @@ const createBuilderTaskFromExisting = (task: Task): BuilderTask => ({
   evidenceConfig: task.evidenceConfig,
 });
 
+const isTaskTemplate = (task: LibraryTask): task is TaskTemplate =>
+  (task as TaskTemplate).scope !== undefined;
+
+const mapToBuilderTask = (task: LibraryTask): BuilderTask =>
+  isTaskTemplate(task) ? createBuilderTaskFromTemplate(task) : createBuilderTaskFromExisting(task);
+
 interface BuilderState {
   title: string;
   selectedTasks: BuilderTask[];
-  addTask: (task: TaskTemplate) => void;
+  addTask: (task: LibraryTask) => void;
   removeTask: (taskId: string) => void;
   clear: () => void;
   setTitle: (title: string) => void;
@@ -124,7 +133,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   selectedTasks: [],
   addTask: (task) =>
     set((state) => {
-      const builderTask = createBuilderTaskFromTemplate(task);
+      const builderTask = mapToBuilderTask(task);
       if (state.selectedTasks.some((current) => current.id === builderTask.id)) {
         return state;
       }
@@ -152,12 +161,10 @@ export function ProgramBuilder() {
     setTitle,
     setTasks,
   } = useBuilderStore();
-  const [taskTemplates, setTaskTemplates] = useState<TaskTemplate[]>([]);
+  const [libraryTasks, setLibraryTasks] = useState<LibraryTask[]>([]);
   const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [programId, setProgramId] = useState<string>("");
-  const [templateId, setTemplateId] = useState<string>("");
-  const [useTemplateSelection, setUseTemplateSelection] = useState(false);
   const [programType, setProgramType] = useState<ProgramType>(ProgramType.AdaptiveNormal);
   const [originalProgram, setOriginalProgram] = useState<Program | null>(null);
   const [originalTasks, setOriginalTasks] = useState<Task[]>([]);
@@ -180,11 +187,6 @@ export function ProgramBuilder() {
   const [templateFormError, setTemplateFormError] = useState<string | null>(null);
   const [templateFormLoading, setTemplateFormLoading] = useState(false);
 
-  const activeTemplate = useMemo(() => {
-    if (!templateId) return null;
-    return programTemplates.find((template) => template.id === templateId) ?? null;
-  }, [programTemplates, templateId]);
-
   const isEditing = Boolean(programId);
   const isAdmin = role === "admin";
 
@@ -197,16 +199,6 @@ export function ProgramBuilder() {
   const programPlaceholder = t(
     "therapist.programBuilder.placeholders.program",
     "Select program"
-  );
-  const templateLabel = t("therapist.programBuilder.fields.template", "Base template");
-  const noneOptionLabel = t("therapist.programBuilder.fields.none", "None");
-  const templateToggleLabel = t(
-    "therapist.programBuilder.fields.useTemplate",
-    "Use template"
-  );
-  const templateToggleHelp = t(
-    "therapist.programBuilder.fields.useTemplateHelp",
-    "Enable to load a predefined program template."
   );
   const titleLabel = t("therapist.programBuilder.fields.title", "Program title");
   const programTypeLabel = t("therapist.programBuilder.fields.programType", "Program type");
@@ -249,11 +241,19 @@ export function ProgramBuilder() {
     "therapist.programBuilder.selectedTasks.empty",
     "No tasks selected yet. Add tasks from the library."
   );
-  const libraryTitle = t("therapist.programBuilder.library.title", "Task library");
-  const librarySubtitle = t(
-    "therapist.programBuilder.library.subtitle",
-    "Add tasks with one click. Duplicate entries are prevented."
-  );
+  const usePersonalTasks = !isAdmin;
+  const libraryTitle = usePersonalTasks
+    ? t("therapist.programBuilder.library.myTasksTitle", "My tasks")
+    : t("therapist.programBuilder.library.title", "Task library");
+  const librarySubtitle = usePersonalTasks
+    ? t(
+        "therapist.programBuilder.library.myTasksSubtitle",
+        "Only tasks you created or pulled from the library."
+      )
+    : t(
+        "therapist.programBuilder.library.subtitle",
+        "Add tasks with one click. Duplicate entries are prevented."
+      );
   const libraryAdd = t("therapist.programBuilder.library.add", "Add");
   const libraryAdded = t("therapist.programBuilder.library.added", "Added");
   const libraryConfig = t("therapist.programBuilder.library.config", "Show configuration");
@@ -374,16 +374,14 @@ export function ProgramBuilder() {
       role === "admin"
         ? listAllPrograms()
         : listProgramsByOwner(user?.uid ?? "");
+    const loadLibraryTasks =
+      role === "admin" ? listTaskTemplates() : listTasksByOwner(user?.uid ?? "");
 
-    Promise.all([
-      listTaskTemplates(),
-      listProgramTemplates(),
-      loadPrograms,
-    ])
-      .then(([tasks, programs, loadedPrograms]) => {
+    Promise.all([loadLibraryTasks, listProgramTemplates(), loadPrograms])
+      .then(([library, templates, loadedPrograms]) => {
         if (!active) return;
-        setTaskTemplates(tasks);
-        setProgramTemplates(programs);
+        setLibraryTasks(library);
+        setProgramTemplates(templates);
         setPrograms(loadedPrograms);
       })
       .catch((err) => {
@@ -418,8 +416,6 @@ export function ProgramBuilder() {
 
   const resetBuilder = useCallback(() => {
     clear();
-    setTemplateId("");
-    setUseTemplateSelection(false);
     setProgramId("");
     setOriginalProgram(null);
     setOriginalTasks([]);
@@ -431,9 +427,7 @@ export function ProgramBuilder() {
     setOriginalProgram,
     setOriginalTasks,
     setProgramId,
-    setTemplateId,
     resetTemplateFormState,
-    setUseTemplateSelection,
     setTitle,
     setProgramType,
   ]);
@@ -458,8 +452,6 @@ export function ProgramBuilder() {
           .filter((task): task is Task => Boolean(task))
           .map(createBuilderTaskFromExisting);
         setTasks(orderedTasks);
-        setUseTemplateSelection(false);
-        setTemplateId("");
       } catch (err) {
         setMessage({
           type: "error",
@@ -477,20 +469,9 @@ export function ProgramBuilder() {
       setOriginalProgram,
       setOriginalTasks,
       setProgramType,
-      setUseTemplateSelection,
       setTasks,
-      setTemplateId,
       setTitle,
     ]
-  );
-
-  const programTemplateOptions = useMemo(
-    () =>
-      programTemplates.map((program) => ({
-        value: program.id,
-        label: program.title,
-      })),
-    [programTemplates]
   );
 
   const refreshProgramTemplates = useCallback(async () => {
@@ -532,43 +513,13 @@ export function ProgramBuilder() {
     [t]
   );
 
-  const handleTemplateSelect = (value: string) => {
-    setTemplateId(value);
-    if (!value) {
-      clear();
-      setTitle("");
-      setProgramType(ProgramType.AdaptiveNormal);
-      return;
-    }
-    setUseTemplateSelection(true);
-    setProgramId("");
-    setOriginalProgram(null);
-    setOriginalTasks([]);
-    const template = programTemplates.find((item) => item.id === value);
-    if (!template) return;
-    const tasks = template.taskIds
-      .map((taskId) => taskTemplates.find((task) => task.id === taskId))
-      .filter((task): task is TaskTemplate => Boolean(task))
-      .map(createBuilderTaskFromTemplate);
-    setTasks(tasks);
-    setTitle(template.title);
-    setProgramType(template.type);
-  };
-
-  const handleTemplateToggle = (enabled: boolean) => {
-    setUseTemplateSelection(enabled);
-    if (!enabled) {
-      setTemplateId("");
-    }
-  };
-
   const startCreateTemplate = () => {
     setTemplateForm({
       title: title.trim() || "",
       subtitle: "",
       description: "",
       icon: selectedTasks[0]?.icon ?? PROGRAM_ICON_OPTIONS[3],
-      color: activeTemplate?.color ?? PROGRAM_COLOR_OPTIONS[0],
+      color: PROGRAM_COLOR_OPTIONS[0],
       type: programType,
     });
     setEditingTemplateId(null);
@@ -768,7 +719,6 @@ function buildProgramPayload({
   taskIds,
   currentProgramType,
   selectedTasks,
-  activeTemplate,
   originalProgram,
 }: {
   title: string;
@@ -776,27 +726,19 @@ function buildProgramPayload({
   taskIds: string[];
   currentProgramType: ProgramType;
   selectedTasks: BuilderTask[];
-  activeTemplate: ProgramTemplate | null;
   originalProgram: Program | null;
 }): Omit<Program, "id"> {
   return {
-    title:
-      title.trim() ||
-      activeTemplate?.title ||
-      originalProgram?.title ||
-      "New program",
-    subtitle: activeTemplate?.subtitle ?? originalProgram?.subtitle ?? "",
-    description: activeTemplate?.description ?? originalProgram?.description ?? "",
+    title: title.trim() || originalProgram?.title || "New program",
+    subtitle: originalProgram?.subtitle ?? "",
+    description: originalProgram?.description ?? "",
     type: currentProgramType,
     taskIds,
     icon:
-      activeTemplate?.icon ??
-      originalProgram?.icon ??
-      selectedTasks[0]?.icon ??
-      "favorite_rounded",
-    color: activeTemplate?.color ?? originalProgram?.color ?? "#1F6FEB",
+      originalProgram?.icon ?? selectedTasks[0]?.icon ?? "favorite_rounded",
+    color: originalProgram?.color ?? "#1F6FEB",
     ownerId,
-    roles: activeTemplate?.roles ?? originalProgram?.roles ?? [],
+    roles: originalProgram?.roles ?? [],
     scope: TemplateScope.Private,
     therapistTypes: [],
     assignedUserIds: [],
@@ -875,7 +817,6 @@ const handleSave = async (): Promise<void> => {
       taskIds: finalTaskIds,
       currentProgramType,
       selectedTasks,
-      activeTemplate,
       originalProgram,
     });
 
@@ -976,39 +917,6 @@ const handleSave = async (): Promise<void> => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="use-template"
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-brand-divider/70 text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-                      checked={useTemplateSelection}
-                      onChange={(event) => handleTemplateToggle(event.target.checked)}
-                    />
-                    <Label htmlFor="use-template" className="cursor-pointer text-sm font-medium text-brand-text">
-                      {templateToggleLabel}
-                    </Label>
-                  </div>
-                  {!useTemplateSelection && (
-                    <p className="text-xs text-brand-text-muted">{templateToggleHelp}</p>
-                  )}
-                  <Label htmlFor="template" className="text-sm font-medium text-brand-text">
-                    {templateLabel}
-                  </Label>
-                  <Select
-                    id="template"
-                    value={templateId}
-                    onChange={(event) => handleTemplateSelect(event.target.value)}
-                    disabled={!useTemplateSelection}
-                  >
-                    <option value="">{noneOptionLabel}</option>
-                    {programTemplateOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="program-type">{programTypeLabel}</Label>
                   <Select
                     id="program-type"
@@ -1093,7 +1001,7 @@ const handleSave = async (): Promise<void> => {
             <p className="mt-1 text-xs text-brand-text-muted">{librarySubtitle}</p>
           </div>
           <div className="space-y-3 overflow-y-auto pr-1">
-            {taskTemplates.map((task) => {
+            {libraryTasks.map((task) => {
               const alreadySelected = selectedTasks.some((item) => item.id === task.id);
               const visibilityLabel =
                 task.visibility === TaskVisibility.HiddenFromPatients
@@ -1141,7 +1049,7 @@ const handleSave = async (): Promise<void> => {
                 </div>
               );
             })}
-            {taskTemplates.length === 0 && (
+            {libraryTasks.length === 0 && (
               <p className="rounded-[14px] border border-dashed border-brand-divider/70 px-4 py-6 text-center text-sm text-brand-text-muted">
                 {t("therapist.taskLibrary.empty", "No tasks found.")}
               </p>
@@ -1150,7 +1058,8 @@ const handleSave = async (): Promise<void> => {
         </Card>
       </div>
 
-      <Card className="space-y-5 p-6">
+      {isAdmin && (
+        <Card className="space-y-5 p-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-brand-text">{templateManagerTitle}</h2>
@@ -1351,7 +1260,8 @@ const handleSave = async (): Promise<void> => {
             </p>
           )}
         </div>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
