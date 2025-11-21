@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 scripts/serviceAccountKey.json
-
+.env
 # Generated therapy media
 public/therapy_media/
