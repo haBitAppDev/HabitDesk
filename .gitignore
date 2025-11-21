@@ -22,7 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-scripts/serviceAccountKey.json
 .env
+.env.local
+scripts/serviceAccountKey.json
 # Generated therapy media
 public/therapy_media/
