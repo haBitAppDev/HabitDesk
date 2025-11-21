@@ -37,6 +37,7 @@ import { useI18n } from "../../../i18n/I18nProvider";
 import { useAuthState } from "../../shared/hooks/useAuthState";
 import { TaskConfigEditor } from "../../shared/components/TaskConfigEditor";
 import { EvidenceConfigEditor } from "../../shared/components/EvidenceConfigEditor";
+import { TaskPreview } from "../../shared/components/TaskPreview";
 import type {
   EvidenceTaskConfig,
   MediaTaskConfig,
@@ -195,6 +196,9 @@ export function TaskLibrary() {
       setIsCreating(false);
     }
   }, [canCreateTemplates, isCreating]);
+
+  const createTaskConfig = ensureConfigMatchesType(createForm.type, createForm.config);
+  const myTaskConfig = ensureConfigMatchesType(myTaskForm.type, myTaskForm.config);
 
   const titleText = t("therapist.taskLibrary.title", "Task Library");
   const subtitleText = t(
@@ -1243,53 +1247,70 @@ export function TaskLibrary() {
               />
             </div>
 
-            <TaskConfigEditor
-              type={createForm.type}
-              value={ensureConfigMatchesType(createForm.type, createForm.config)}
-              onChange={(config) =>
-                setCreateForm((prev) => ({
-                  ...prev,
-                  config,
-                }))
-              }
-              t={t}
-            />
-            <EvidenceConfigEditor
-              enabled={
-                createForm.type === TaskType.Evidence
-                  ? true
-                  : createForm.evidenceEnabled
-              }
-              disableToggle={createForm.type === TaskType.Evidence}
-              config={createForm.evidenceConfig}
-              onToggle={(enabled) =>
-                setCreateForm((prev) => {
-                  if (prev.type === TaskType.Evidence) {
-                    return prev;
+            <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+              <div className="space-y-4">
+                <TaskConfigEditor
+                  type={createForm.type}
+                  value={createTaskConfig}
+                  onChange={(config) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      config,
+                    }))
                   }
-                  return {
-                    ...prev,
-                    evidenceEnabled: enabled,
-                    evidenceConfig: enabled
-                      ? prev.evidenceConfig?.requirements.length
-                        ? prev.evidenceConfig
-                        : createDefaultEvidenceConfig()
-                      : prev.evidenceConfig,
-                  };
-                })
-              }
-              onChange={(nextConfig) =>
-                setCreateForm((prev) => ({
-                  ...prev,
-                  evidenceConfig: nextConfig,
-                  config:
-                    prev.type === TaskType.Evidence
-                      ? normalizeEvidenceConfig(nextConfig)
-                      : prev.config,
-                }))
-              }
-              t={t}
-            />
+                  t={t}
+                />
+                <EvidenceConfigEditor
+                  enabled={
+                    createForm.type === TaskType.Evidence
+                      ? true
+                      : createForm.evidenceEnabled
+                  }
+                  disableToggle={createForm.type === TaskType.Evidence}
+                  config={createForm.evidenceConfig}
+                  onToggle={(enabled) =>
+                    setCreateForm((prev) => {
+                      if (prev.type === TaskType.Evidence) {
+                        return prev;
+                      }
+                      return {
+                        ...prev,
+                        evidenceEnabled: enabled,
+                        evidenceConfig: enabled
+                          ? prev.evidenceConfig?.requirements.length
+                            ? prev.evidenceConfig
+                            : createDefaultEvidenceConfig()
+                          : prev.evidenceConfig,
+                      };
+                    })
+                  }
+                  onChange={(nextConfig) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      evidenceConfig: nextConfig,
+                      config:
+                        prev.type === TaskType.Evidence
+                          ? normalizeEvidenceConfig(nextConfig)
+                          : prev.config,
+                    }))
+                  }
+                  t={t}
+                />
+              </div>
+              <TaskPreview
+                title={createForm.title}
+                description={createForm.description}
+                icon={createForm.icon}
+                type={createForm.type}
+                config={createTaskConfig}
+                evidenceConfig={createForm.evidenceConfig}
+                evidenceEnabled={
+                  createForm.type === TaskType.Evidence || createForm.evidenceEnabled
+                }
+                t={t}
+                className="lg:sticky lg:top-4"
+              />
+            </div>
 
             {createError && (
               <div className="rounded-card border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -1573,54 +1594,71 @@ export function TaskLibrary() {
                 />
               </div>
 
-              <TaskConfigEditor
-                type={myTaskForm.type}
-                value={ensureConfigMatchesType(myTaskForm.type, myTaskForm.config)}
-                onChange={(config) =>
-                  setMyTaskForm((prev) => ({
-                    ...prev,
-                    config,
-                  }))
-                }
-                t={t}
-              />
-
-              <EvidenceConfigEditor
-                enabled={
-                  myTaskForm.type === TaskType.Evidence
-                    ? true
-                    : myTaskForm.evidenceEnabled
-                }
-                disableToggle={myTaskForm.type === TaskType.Evidence}
-                config={myTaskForm.evidenceConfig}
-                onToggle={(enabled) =>
-                  setMyTaskForm((prev) => {
-                    if (prev.type === TaskType.Evidence) {
-                      return prev;
+              <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+                <div className="space-y-4">
+                  <TaskConfigEditor
+                    type={myTaskForm.type}
+                    value={myTaskConfig}
+                    onChange={(config) =>
+                      setMyTaskForm((prev) => ({
+                        ...prev,
+                        config,
+                      }))
                     }
-                    return {
-                      ...prev,
-                      evidenceEnabled: enabled,
-                      evidenceConfig: enabled
-                        ? prev.evidenceConfig?.requirements.length
-                          ? prev.evidenceConfig
-                          : createDefaultEvidenceConfig()
-                        : prev.evidenceConfig,
-                    };
-                  })
-                }
-                onChange={(nextConfig) =>
-                  setMyTaskForm((prev) => ({
-                    ...prev,
-                    evidenceConfig: nextConfig,
-                    config:
-                      prev.type === TaskType.Evidence
-                        ? normalizeEvidenceConfig(nextConfig)
-                        : prev.config,
-                  }))
-                }
-                t={t}
-              />
+                    t={t}
+                  />
+
+                  <EvidenceConfigEditor
+                    enabled={
+                      myTaskForm.type === TaskType.Evidence
+                        ? true
+                        : myTaskForm.evidenceEnabled
+                    }
+                    disableToggle={myTaskForm.type === TaskType.Evidence}
+                    config={myTaskForm.evidenceConfig}
+                    onToggle={(enabled) =>
+                      setMyTaskForm((prev) => {
+                        if (prev.type === TaskType.Evidence) {
+                          return prev;
+                        }
+                        return {
+                          ...prev,
+                          evidenceEnabled: enabled,
+                          evidenceConfig: enabled
+                            ? prev.evidenceConfig?.requirements.length
+                              ? prev.evidenceConfig
+                              : createDefaultEvidenceConfig()
+                            : prev.evidenceConfig,
+                        };
+                      })
+                    }
+                    onChange={(nextConfig) =>
+                      setMyTaskForm((prev) => ({
+                        ...prev,
+                        evidenceConfig: nextConfig,
+                        config:
+                          prev.type === TaskType.Evidence
+                            ? normalizeEvidenceConfig(nextConfig)
+                            : prev.config,
+                      }))
+                    }
+                    t={t}
+                  />
+                </div>
+                <TaskPreview
+                  title={myTaskForm.title}
+                  description={myTaskForm.description}
+                  icon={myTaskForm.icon}
+                  type={myTaskForm.type}
+                  config={myTaskConfig}
+                  evidenceConfig={myTaskForm.evidenceConfig}
+                  evidenceEnabled={
+                    myTaskForm.type === TaskType.Evidence || myTaskForm.evidenceEnabled
+                  }
+                  t={t}
+                  className="lg:sticky lg:top-4"
+                />
+              </div>
 
               {myTaskFormError && (
                 <div className="rounded-card border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
